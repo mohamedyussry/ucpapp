@@ -209,7 +209,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
                     title,
                     style: GoogleFonts.playfairDisplay(
                       color: Colors.white,
-                      fontSize: 60,
+                      fontSize: 40,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

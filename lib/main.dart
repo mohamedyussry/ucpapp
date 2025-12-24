@@ -3,16 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:myapp/language_selection_screen.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
-import 'package:video_player_web/video_player_web.dart';
 
 void main() {
   // Ensure the binding is initialized.
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Register the web platform implementation of video_player.
-  if (kIsWeb) {
-    VideoPlayerPlatform.instance = VideoPlayerPlugin();
-  }
 
   runApp(const MyApp());
 }
