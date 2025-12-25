@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:myapp/login_screen.dart';
 
@@ -104,7 +103,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
         width: 150,
         height: 100,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange.withOpacity(0.1) : Colors.white,
+          color: isSelected ? Colors.orange.withAlpha(25) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected ? Colors.orange : Colors.grey.shade300,

@@ -200,7 +200,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
         children: [
           VideoBackground(videoPath: videoPath, isVisible: isVisible),
           Container(
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.35)),
+            decoration: BoxDecoration(color: Colors.black.withAlpha(89)),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -231,7 +231,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
       right: 0,
       child: Container(
         height: 140,
-        color: Colors.black.withOpacity(0.4),
+        color: Colors.black.withAlpha(102),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
@@ -246,7 +246,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.9),
+                fillColor: Colors.white.withAlpha(230),
                 contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
               ),
             ),

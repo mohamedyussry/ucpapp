@@ -1,8 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:myapp/language_selection_screen.dart';
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
 void main() {
   // Ensure the binding is initialized.
