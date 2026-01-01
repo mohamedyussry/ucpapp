@@ -1,8 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:video_player/video_player.dart';
-import './self_care_screen.dart'; // Import the new screen
+import './self_care_screen.dart';
+import 'widgets/category_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,28 +33,28 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               children: [
                 Expanded(
-                  child: GestureDetector(
+                  child: CategoryBanner(
+                    title: 'Self Care',
+                    subtitle: 'Shop now',
+                    videoAsset: 'assets/home/self-care.mp4',
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SelfCareScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const SelfCareScreen()),
                       );
                     },
-                    child: _buildCategoryCard(
-                      context,
-                      'Self Care',
-                      'Shop now',
-                      'assets/home/self-care.mp4',
-                    ),
                   ),
                 ),
                 Expanded(
-                  child: _buildCategoryCard(
-                    context,
-                    'Medicines',
-                    'Shop now',
-                    'assets/home/medicines.mp4',
+                  child: CategoryBanner(
+                    title: 'Medicines',
+                    subtitle: 'Shop now',
+                    videoAsset: 'assets/home/medicines.mp4',
                     showFloatingIcon: true,
+                    onTap: () {
+                      // TODO: Implement navigation to medicines screen.
+                    },
                   ),
                 ),
               ],
@@ -77,14 +78,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: InputDecoration(
                     hintText: 'What can we help you find?',
                     hintStyle: GoogleFonts.lato(color: Colors.grey.shade600),
-                    suffixIcon: Icon(Icons.photo_camera_back, color: Colors.grey.shade600),
+                    suffixIcon:
+                        Icon(Icons.photo_camera_back, color: Colors.grey.shade600),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                       borderSide: BorderSide.none,
                     ),
                     filled: true,
                     fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 15, horizontal: 20),
                   ),
                 ),
               ),
@@ -133,109 +136,5 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-
-  Widget _buildCategoryCard(
-      BuildContext context, String title, String subtitle, String videoAsset,
-      {bool showFloatingIcon = false}) {
-    return Container(
-      width: double.infinity,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          _VideoPlayerWidget(videoAsset: videoAsset),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.black.withAlpha(77),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.playfairDisplay(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.lato(
-                      color: Colors.white,
-                      fontSize: 18,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (showFloatingIcon)
-            Positioned(
-              bottom: 40,
-              right: 20,
-              child: CircleAvatar(
-                backgroundColor: Colors.orange.withAlpha(204),
-                radius: 30,
-                child: const FaIcon(
-                  FontAwesomeIcons.pills,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VideoPlayerWidget extends StatefulWidget {
-  final String videoAsset;
-
-  const _VideoPlayerWidget({required this.videoAsset});
-
-  @override
-  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
-}
-
-class _VideoPlayerWidgetState extends State<_VideoPlayerWidget> {
-  late VideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.asset(widget.videoAsset)
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
-        _controller.setLooping(true);
-        _controller.setVolume(0); // Mute the video
-      });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _controller.value.isInitialized
-        ? SizedBox.expand(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              child: SizedBox(
-                width: _controller.value.size.width,
-                height: _controller.value.size.height,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-          )
-        : const Center(child: CircularProgressIndicator());
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }

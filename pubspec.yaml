@@ -18,6 +18,7 @@ dependencies:
   video_player_avfoundation: ^2.8.8
   video_player: ^2.10.1
   video_player_platform_interface: ^6.6.0
+  carousel_slider: ^5.1.1
 
 dev_dependencies:
   flutter_test:
@@ -30,3 +31,5 @@ flutter:
   assets:
     - assets/
     - assets/home/
+    - assets/products/
+    - assets/brands/

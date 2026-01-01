@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/home_screen.dart';
+import 'package:myapp/otp_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -56,12 +57,14 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
                 _buildTextField('Mobile Number'),
-                const SizedBox(height: 20),
-                _buildTextField('OTP Code'),
                 const SizedBox(height: 30),
                 ElevatedButton(
                   onPressed: () {
-                    // TODO: Implement login logic
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (BuildContext context) => const OTPScreen(),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
