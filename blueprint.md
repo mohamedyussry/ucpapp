@@ -1,4 +1,3 @@
-
 # Project Blueprint: E-commerce App
 
 ## Overview
@@ -10,11 +9,12 @@ This document outlines the architecture, features, and design of a Flutter-based
 *   **Home Screen (`home_screen.dart`):**
     *   Serves as the main entry point after the splash screen.
     *   Features a clean UI with a search bar and a bottom navigation menu.
-    *   Provides navigation to the "Self Care" category section.
+    *   Provides navigation to the "Self Care" category section and the "Medicines" product screen.
+    *   **New:** Tapping the "Medicines" banner now navigates to the `ProductsScreen`, filtering for the "Medicine" category.
 
 *   **Self-Care Categories Screen (`self_care_screen.dart`):**
     *   Displays three main categories: "HIM", "HER", and "BABY".
-    *   Each category is represented by a full-screen, looping background video (`assets/him.mp4`, `assets/HER.mp4`, `assets/baby.mp4`) to create a dynamic and visually engaging experience.
+    *   Each category is represented by a full-screen, looping background video to create a dynamic and visually engaging experience.
     *   The category titles are overlaid on the videos with a stylish `GoogleFonts.cinzel` font.
     *   Tapping on a category navigates the user to the corresponding products screen.
     *   Separates the displayed category title (e.g., "HIM") from the actual API query category name (e.g., "For Him") to allow for clean UI text while fetching the correct data.
@@ -40,13 +40,10 @@ This document outlines the architecture, features, and design of a Flutter-based
 
 ## Current Plan
 
-**Goal:** Upload the project to a GitHub repository.
+**Goal:** Upload the latest project version to the GitHub repository.
 
 **Steps:**
-1.  [x] Create this `blueprint.md` file to document the project.
-2.  [ ] Initialize a Git repository.
-3.  [ ] Add all project files to the staging area.
-4.  [ ] Commit the files with the message "Feat: Initial commit with product display functionality".
-5.  [ ] Request the remote GitHub repository URL from the user.
-6.  [ ] Add the remote origin.
-7.  [ ] Push the project to the `main` branch.
+1.  [x] Update this `blueprint.md` file to document the new changes.
+2.  [ ] Add all project files to the staging area.
+3.  [ ] Commit the files with the message "Feat: Activate medicines banner navigation".
+4.  [ ] Push the project to the `main` branch.
