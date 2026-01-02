@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import './self_care_screen.dart';
 import 'widgets/category_banner.dart';
 
@@ -77,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'What can we help you find?',
-                    hintStyle: GoogleFonts.lato(color: Colors.grey.shade600),
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
                     suffixIcon:
                         Icon(Icons.photo_camera_back, color: Colors.grey.shade600),
                     border: OutlineInputBorder(
@@ -129,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
           type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.orange,
           unselectedItemColor: Colors.grey.shade400,
-          selectedLabelStyle: GoogleFonts.lato(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: GoogleFonts.lato(),
+          selectedLabelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: Theme.of(context).textTheme.bodySmall,
           backgroundColor: Colors.white,
           elevation: 5,
         ),

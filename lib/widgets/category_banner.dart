@@ -1,7 +1,5 @@
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 
 class CategoryBanner extends StatefulWidget {
@@ -82,18 +80,16 @@ class _CategoryBannerState extends State<CategoryBanner> {
                     children: [
                       Text(
                         widget.title,
-                        style: GoogleFonts.playfairDisplay(
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                           color: Colors.white,
-                          fontSize: 48,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         widget.subtitle,
-                        style: GoogleFonts.lato(
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.white,
-                          fontSize: 18,
                           decoration: TextDecoration.underline,
                           decorationColor: Colors.white,
                         ),
