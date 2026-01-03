@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/favorites_screen.dart';
 import 'package:myapp/home_screen.dart';
+import 'package:myapp/screens/profile_screen.dart';
+import 'package:myapp/self_care_screen.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -22,7 +24,14 @@ class CustomBottomNavBar extends StatelessWidget {
         );
         break;
       case 1: // Categories
-        // TODO: Navigate to Categories Screen
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) =>
+                const SelfCareScreen(),
+            transitionDuration: Duration.zero,
+          ),
+        );
         break;
       case 2: // Orders
         // TODO: Navigate to Orders Screen
@@ -31,13 +40,21 @@ class CustomBottomNavBar extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => const FavoritesScreen(),
+            pageBuilder: (context, animation1, animation2) =>
+                const FavoritesScreen(),
             transitionDuration: Duration.zero,
           ),
         );
         break;
       case 4: // Profile
-        // TODO: Navigate to Profile Screen
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) =>
+                const ProfileScreen(),
+            transitionDuration: Duration.zero,
+          ),
+        );
         break;
     }
   }
