@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../product_detail_screen.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final WooProduct product;
@@ -18,7 +19,7 @@ class ProductCard extends StatelessWidget {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final imageUrl = product.images.isNotEmpty ? product.images[0].src ?? '' : '';
     final productName = product.name ?? 'No Name';
-    final price = '${product.price ?? '0'} SAR'; // Changed currency to SAR
+    final price = '${product.price ?? '0'} EUR';
 
     return GestureDetector(
       onTap: () {
@@ -49,14 +50,42 @@ class ProductCard extends StatelessWidget {
             children: [
               Expanded(
                 flex: 5,
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.error, color: Colors.grey),
-                  ),
+                child: Stack(
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: Colors.grey[200]),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.error, color: Colors.grey),
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Consumer<FavoritesProvider>(
+                        builder: (context, favoritesProvider, child) {
+                          final isFavorite = favoritesProvider.isFavorite(product.id);
+                          return GestureDetector(
+                            onTap: () {
+                              favoritesProvider.toggleFavorite(product);
+                            },
+                            child: CircleAvatar(
+                              backgroundColor: Colors.white.withOpacity(0.8),
+                              radius: 15,
+                              child: Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.grey,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
@@ -86,7 +115,7 @@ class ProductCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
+                              color: Colors.black87,
                             ),
                           ),
                           GestureDetector(
@@ -108,12 +137,13 @@ class ProductCard extends StatelessWidget {
                             },
                             child: Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  shape: BoxShape.circle,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.rectangle,
+                                  borderRadius: BorderRadius.all(Radius.circular(8)),
                                 ),
                                 child: const Icon(
-                                  Icons.add_shopping_cart,
+                                  Icons.shopping_cart_outlined,
                                   color: Colors.white,
                                   size: 20,
                                 ),

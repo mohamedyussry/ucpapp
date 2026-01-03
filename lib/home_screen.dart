@@ -1,24 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/products_screen.dart';
+import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import './self_care_screen.dart';
 import 'widgets/category_banner.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,49 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-        ),
-        child: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.house, size: 20),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.tableCellsLarge, size: 20),
-              label: 'Categories',
-            ),
-            BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.rotate, size: 20),
-              label: 'Orders',
-            ),
-            BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.heart, size: 20),
-              label: 'Favorites',
-            ),
-            BottomNavigationBarItem(
-              icon: FaIcon(FontAwesomeIcons.user, size: 20),
-              label: 'Profile',
-            ),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.orange,
-          unselectedItemColor: Colors.grey.shade400,
-          selectedLabelStyle: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: Theme.of(context).textTheme.bodySmall,
-          backgroundColor: Colors.white,
-          elevation: 5,
-        ),
-      ),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 0),
     );
   }
 }

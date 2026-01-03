@@ -4,6 +4,7 @@ import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:myapp/widgets/cart_badge.dart';
+import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 
 class ProductsScreen extends StatefulWidget {
   final String category;
@@ -120,6 +121,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );
   }
 }

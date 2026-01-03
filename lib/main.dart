@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:myapp/language_selection_screen.dart';
 import 'package:myapp/providers/cart_provider.dart';
+import 'package:myapp/providers/favorites_provider.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -10,8 +11,11 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => CartProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => CartProvider()),
+        ChangeNotifierProvider(create: (context) => FavoritesProvider()),
+      ],
       child: const MyApp(),
     ),
   );
