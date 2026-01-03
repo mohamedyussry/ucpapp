@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'providers/cart_provider.dart';
+import 'checkout_screen.dart'; // Import the new checkout screen
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -303,7 +304,11 @@ class CartScreen extends StatelessWidget {
   Widget _buildCheckoutButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        // Handle checkout
+        // Navigate to the Checkout Screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CheckoutScreen()),
+        );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.orange,
