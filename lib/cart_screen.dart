@@ -144,7 +144,7 @@ class CartScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${product.price ?? '0'} EGP',
+                      '${product.price ?? '0'} SAR',
                       style: GoogleFonts.poppins(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
@@ -225,11 +225,11 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _buildDiscountCodeField(),
           const SizedBox(height: 20),
-          _buildPriceSummaryRow('Sub total :', '${subtotal.toStringAsFixed(2)} EGP'),
+          _buildPriceSummaryRow('Sub total :', '${subtotal.toStringAsFixed(2)} SAR'),
           const SizedBox(height: 8),
-          _buildPriceSummaryRow('Discount :', '${discount.toStringAsFixed(2)} EGP'),
+          _buildPriceSummaryRow('Discount :', '${discount.toStringAsFixed(2)} SAR'),
           const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
-          _buildPriceSummaryRow('Total :', '${total.toStringAsFixed(2)} EGP', isTotal: true),
+          _buildPriceSummaryRow('Total :', '${total.toStringAsFixed(2)} SAR', isTotal: true),
           const SizedBox(height: 20),
           _buildCheckoutButton(context),
         ],

@@ -18,7 +18,7 @@ class ProductCard extends StatelessWidget {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final imageUrl = product.images.isNotEmpty ? product.images[0].src ?? '' : '';
     final productName = product.name ?? 'No Name';
-    final price = '${product.price ?? '0'} EGP'; // Changed currency to EGP
+    final price = '${product.price ?? '0'} SAR'; // Changed currency to SAR
 
     return GestureDetector(
       onTap: () {

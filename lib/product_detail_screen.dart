@@ -166,7 +166,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} EUR',
+          '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} SAR',
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (originalPrice != null) ...[
           const SizedBox(width: 8),
           Text(
-            '${originalPrice.toStringAsFixed(2)} EUR',
+            '${originalPrice.toStringAsFixed(2)} SAR',
             style: GoogleFonts.poppins(
               fontSize: 16,
               color: Colors.grey,

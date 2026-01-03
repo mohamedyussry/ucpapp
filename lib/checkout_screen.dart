@@ -384,7 +384,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             },
             icon: const Icon(Icons.arrow_forward, color: Colors.black),
             label: Text(
-              'Pay Now  350EGP',
+              'Pay Now  350SAR',
               style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
             ),
             style: ElevatedButton.styleFrom(
