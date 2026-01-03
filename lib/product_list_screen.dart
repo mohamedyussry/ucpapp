@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 
 class ProductListScreen extends StatelessWidget {
   final String categoryName;
@@ -45,7 +46,7 @@ class ProductListScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );
   }
 
@@ -223,22 +224,6 @@ class ProductListScreen extends StatelessWidget {
       child: Image.asset(assetPath, errorBuilder: (context, error, stackTrace) {
         return const Icon(Icons.error);
       }),
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.orange,
-      unselectedItemColor: Colors.grey,
-      currentIndex: 0,
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.category), label: 'categories'),
-        BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
     );
   }
 }

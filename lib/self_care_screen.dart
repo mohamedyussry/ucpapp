@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/products_screen.dart';
+import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import 'package:video_player/video_player.dart';
 
 class SelfCareScreen extends StatefulWidget {
@@ -12,18 +12,6 @@ class SelfCareScreen extends StatefulWidget {
 }
 
 class _SelfCareScreenState extends State<SelfCareScreen> {
-  int _bottomNavIndex = 0;
-
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pop(context);
-    } else {
-      setState(() {
-        _bottomNavIndex = index;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,7 +53,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavBar(context),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1), // Using the unified widget
     );
   }
 
@@ -115,34 +103,6 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
             contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavBar(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-      ),
-      child: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.house, size: 20), label: 'Home'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.grip, size: 20), label: 'categories'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.rotate, size: 20), label: 'Orders'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.heart, size: 20), label: 'Favorites'),
-          BottomNavigationBarItem(icon: FaIcon(FontAwesomeIcons.user, size: 20), label: 'Profile'),
-        ],
-        currentIndex: _bottomNavIndex,
-        onTap: _onItemTapped,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey.shade400,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
-        backgroundColor: Colors.white,
-        elevation: 8,
       ),
     );
   }
