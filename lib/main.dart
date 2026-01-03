@@ -1,12 +1,20 @@
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:myapp/language_selection_screen.dart';
+import 'package:myapp/providers/cart_provider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   // Ensure the binding is initialized.
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => CartProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

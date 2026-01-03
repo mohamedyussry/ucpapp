@@ -1,7 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
+import 'package:myapp/widgets/cart_badge.dart';
 
 class ProductsScreen extends StatefulWidget {
   final String category;
@@ -56,13 +58,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.category.toUpperCase()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_cart),
-            onPressed: () {
-              // Handle cart button press
-            },
-          ),
+        actions: const [
+          CartBadge(),
         ],
       ),
       body: Padding(

@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:myapp/providers/cart_provider.dart';
+import 'package:myapp/widgets/cart_badge.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final WooProduct product;
@@ -30,13 +33,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black),
-            onPressed: () {
-              // Navigate to cart
-            },
-          ),
+        actions: const [
+          CartBadge(),
         ],
       ),
       body: SingleChildScrollView(
@@ -284,6 +282,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
 
   Widget _buildBottomBar() {
+    final cart = Provider.of<CartProvider>(context, listen: false);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       decoration: BoxDecoration(
@@ -314,7 +314,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           Expanded(
             child: ElevatedButton(
               onPressed: () {
-                // Handle add to cart
+                cart.addItem(widget.product);
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Added ${widget.product.name} to cart!'),
+                    duration: const Duration(seconds: 2),
+                    action: SnackBarAction(
+                      label: 'UNDO',
+                      onPressed: () {
+                        cart.removeSingleItem(widget.product.id);
+                      },
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
@@ -339,4 +352,3 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 }
-
