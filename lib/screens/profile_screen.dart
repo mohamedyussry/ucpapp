@@ -197,7 +197,7 @@ class ProfileScreen extends StatelessWidget {
       trailing: Switch(
         value: value,
         onChanged: (bool newValue) {},
-        activeColor: Colors.orange,
+        activeTrackColor: Colors.orange,
       ),
     );
   }

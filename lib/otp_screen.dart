@@ -4,10 +4,10 @@ class OTPScreen extends StatefulWidget {
   const OTPScreen({super.key});
 
   @override
-  _OTPScreenState createState() => _OTPScreenState();
+  OTPScreenState createState() => OTPScreenState();
 }
 
-class _OTPScreenState extends State<OTPScreen> {
+class OTPScreenState extends State<OTPScreen> {
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
   final List<TextEditingController> _controllers = List.generate(4, (index) => TextEditingController());
 

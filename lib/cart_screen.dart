@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'providers/cart_provider.dart';
 import 'checkout_screen.dart'; // Import the new checkout screen
+import 'widgets/custom_bottom_nav_bar.dart'; // Import the custom bottom nav bar
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -75,6 +76,7 @@ class CartScreen extends StatelessWidget {
                 ],
               ),
             ),
+        bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
     );
   }
 
@@ -111,7 +113,7 @@ class CartScreen extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12.0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         elevation: 1,
-        shadowColor: Colors.grey.withOpacity(0.2),
+        shadowColor: Colors.grey.withAlpha((255 * 0.2).round()),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Row(
@@ -325,7 +327,7 @@ class CartScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withAlpha((255 * 0.3).round()),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),

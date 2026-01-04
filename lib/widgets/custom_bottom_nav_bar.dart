@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/favorites_screen.dart';
 import 'package:myapp/home_screen.dart';
+import 'package:myapp/my_orders_screen.dart';
 import 'package:myapp/screens/profile_screen.dart';
 import 'package:myapp/self_care_screen.dart';
 
@@ -34,7 +35,13 @@ class CustomBottomNavBar extends StatelessWidget {
         );
         break;
       case 2: // Orders
-        // TODO: Navigate to Orders Screen
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) => const MyOrdersScreen(),
+            transitionDuration: Duration.zero,
+          ),
+        );
         break;
       case 3: // Favorites
         Navigator.pushReplacement(
@@ -77,7 +84,7 @@ class CustomBottomNavBar extends StatelessWidget {
             label: 'Categories',
           ),
           BottomNavigationBarItem(
-            icon: FaIcon(FontAwesomeIcons.rotate, size: 20),
+            icon: FaIcon(FontAwesomeIcons.box, size: 20),
             label: 'Orders',
           ),
           BottomNavigationBarItem(

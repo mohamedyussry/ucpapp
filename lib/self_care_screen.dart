@@ -82,7 +82,7 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.black.withOpacity(0.7),
+            Colors.black.withAlpha((255 * 0.7).round()),
             Colors.transparent,
           ],
         ),
@@ -168,7 +168,7 @@ class __CategoryVideoState extends State<_CategoryVideo> {
           else
             const Center(child: CircularProgressIndicator()),
           Container(
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.3)),
+            decoration: BoxDecoration(color: Colors.black.withAlpha((255 * 0.3).round())),
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

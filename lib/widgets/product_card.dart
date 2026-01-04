@@ -36,7 +36,7 @@ class ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withAlpha((255 * 0.1).round()),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 2),
@@ -73,7 +73,7 @@ class ProductCard extends StatelessWidget {
                               favoritesProvider.toggleFavorite(product);
                             },
                             child: CircleAvatar(
-                              backgroundColor: Colors.white.withOpacity(0.8),
+                              backgroundColor: Colors.white.withAlpha((255 * 0.8).round()),
                               radius: 15,
                               child: Icon(
                                 isFavorite ? Icons.favorite : Icons.favorite_border,
