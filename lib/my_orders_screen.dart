@@ -4,10 +4,10 @@ class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
 
   @override
-  _MyOrdersScreenState createState() => _MyOrdersScreenState();
+  MyOrdersScreenState createState() => MyOrdersScreenState();
 }
 
-class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProviderStateMixin {
+class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -119,7 +119,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvid
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withAlpha(51),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Row(
@@ -225,7 +225,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvid
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
-      shadowColor: Colors.grey.withOpacity(0.2),
+      shadowColor: Colors.grey.withAlpha(51),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(

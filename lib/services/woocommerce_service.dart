@@ -1,13 +1,13 @@
+
+import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
-import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
 import '../config.dart';
+import '../models/product_model.dart';
 
 class WooCommerceService {
   late final Dio _dio;
 
   WooCommerceService() {
-    // Initialize a single Dio instance for all network calls.
-    // It's configured with the base URL and a User-Agent to bypass bot protection.
     _dio = Dio(
       BaseOptions(
         baseUrl: '${Config.wooCommerceUrl}/wp-json/wc/v3',
@@ -19,7 +19,6 @@ class WooCommerceService {
     );
   }
 
-  // Rewritten to use our reliable Dio instance.
   Future<List<WooProduct>> getProducts({int? categoryId}) async {
     try {
       final Map<String, dynamic> queryParameters = {
@@ -38,29 +37,27 @@ class WooCommerceService {
       );
 
       if (response.statusCode == 200 && response.data is List) {
-        // Manually parse the JSON data into a list of WooProduct objects.
         return (response.data as List)
             .map((p) => WooProduct.fromJson(p))
             .toList();
       } else {
-        print(
+        developer.log(
             'Error fetching products: Status ${response.statusCode}, Body: ${response.data}');
         return [];
       }
-    } on DioException catch (e) {
-      _handleDioError(e, 'fetching products');
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching products');
       return [];
-    } catch (e) {
-      print('Unexpected error fetching products: $e');
+    } catch (e, s) {
+      developer.log('Unexpected error fetching products', error: e, stackTrace: s);
       return [];
     }
   }
 
-  // This method already uses our reliable Dio instance.
-  Future<List<Map<String, dynamic>>> getCategories() async {
+  Future<List<WooProductVariation>> getProductVariations(int productId) async {
     try {
       final response = await _dio.get(
-        '/products/categories',
+        '/products/$productId/variations',
         queryParameters: {
           'consumer_key': Config.consumerKey,
           'consumer_secret': Config.consumerSecret,
@@ -68,29 +65,90 @@ class WooCommerceService {
         },
       );
       if (response.statusCode == 200 && response.data is List) {
-        return List<Map<String, dynamic>>.from(response.data);
+        return (response.data as List)
+            .map((v) => WooProductVariation.fromJson(v))
+            .toList();
       } else {
-        print(
-            'Error fetching categories: Status ${response.statusCode}, Body: ${response.data}');
+        developer.log(
+            'Error fetching product variations: Status ${response.statusCode}, Body: ${response.data}');
         return [];
       }
-    } on DioException catch (e) {
-      _handleDioError(e, 'fetching categories');
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching product variations');
       return [];
-    } catch (e) {
-      print('Unexpected error fetching categories: $e');
+    } catch (e, s) {
+      developer.log('Unexpected error fetching product variations', error: e, stackTrace: s);
       return [];
     }
   }
 
-  void _handleDioError(DioException e, String context) {
+  Future<List<WooProductCategory>> getCategories() async {
+    try {
+      final response = await _dio.get(
+        '/products/categories',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'per_page': 100,
+          'hide_empty': true,
+        },
+      );
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List)
+            .map((c) => WooProductCategory.fromJson(c))
+            .toList();
+      } else {
+        developer.log(
+            'Error fetching categories: Status ${response.statusCode}, Body: ${response.data}');
+        return [];
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching categories');
+      return [];
+    } catch (e, s) {
+      developer.log('Unexpected error fetching categories', error: e, stackTrace: s);
+      return [];
+    }
+  }
+
+  Future<String> getCurrencySymbol() async {
+    try {
+      final response = await _dio.get(
+        '/data/currencies/current',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+        },
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        // The API returns a map with a 'symbol' key.
+        return response.data['symbol'] as String;
+      } else {
+        developer.log(
+            'Error fetching currency symbol: Status ${response.statusCode}, Body: ${response.data}');
+        return ''; // Return empty string on failure
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching currency symbol');
+      return ''; // Return empty string on failure
+    } catch (e, s) {
+      developer.log('Unexpected error fetching currency symbol', error: e, stackTrace: s);
+      return ''; // Return empty string on failure
+    }
+  }
+
+  void _handleDioError(DioException e, StackTrace s, String context) {
     if (e.response != null) {
-      print(
-          'Error $context: Status ${e.response?.statusCode}, Body: ${e.response?.data}');
+      developer.log(
+          'Error $context: Status ${e.response?.statusCode}, Body: ${e.response?.data}',
+          error: e,
+          stackTrace: s);
     } else {
-      print(
-          'Error $context: The connection errored. This might be a network issue or a server-side problem like CORS or bot protection.');
-      print('Dio message: ${e.message}');
+      developer.log(
+          'Error $context: The connection errored. This might be a network issue or a server-side problem like CORS or bot protection.',
+          error: e,
+          stackTrace: s);
+      developer.log('Dio message: ${e.message}');
     }
   }
 }

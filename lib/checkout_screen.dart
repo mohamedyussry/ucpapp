@@ -75,7 +75,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withAlpha(25),
                   spreadRadius: 1,
                   blurRadius: 5,
                 ),
@@ -95,23 +95,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildDeliveryOptions() {
-    return Row(
+    return Column(
       children: [
-        Radio<String>(
+        RadioMenuButton<String>(
           value: 'Home Delivery',
           groupValue: _deliveryOption,
           onChanged: (value) => setState(() => _deliveryOption = value!),
-          activeColor: Colors.black,
+          child: const Text('Home Delivery'),
         ),
-        const Text('Home Delivery'),
-        const SizedBox(width: 20),
-        Radio<String>(
+        RadioMenuButton<String>(
           value: 'Pharmacy Pickup',
           groupValue: _deliveryOption,
           onChanged: (value) => setState(() => _deliveryOption = value!),
-          activeColor: Colors.black,
+          child: const Text('Pharmacy Pickup'),
         ),
-        const Text('Pharmacy Pickup'),
       ],
     );
   }
@@ -140,7 +137,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
+                    color: Colors.orange.withAlpha(76),
                     spreadRadius: 1,
                     blurRadius: 5,
                   ),
@@ -229,7 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange.withOpacity(0.1) : Colors.grey.shade100,
+          color: isSelected ? Colors.orange.withAlpha(25) : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: isSelected ? Colors.orange : Colors.grey.shade300),
         ),
@@ -284,7 +281,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withAlpha(51),
             spreadRadius: 2,
             blurRadius: 10,
           ),

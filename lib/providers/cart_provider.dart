@@ -1,6 +1,6 @@
 
 import 'package:flutter/material.dart';
-import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
+import 'package:myapp/models/product_model.dart';
 
 class CartItem {
   final WooProduct product;
@@ -42,11 +42,9 @@ class CartProvider with ChangeNotifier {
   }
 
   void addItem(WooProduct product) {
-    if (product.id == null) return;
-
     if (_items.containsKey(product.id)) {
       _items.update(
-        product.id!,
+        product.id,
         (existingCartItem) {
           existingCartItem.increment();
           return existingCartItem;
@@ -54,15 +52,15 @@ class CartProvider with ChangeNotifier {
       );
     } else {
       _items.putIfAbsent(
-        product.id!,
+        product.id,
         () => CartItem(product: product),
       );
     }
     notifyListeners();
   }
 
-  void removeSingleItem(int? productId) {
-    if (productId == null || !_items.containsKey(productId)) {
+  void removeSingleItem(int productId) {
+    if (!_items.containsKey(productId)) {
       return;
     }
     if (_items[productId]!.quantity > 1) {
@@ -76,8 +74,7 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeItem(int? productId) {
-    if (productId == null) return;
+  void removeItem(int productId) {
     _items.remove(productId);
     notifyListeners();
   }

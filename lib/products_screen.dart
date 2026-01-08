@@ -1,6 +1,7 @@
 
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
+import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:myapp/widgets/cart_badge.dart';
@@ -29,27 +30,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Future<List<WooProduct>> _fetchProductsForCategory() async {
     try {
       final categories = await _wooCommerceService.getCategories();
-      Map<String, dynamic>? targetCategory;
+      WooProductCategory? targetCategory;
       for (final cat in categories) {
-        final catName = cat['name'] as String?;
-        if (catName?.toLowerCase() == widget.category.toLowerCase()) {
+        if (cat.name.toLowerCase() == widget.category.toLowerCase()) {
           targetCategory = cat;
           break;
         }
       }
 
       if (targetCategory != null) {
-        final categoryId = targetCategory['id'] as int?;
-        if (categoryId != null) {
-          return _wooCommerceService.getProducts(categoryId: categoryId);
-        } else {
-          return [];
-        }
+        return _wooCommerceService.getProducts(categoryId: targetCategory.id);
       } else {
         return [];
       }
-    } catch (e) {
-      print('An error occurred in _fetchProductsForCategory: $e');
+    } catch (e, s) {
+      developer.log('An error occurred in _fetchProductsForCategory', error: e, stackTrace: s);
       return [];
     }
   }

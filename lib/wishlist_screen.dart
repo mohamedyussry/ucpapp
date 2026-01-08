@@ -1,19 +1,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:myapp/providers/favorites_provider.dart';
+import 'package:myapp/providers/wishlist_provider.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class FavoritesScreen extends StatelessWidget {
-  const FavoritesScreen({super.key});
+class WishlistScreen extends StatelessWidget {
+  const WishlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final favoritesProvider = Provider.of<FavoritesProvider>(context);
-    final favoriteProducts = favoritesProvider.favorites.values.toList();
+    final wishlistProvider = Provider.of<WishlistProvider>(context);
+    final wishlistProducts = wishlistProvider.wishlistItems;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,15 +56,15 @@ class FavoritesScreen extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Your Favorites (${favoriteProducts.length})',
+                'Your Wishlist (${wishlistProducts.length})',
                 style: GoogleFonts.lato(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ),
           Expanded(
-            child: favoriteProducts.isEmpty
-                ? _buildEmptyFavorites(context)
-                : _buildFavoritesGrid(favoriteProducts),
+            child: wishlistProducts.isEmpty
+                ? _buildEmptyWishlist(context)
+                : _buildWishlistGrid(wishlistProducts),
           ),
         ],
       ),
@@ -83,14 +83,14 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyFavorites(BuildContext context) {
+  Widget _buildEmptyWishlist(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FaIcon(FontAwesomeIcons.heartCrack, size: 100, color: Colors.grey[300]),
           const SizedBox(height: 20),
-          const Text('You haven\'t add any products to your Favourites yet!'),
+          const Text('You haven\'t add any products to your Wishlist yet!'),
           const SizedBox(height: 30),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -113,7 +113,7 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoritesGrid(List<dynamic> products) {
+  Widget _buildWishlistGrid(List<dynamic> products) {
     return GridView.builder(
       padding: const EdgeInsets.all(16.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

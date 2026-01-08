@@ -1,7 +1,10 @@
 
 import 'package:flutter/material.dart';
-import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
+import 'package:myapp/models/product_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:myapp/providers/currency_provider.dart';
+import 'package:myapp/providers/wishlist_provider.dart';
+import 'package:myapp/services/woocommerce_service.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -20,7 +23,59 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _pageController = PageController();
-  String _selectedSize = "30ml"; // Default selected size
+  final WooCommerceService _wooCommerceService = WooCommerceService();
+
+  // State for variations
+  List<WooProductVariation> _variations = [];
+  WooProductVariation? _selectedVariation;
+  final Map<String, String> _selectedOptions = {};
+  bool _isLoadingVariations = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product.type == 'variable') {
+      _fetchVariations();
+    } else {
+      _selectedVariation = null;
+    }
+  }
+
+  void _fetchVariations() async {
+    setState(() {
+      _isLoadingVariations = true;
+    });
+    try {
+      final variations = await _wooCommerceService.getProductVariations(widget.product.id);
+      setState(() {
+        _variations = variations;
+        if (widget.product.attributes.isNotEmpty) {
+          for (var attr in widget.product.attributes) {
+            if (attr.options.isNotEmpty) {
+              _selectedOptions[attr.name] = attr.options.first;
+            }
+          }
+          _updateSelectedVariation();
+        }
+        _isLoadingVariations = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingVariations = false;
+      });
+    }
+  }
+
+  void _updateSelectedVariation() {
+    if (_variations.isEmpty) return;
+
+    _selectedVariation = _variations.firstWhere(
+      (v) => v.attributes.every((attr) {
+        return _selectedOptions[attr['name']] == attr['option'];
+      }),
+    );
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +102,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               const SizedBox(height: 24),
               _buildProductInfo(),
               const SizedBox(height: 24),
-              _buildSizeSelector(),
+              if (widget.product.type == 'variable') _buildAttributeSelectors(),
               const SizedBox(height: 24),
               _buildStockInfo(),
               const SizedBox(height: 32),
@@ -62,7 +117,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildImageCarousel() {
-    final images = widget.product.images;
+    final images = _selectedVariation?.image != null
+        ? [_selectedVariation!.image!]
+        : widget.product.images;
+
     return Column(
       children: [
         SizedBox(
@@ -72,7 +130,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             itemCount: images.length,
             itemBuilder: (context, index) {
               return CachedNetworkImage(
-                imageUrl: images[index].src ?? '',
+                imageUrl: images[index].src,
                 fit: BoxFit.contain,
                 placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
                 errorWidget: (context, url, error) => const Icon(Icons.error),
@@ -80,24 +138,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             },
           ),
         ),
-        const SizedBox(height: 16),
-        SmoothPageIndicator(
-          controller: _pageController,
-          count: images.length,
-          effect: const WormEffect(
-            dotHeight: 8,
-            dotWidth: 8,
-            activeDotColor: Colors.black,
-            dotColor: Colors.grey,
+        if (images.length > 1) ...[
+          const SizedBox(height: 16),
+          SmoothPageIndicator(
+            controller: _pageController,
+            count: images.length,
+            effect: const WormEffect(
+              dotHeight: 8,
+              dotWidth: 8,
+              activeDotColor: Colors.black,
+              dotColor: Colors.grey,
+            ),
           ),
-        ),
+        ]
       ],
     );
   }
 
   Widget _buildProductInfo() {
-    // Dummy brand for display, as it's not in WooProduct model
-    final brand = "Medicube";
+    final brand = "Medicube"; // Dummy brand
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -111,7 +170,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          widget.product.name ?? 'No Name',
+          widget.product.name,
           style: GoogleFonts.poppins(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -119,54 +178,64 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            const Icon(Icons.star, color: Colors.amber, size: 20),
-            const SizedBox(width: 4),
-            Text(
-              "4.8", // Static for now
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              "(217 Reviews)", // Static for now
-              style: GoogleFonts.poppins(color: Colors.grey),
-            ),
-          ],
-        ),
+        if (widget.product.ratingCount > 0) _buildRatingInfo(),
         const SizedBox(height: 12),
         _buildPrice(),
       ],
     );
   }
 
+  Widget _buildRatingInfo() {
+    return Row(
+      children: [
+        const Icon(Icons.star, color: Colors.amber, size: 20),
+        const SizedBox(width: 4),
+        Text(
+          double.tryParse(widget.product.averageRating)?.toStringAsFixed(1) ?? '0.0',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          "(${widget.product.ratingCount} Reviews)",
+          style: GoogleFonts.poppins(color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
   Widget _buildPrice() {
-    final salePrice = double.tryParse(widget.product.salePrice?.toString() ?? '');
-    final regularPrice = double.tryParse(widget.product.regularPrice?.toString() ?? '');
-    final price = double.tryParse(widget.product.price?.toString() ?? '');
-    
-    double? displayPrice = price;
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final currencySymbol = currencyProvider.currencySymbol;
+
+    final price = _selectedVariation?.price ?? widget.product.price;
+    final regularPrice = _selectedVariation?.regularPrice ?? widget.product.regularPrice;
+    final salePrice = _selectedVariation?.salePrice ?? widget.product.salePrice;
+
+    final salePriceNum = double.tryParse(salePrice?.toString() ?? '');
+    final regularPriceNum = double.tryParse(regularPrice?.toString() ?? '');
+    final priceNum = double.tryParse(price?.toString() ?? '');
+
+    double? displayPrice = priceNum;
     double? originalPrice;
     int? discount;
 
-    if (salePrice != null && regularPrice != null && regularPrice > salePrice) {
-      displayPrice = salePrice;
-      originalPrice = regularPrice;
-      discount = ((regularPrice - salePrice) / regularPrice * 100).round();
-    } else if (regularPrice != null && regularPrice > 0) {
-      displayPrice = price;
-      originalPrice = (price != null && price < regularPrice) ? regularPrice : null;
-       if (originalPrice != null && displayPrice != null) {
-         discount = ((originalPrice - displayPrice) / originalPrice * 100).round();
-       }
+    if (salePriceNum != null && regularPriceNum != null && regularPriceNum > salePriceNum) {
+      displayPrice = salePriceNum;
+      originalPrice = regularPriceNum;
+      discount = ((regularPriceNum - salePriceNum) / regularPriceNum * 100).round();
+    } else if (regularPriceNum != null && regularPriceNum > 0) {
+      displayPrice = priceNum;
+      originalPrice = (priceNum != null && priceNum < regularPriceNum) ? regularPriceNum : null;
+      if (originalPrice != null && displayPrice != null) {
+        discount = ((originalPrice - displayPrice) / originalPrice * 100).round();
+      }
     }
-
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text(
-          '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} SAR',
+          '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} $currencySymbol',
           style: GoogleFonts.poppins(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -176,7 +245,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (originalPrice != null) ...[
           const SizedBox(width: 8),
           Text(
-            '${originalPrice.toStringAsFixed(2)} SAR',
+            '${originalPrice.toStringAsFixed(2)} $currencySymbol',
             style: GoogleFonts.poppins(
               fontSize: 16,
               color: Colors.grey,
@@ -206,46 +275,68 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildSizeSelector() {
-    // Assuming static sizes for now
-    final sizes = ["30ml", "100ml"];
-    return Row(
-      children: sizes.map((size) {
-        final isSelected = _selectedSize == size;
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedSize = size;
-            });
-          },
-          child: Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.black : Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: isSelected ? Colors.black : Colors.grey.shade300,
-                width: 1.5,
-              ),
+  Widget _buildAttributeSelectors() {
+    if (_isLoadingVariations) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (widget.product.attributes.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widget.product.attributes.map((attribute) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              attribute.name,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
             ),
-            child: Text(
-              size,
-              style: GoogleFonts.poppins(
-                color: isSelected ? Colors.white : Colors.black,
-                fontWeight: FontWeight.w600,
-              ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8.0,
+              children: attribute.options.map((option) {
+                final isSelected = _selectedOptions[attribute.name] == option;
+                return ChoiceChip(
+                  label: Text(option),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedOptions[attribute.name] = option;
+                      _updateSelectedVariation();
+                    });
+                  },
+                  selectedColor: Colors.black,
+                  labelStyle: GoogleFonts.poppins(
+                    color: isSelected ? Colors.white : Colors.black,
+                  ),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: isSelected ? Colors.black : Colors.grey.shade300),
+                  ),
+                );
+              }).toList(),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
         );
       }).toList(),
     );
   }
 
   Widget _buildStockInfo() {
+    final stockStatus = _selectedVariation?.stockStatus ?? widget.product.stockStatus;
+    final isInStock = stockStatus == 'instock';
+
     return Column(
       children: [
-        _infoRow(FontAwesomeIcons.box, "in stock", Colors.green),
+        _infoRow(
+          FontAwesomeIcons.box,
+          isInStock ? "In stock" : "Out of stock",
+          isInStock ? Colors.green.shade700 : Colors.red.shade700,
+        ),
         const SizedBox(height: 12),
         _infoRow(FontAwesomeIcons.truck, "Free Delivery", Colors.black),
         const SizedBox(height: 12),
@@ -266,23 +357,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ],
     );
   }
-  
-  Widget _buildDescription() {
-      // Simple regex to strip HTML tags
-      final description = widget.product.description?.replaceAll(RegExp(r'<[^>]*>'), '') ?? 'No description available.';
-      return Text(
-        description,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          color: Colors.grey[700],
-          height: 1.6,
-        ),
-      );
-  }
 
+  Widget _buildDescription() {
+    final description = widget.product.description.replaceAll(RegExp(r'<[^>]*>'), '');
+    return Text(
+      description,
+      style: GoogleFonts.poppins(
+        fontSize: 14,
+        color: Colors.grey[700],
+        height: 1.6,
+      ),
+    );
+  }
 
   Widget _buildBottomBar() {
     final cart = Provider.of<CartProvider>(context, listen: false);
+    final stockStatus = _selectedVariation?.stockStatus ?? widget.product.stockStatus;
+    final isInStock = stockStatus == 'instock';
+
+    final productToAdd = widget.product.type == 'variable' && _selectedVariation != null
+        ? WooProduct(
+            id: _selectedVariation!.id,
+            name: "${widget.product.name} - ${_selectedOptions.values.join(', ')}",
+            type: 'variation',
+            price: _selectedVariation!.price,
+            regularPrice: _selectedVariation!.regularPrice,
+            salePrice: _selectedVariation!.salePrice,
+            images: _selectedVariation!.image != null ? [_selectedVariation!.image!] : widget.product.images,
+            description: widget.product.description, 
+            permalink: widget.product.permalink,
+            categories: widget.product.categories,
+            attributes: [],
+            stockStatus: _selectedVariation!.stockStatus,
+            stockQuantity: _selectedVariation!.stockQuantity,
+            averageRating: widget.product.averageRating, 
+            ratingCount: widget.product.ratingCount,
+          )
+        : widget.product;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
@@ -298,39 +409,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 1.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.favorite_border, color: Colors.black),
-              onPressed: () {
-                // Handle favorite action
-              },
-            ),
+          Consumer<WishlistProvider>(
+            builder: (context, wishlist, child) {
+              final isFavorite = wishlist.isFavorite(widget.product.id);
+              return Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite ? Colors.red : Colors.black,
+                  ),
+                  onPressed: () {
+                    wishlist.toggleWishlist(widget.product);
+                  },
+                ),
+              );
+            },
           ),
           const SizedBox(width: 15),
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                cart.addItem(widget.product);
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added ${widget.product.name} to cart!'),
-                    duration: const Duration(seconds: 2),
-                    action: SnackBarAction(
-                      label: 'UNDO',
-                      onPressed: () {
-                        cart.removeSingleItem(widget.product.id);
-                      },
-                    ),
-                  ),
-                );
-              },
+              onPressed: isInStock
+                  ? () {
+                      cart.addItem(productToAdd);
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Added ${productToAdd.name} to cart!'),
+                          duration: const Duration(seconds: 2),
+                          action: SnackBarAction(
+                            label: 'UNDO',
+                            onPressed: () {
+                              cart.removeSingleItem(productToAdd.id);
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  : null, // Disable button if out of stock
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: isInStock ? Colors.orange : Colors.grey.shade400,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -338,7 +459,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 elevation: 0,
               ),
               child: Text(
-                'Add to cart',
+                isInStock ? 'Add to cart' : 'Out of Stock',
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

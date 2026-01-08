@@ -2,12 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:woocommerce_flutter_api/woocommerce_flutter_api.dart';
+import 'package:myapp/models/product_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/providers/currency_provider.dart';
 
 import '../product_detail_screen.dart';
 import '../providers/cart_provider.dart';
-import '../providers/favorites_provider.dart';
+import '../providers/wishlist_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final WooProduct product;
@@ -17,9 +18,10 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    final imageUrl = product.images.isNotEmpty ? product.images[0].src ?? '' : '';
-    final productName = product.name ?? 'No Name';
-    final price = '${product.price ?? '0'} EUR';
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
+    final productName = product.name;
+    final price = '${product.price ?? '0'} ${currencyProvider.currencySymbol}';
 
     return GestureDetector(
       onTap: () {
@@ -65,12 +67,12 @@ class ProductCard extends StatelessWidget {
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: Consumer<FavoritesProvider>(
-                        builder: (context, favoritesProvider, child) {
-                          final isFavorite = favoritesProvider.isFavorite(product.id);
+                      child: Consumer<WishlistProvider>(
+                        builder: (context, wishlistProvider, child) {
+                          final isFavorite = wishlistProvider.isFavorite(product.id);
                           return GestureDetector(
                             onTap: () {
-                              favoritesProvider.toggleFavorite(product);
+                              wishlistProvider.toggleWishlist(product);
                             },
                             child: CircleAvatar(
                               backgroundColor: Colors.white.withAlpha((255 * 0.8).round()),
@@ -129,7 +131,7 @@ class ProductCard extends StatelessWidget {
                                   action: SnackBarAction(
                                     label: 'UNDO',
                                     onPressed: () {
-                                      cart.removeSingleItem(product.id!);
+                                      cart.removeSingleItem(product.id);
                                     },
                                   ),
                                 ),

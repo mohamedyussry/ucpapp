@@ -38,13 +38,13 @@ class PaymentSuccessScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.orange.withOpacity(0.1),
+                      color: Colors.orange.withAlpha(25),
                     ),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.orange.withOpacity(0.3),
+                        color: Colors.orange.withAlpha(77),
                       ),
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -74,7 +74,7 @@ class PaymentSuccessScreen extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withAlpha(51),
                   spreadRadius: 2,
                   blurRadius: 10,
                 ),

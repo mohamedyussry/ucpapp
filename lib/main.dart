@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:myapp/language_selection_screen.dart';
 import 'package:myapp/providers/cart_provider.dart';
-import 'package:myapp/providers/favorites_provider.dart';
+import 'package:myapp/providers/currency_provider.dart';
+import 'package:myapp/providers/wishlist_provider.dart';
+import 'package:myapp/services/woocommerce_service.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -14,7 +16,10 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => CartProvider()),
-        ChangeNotifierProvider(create: (context) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (context) => WishlistProvider()),
+        ChangeNotifierProvider(
+          create: (context) => CurrencyProvider(WooCommerceService()),
+        ),
       ],
       child: const MyApp(),
     ),

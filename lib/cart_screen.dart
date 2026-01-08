@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:myapp/providers/currency_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,6 +14,8 @@ class CartScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final currencySymbol = currencyProvider.currencySymbol;
     // Dummy discount for design purposes
     const double discount = 25.0;
     final double subtotal = cart.totalAmount;
@@ -68,11 +71,11 @@ class CartScreen extends StatelessWidget {
                     itemBuilder: (ctx, i) {
                       final cartItem = cart.items.values.toList()[i];
                       final productId = cart.items.keys.toList()[i];
-                      return _buildCartItem(context, cart, cartItem, productId);
+                      return _buildCartItem(context, cart, cartItem, productId, currencySymbol);
                     },
                   ),
                   const SizedBox(height: 20),
-                  _buildCheckoutForm(context, subtotal, discount, total),
+                  _buildCheckoutForm(context, subtotal, discount, total, currencySymbol),
                 ],
               ),
             ),
@@ -80,9 +83,9 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCartItem(BuildContext context, CartProvider cart, CartItem cartItem, int productId) {
+  Widget _buildCartItem(BuildContext context, CartProvider cart, CartItem cartItem, int productId, String currencySymbol) {
     final product = cartItem.product;
-    final imageUrl = product.images.isNotEmpty ? product.images[0].src ?? '' : '';
+    final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
 
     return Dismissible(
       key: ValueKey(productId),
@@ -135,18 +138,18 @@ class CartScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.name ?? 'No Name',
+                      product.name,
                       style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      product.categories.isNotEmpty ? product.categories[0].name ?? 'Category' : 'Category',
+                      product.categories.isNotEmpty ? product.categories[0].name : 'Category',
                       style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${product.price ?? '0'} SAR',
+                      '${product.price ?? '0'} $currencySymbol',
                       style: GoogleFonts.poppins(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
@@ -214,7 +217,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total) {
+  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, String currencySymbol) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -227,11 +230,11 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _buildDiscountCodeField(),
           const SizedBox(height: 20),
-          _buildPriceSummaryRow('Sub total :', '${subtotal.toStringAsFixed(2)} SAR'),
+          _buildPriceSummaryRow('Sub total :', '${subtotal.toStringAsFixed(2)} $currencySymbol'),
           const SizedBox(height: 8),
-          _buildPriceSummaryRow('Discount :', '${discount.toStringAsFixed(2)} SAR'),
+          _buildPriceSummaryRow('Discount :', '${discount.toStringAsFixed(2)} $currencySymbol'),
           const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
-          _buildPriceSummaryRow('Total :', '${total.toStringAsFixed(2)} SAR', isTotal: true),
+          _buildPriceSummaryRow('Total :', '${total.toStringAsFixed(2)} $currencySymbol', isTotal: true),
           const SizedBox(height: 20),
           _buildCheckoutButton(context),
         ],

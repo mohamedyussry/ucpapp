@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:myapp/favorites_screen.dart';
+import 'package:myapp/wishlist_screen.dart';
 import 'package:myapp/home_screen.dart';
 import 'package:myapp/my_orders_screen.dart';
 import 'package:myapp/screens/profile_screen.dart';
@@ -48,7 +48,7 @@ class CustomBottomNavBar extends StatelessWidget {
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation1, animation2) =>
-                const FavoritesScreen(),
+                const WishlistScreen(),
             transitionDuration: Duration.zero,
           ),
         );
