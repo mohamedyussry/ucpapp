@@ -15,7 +15,6 @@ class CartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final currencyProvider = Provider.of<CurrencyProvider>(context);
-    final currencySymbol = currencyProvider.currencySymbol;
     // Dummy discount for design purposes
     const double discount = 25.0;
     final double subtotal = cart.totalAmount;
@@ -71,11 +70,11 @@ class CartScreen extends StatelessWidget {
                     itemBuilder: (ctx, i) {
                       final cartItem = cart.items.values.toList()[i];
                       final productId = cart.items.keys.toList()[i];
-                      return _buildCartItem(context, cart, cartItem, productId, currencySymbol);
+                      return _buildCartItem(context, cart, cartItem, productId, currencyProvider);
                     },
                   ),
                   const SizedBox(height: 20),
-                  _buildCheckoutForm(context, subtotal, discount, total, currencySymbol),
+                  _buildCheckoutForm(context, subtotal, discount, total, currencyProvider),
                 ],
               ),
             ),
@@ -83,7 +82,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCartItem(BuildContext context, CartProvider cart, CartItem cartItem, int productId, String currencySymbol) {
+  Widget _buildCartItem(BuildContext context, CartProvider cart, CartItem cartItem, int productId, CurrencyProvider currencyProvider) {
     final product = cartItem.product;
     final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
 
@@ -148,13 +147,18 @@ class CartScreen extends StatelessWidget {
                       style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '${product.price ?? '0'} $currencySymbol',
-                      style: GoogleFonts.poppins(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '${product.price ?? '0'} ',
+                           style: GoogleFonts.poppins(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        _buildCurrencyDisplay(currencyProvider),
+                      ],
                     ),
                   ],
                 ),
@@ -217,7 +221,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, String currencySymbol) {
+  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, CurrencyProvider currencyProvider) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -230,11 +234,11 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _buildDiscountCodeField(),
           const SizedBox(height: 20),
-          _buildPriceSummaryRow('Sub total :', '${subtotal.toStringAsFixed(2)} $currencySymbol'),
+          _buildPriceSummaryRow('Sub total :', subtotal, currencyProvider),
           const SizedBox(height: 8),
-          _buildPriceSummaryRow('Discount :', '${discount.toStringAsFixed(2)} $currencySymbol'),
+          _buildPriceSummaryRow('Discount :', discount, currencyProvider),
           const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
-          _buildPriceSummaryRow('Total :', '${total.toStringAsFixed(2)} $currencySymbol', isTotal: true),
+          _buildPriceSummaryRow('Total :', total, currencyProvider, isTotal: true),
           const SizedBox(height: 20),
           _buildCheckoutButton(context),
         ],
@@ -282,7 +286,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceSummaryRow(String title, String amount, {bool isTotal = false}) {
+  Widget _buildPriceSummaryRow(String title, double amount, CurrencyProvider currencyProvider, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -294,14 +298,19 @@ class CartScreen extends StatelessWidget {
             color: isTotal ? Colors.black : Colors.grey[600],
           ),
         ),
-        Text(
-          amount,
-          style: GoogleFonts.poppins(
-            fontSize: isTotal ? 18 : 14,
-            fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
+        Row(
+          children: [
+            Text(
+              '${amount.toStringAsFixed(2)} ',
+              style: GoogleFonts.poppins(
+                fontSize: isTotal ? 18 : 14,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+            _buildCurrencyDisplay(currencyProvider),
+          ],
+        )
       ],
     );
   }
@@ -347,5 +356,23 @@ class CartScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+   Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider) {
+    final currencyImageUrl = currencyProvider.currencyImageUrl;
+    final currencySymbol = currencyProvider.currencySymbol;
+
+    if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
+      return Image.network(
+        currencyImageUrl,
+        height: 16, // Adjust size as needed
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to text if image fails to load
+          return Text(currencySymbol);
+        },
+      );
+    } else {
+      return Text(currencySymbol);
+    }
   }
 }

@@ -5,6 +5,7 @@ import 'package:myapp/language_selection_screen.dart';
 import 'package:myapp/providers/cart_provider.dart';
 import 'package:myapp/providers/currency_provider.dart';
 import 'package:myapp/providers/wishlist_provider.dart';
+import 'package:myapp/checkout_screen.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +37,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.orange,
       ),
-      home: const SplashScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/checkout': (context) => const CheckoutScreen(),
+      },
     );
   }
 }

@@ -21,7 +21,6 @@ class ProductCard extends StatelessWidget {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
     final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
     final productName = product.name;
-    final price = '${product.price ?? '0'} ${currencyProvider.currencySymbol}';
 
     return GestureDetector(
       onTap: () {
@@ -112,13 +111,19 @@ class ProductCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            price,
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                '${product.price ?? '0'} ',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              _buildCurrencyDisplay(currencyProvider),
+                            ],
                           ),
                           GestureDetector(
                             onTap: () {
@@ -162,5 +167,29 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider) {
+    final currencyImageUrl = currencyProvider.currencyImageUrl;
+    final currencySymbol = currencyProvider.currencySymbol;
+
+    final style = GoogleFonts.poppins(
+      fontSize: 18,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
+    );
+
+    if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
+      return Image.network(
+        currencyImageUrl,
+        height: 18, // Adjust size as needed
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to text if image fails to load
+          return Text(currencySymbol, style: style);
+        },
+      );
+    } else {
+      return Text(currencySymbol, style: style);
+    }
   }
 }

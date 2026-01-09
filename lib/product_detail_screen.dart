@@ -205,7 +205,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildPrice() {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
-    final currencySymbol = currencyProvider.currencySymbol;
 
     final price = _selectedVariation?.price ?? widget.product.price;
     final regularPrice = _selectedVariation?.regularPrice ?? widget.product.regularPrice;
@@ -234,24 +233,34 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} $currencySymbol',
-          style: GoogleFonts.poppins(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
+        Row(
+          children: [
+             Text(
+              '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} ',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            _buildCurrencyDisplay(currencyProvider, 22),
+          ],
         ),
         if (originalPrice != null) ...[
           const SizedBox(width: 8),
-          Text(
-            '${originalPrice.toStringAsFixed(2)} $currencySymbol',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: Colors.grey,
-              decoration: TextDecoration.lineThrough,
-            ),
-          ),
+           Row(
+             children: [
+                Text(
+                  '${originalPrice.toStringAsFixed(2)} ',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+                _buildCurrencyDisplay(currencyProvider, 16, color: Colors.grey),
+             ],
+           ),
         ],
         if (discount != null && discount > 0) ...[
           const SizedBox(width: 12),
@@ -471,5 +480,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider, double size, {Color? color}) {
+    final currencyImageUrl = currencyProvider.currencyImageUrl;
+    final currencySymbol = currencyProvider.currencySymbol;
+
+    final style = GoogleFonts.poppins(
+      fontSize: size,
+      fontWeight: FontWeight.bold,
+      color: color ?? Colors.black,
+    );
+
+    if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
+      return Image.network(
+        currencyImageUrl,
+        height: size, // Adjust size as needed
+        color: color,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to text if image fails to load
+          return Text(currencySymbol, style: style);
+        },
+      );
+    } else {
+      return Text(currencySymbol, style: style);
+    }
   }
 }

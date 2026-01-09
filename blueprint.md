@@ -1,48 +1,119 @@
-# Project Blueprint
+
+# Application Blueprint
 
 ## Overview
 
-This document outlines the architecture, features, and implementation details of the Flutter e-commerce application. It serves as a single source of truth for the project's design and development.
+This document outlines the design, features, and implementation plan for the UCP (Unified Care Platform) mobile application. The application is a Flutter-based e-commerce platform designed to interact with a WooCommerce backend, allowing users to browse products, manage a shopping cart, and place orders.
 
-## Style and Design
+## Application Architecture & Features
 
-The application follows a modern, clean, and user-friendly design aesthetic. Key design elements include:
+This section details the project's structure, including UI screens, state management, data models, and services.
 
-*   **Typography:** Google Fonts (Poppins) are used for a consistent and professional look.
-*   **Color Scheme:** A simple and effective color scheme with a primary accent color for branding.
-*   **Layout:** Responsive layouts that adapt to different screen sizes.
-*   **Iconography:** Material Design icons for intuitive navigation and actions.
+### 1. Core Concepts
 
-## Implemented Features
+- **Theme and Branding:**
+  - **Primary Color:** Orange is used as the main accent color for buttons, active states, and highlights.
+  - **Typography:** The `google_fonts` package (specifically 'Poppins') is used for a clean and modern text style.
+  - **UI Design:** The app follows a minimalist design with a white background, clear visual hierarchy, and intuitive navigation.
 
-*   **Product Browsing:** Users can browse products by category.
-*   **Product Details:** A dedicated screen to view detailed information about each product.
-*   **Shopping Cart:** A fully functional shopping cart that allows users to add, remove, and update product quantities.
-*   **Favorites:** Users can mark products as favorites for easy access.
-*   **Checkout Process:** A streamlined checkout process with a dedicated screen.
-*   **Order History:** A screen for users to view their past orders.
+- **State Management:**
+  - The `provider` package is used as the primary state management solution. It allows for a clean separation between the UI and business logic, managing the state of the cart, currency, and checkout process.
 
-## Current Plan: Refactoring and Bug Squashing
+- **Backend Integration:**
+  - All communication with the e-commerce backend is handled through a centralized `WooCommerceService`. This service abstracts the complexities of making API calls using the `dio` package.
 
-**Objective:** The primary goal of this development cycle is to refactor the application to remove the dependency on the `woocommerce_flutter_api` package and address various bugs and warnings.
+### 2. Screens (UI Flow)
 
-**Completed Steps:**
+- **`main.dart` (App Entry Point):**
+  - Initializes the app and sets up the core `MaterialApp`.
+  - Defines the global theme using `ThemeData`, including color schemes and font styles (`Poppins`).
+  - Configures the initial route of the application to the `SplashScreen`.
+  - Sets up the primary `MultiProvider` for all app-wide providers.
 
-1.  **Dependency Removal:** The `woocommerce_flutter_api` package has been successfully removed from the `pubspec.yaml` file.
-2.  **Custom WooCommerce Service:** A new `WooCommerceService` has been implemented using the `dio` package to handle direct communication with the WooCommerce API.
-3.  **Data Model Creation:** Custom data models (`WooProduct`, `WooProductImage`, `WooProductCategory`) have been created to represent the data received from the API.
-4.  **Provider Updates:** The `CartProvider` and `FavoritesProvider` have been updated to use the new data models.
-5.  **Screen Refactoring:** All screens that previously relied on the `woocommerce_flutter_api` package have been refactored to use the new `WooCommerceService` and data models.
+- **`splash_screen.dart`:**
+  - The first screen the user sees.
+  - Displays the application logo for a brief period (3 seconds) before navigating to the `LanguageSelectionScreen`.
 
-**Remaining Issues:**
+- **`language_selection_screen.dart`:**
+  - Presents the user with a choice between "English" and "Arabic".
+  - This screen is a placeholder for future localization features and currently navigates to the `CartScreen` as a temporary measure for development.
 
-*   **Asset Warnings:** The `pubspec.yaml` file contains references to asset directories that do not exist (`assets/products/` and `assets/brands/`).
-*   **Deprecated Code:** Several `deprecated_member_use` warnings are present throughout the codebase.
-*   **`avoid_print` Warnings:** The use of `print` statements for debugging should be replaced with a more robust logging solution.
+- **`home_screen.dart`:**
+  - Intended to be the main product browsing screen.
+  - Currently, it's a basic placeholder and will be the focus of the next development phase.
 
-**Next Steps:**
+- **`cart_screen.dart`:**
+  - Displays all items that the user has added to their shopping cart.
+  - Shows the product image, name, quantity, and price for each item.
+  - Allows users to adjust the quantity of each item.
+  - Displays the total amount for the cart.
+  - Contains a "Proceed to Checkout" button which navigates to the `CheckoutScreen`.
 
-1.  Create the missing asset directories to resolve the warnings in `pubspec.yaml`.
-2.  Address the `deprecated_member_use` warnings by updating the code to use the recommended replacements.
-3.  Replace `print` statements with a proper logging framework.
-4.  Remove the unnecessary import of `category_model.dart` from `products_screen.dart`.
+- **`checkout_screen.dart`:**
+  - A comprehensive screen for collecting all necessary information to place an order.
+  - Contains a multi-step form for:
+    - **Billing Details:** Name, address, contact information.
+    - **Shipping Details:** An optional, separate form if shipping to a different address.
+    - **Order Summary:** Displays subtotal, shipping costs, and the total amount.
+  - Fetches and displays available shipping methods based on the user's address.
+  - Allows the user to select a shipping method using modern `ChoiceChip` widgets.
+  - Handles the final order placement by creating an `OrderPayload` and sending it to the backend.
+
+- **`payment_success_screen.dart`:**
+  - A simple confirmation screen shown to the user after their order has been successfully placed.
+  - Displays a success message and an icon.
+
+### 3. State Management (Providers)
+
+- **`providers/cart_provider.dart`:**
+  - Manages the state of the shopping cart.
+  - Handles adding products (`addItem`), removing them, clearing the cart (`clear`), and calculating the total amount.
+  - Uses a `Map` to store `CartItemModel` objects, indexed by product ID.
+
+- **`providers/currency_provider.dart`:**
+  - Manages the display of the currency throughout the app.
+  - Provides the currency symbol and an optional image URL for the currency, making it easy to change globally.
+
+- **`providers/checkout_provider.dart`:**
+  - Manages the state of the checkout process.
+  - Fetches and stores available shipping methods from WooCommerce.
+  - Tracks the currently selected shipping method.
+  - Calculates the total order cost, including subtotal, shipping, and taxes.
+
+### 4. Data Models
+
+- **`models/product_model.dart`:**
+  - Represents a single product from WooCommerce.
+  - Contains fields like `id`, `name`, `price`, and a list of `ProductImage` objects.
+
+- **`models/cart_item_model.dart`:**
+  - Represents an item within the shopping cart.
+  - Contains a `ProductModel` and the `quantity` of that product in the cart.
+
+- **`models/order_payload_model.dart`:**
+  - A comprehensive set of models that define the structure of the JSON payload required to create a new order via the WooCommerce API.
+  - Includes `OrderPayload`, `BillingInfo`, `ShippingInfo`, and `ShippingLine`.
+
+- **`models/line_item_model.dart`:**
+  - A specific model used within the `OrderPayload`.
+  - Represents a single product line item in the order, containing the `productId` and `quantity`.
+
+### 5. Services
+
+- **`services/woocommerce_service.dart`:**
+  - The single point of contact for all WooCommerce API interactions.
+  - Configures the `dio` HTTP client with the base URL and authentication credentials (consumer key/secret).
+  - Contains methods for:
+    - `getProducts()`: Fetches a list of all products.
+    - `getShippingMethodsForLocation()`: Retrieves shipping options based on location.
+    - `createOrder()`: Sends the final order payload to the WooCommerce backend.
+
+### 6. Reusable Widgets
+
+- **`widgets/cart_icon.dart`:**
+  - A reusable icon for the app bar that displays the current number of items in the cart.
+  - Tapping it navigates the user to the `CartScreen`.
+
+## Implementation Plan
+
+*This section will outline the steps for the next feature to be implemented.*
