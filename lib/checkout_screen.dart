@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/line_item_model.dart';
@@ -11,7 +10,6 @@ import '../models/order_payload_model.dart';
 import '../providers/cart_provider.dart';
 import '../services/woocommerce_service.dart';
 
-// Wrapper widget to provide the CheckoutProvider
 class CheckoutScreen extends StatelessWidget {
   const CheckoutScreen({super.key});
 
@@ -35,18 +33,15 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
   final _formKey = GlobalKey<FormState>();
   bool _isPlacingOrder = false;
 
-  // Simplified Controllers
   final _billingFullNameController = TextEditingController();
   final _billingAddress1Controller = TextEditingController();
   final _billingEmailController = TextEditingController();
   final _billingPhoneController = TextEditingController();
-
   final _orderNotesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeCheckoutData();
     });
@@ -54,7 +49,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
 
   @override
   void dispose() {
-    // Dispose simplified controllers
     _billingFullNameController.dispose();
     _billingAddress1Controller.dispose();
     _billingEmailController.dispose();
@@ -66,40 +60,18 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
   void _initializeCheckoutData() {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
-
     checkoutProvider.updateSubtotal(cartProvider.totalAmount);
-    
-    // We still initialize with country code 'SA' in the background
     checkoutProvider.initializeCheckout('SA', '');
   }
 
   Future<void> _placeOrder() async {
-     if (!_formKey.currentState!.validate()) return;
-
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
-    final selectedState = checkoutProvider.selectedStateCode;
 
-    if (checkoutProvider.states.isNotEmpty && selectedState == null) {
+    if (checkoutProvider.paymentMethods.isNotEmpty && checkoutProvider.selectedPaymentMethod == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a region.')),
+        const SnackBar(content: Text('Please select a payment method.')),
       );
       return;
-    }
-
-    // Check for shipping method is still valid, as it's selected in the background
-    if (checkoutProvider.shippingMethods.isNotEmpty && checkoutProvider.selectedShippingMethod == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No shipping method available for your region.')),
-        );
-        return;
-    }
-
-    // User must now select a payment method
-    if (checkoutProvider.paymentMethods.isNotEmpty && checkoutProvider.selectedPaymentMethod == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a payment method.')),
-        );
-        return;
     }
 
     setState(() {
@@ -109,27 +81,24 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final wooCommerceService = WooCommerceService();
 
-    // --- Logic to split full name ---
     final fullName = _billingFullNameController.text.trim();
     final nameParts = fullName.split(' ');
     final firstName = nameParts.isNotEmpty ? nameParts.first : fullName;
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '.'; // Use a dot if last name is empty
-    // --- End of name logic ---
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '.';
 
     final billingInfo = BillingInfo(
-        firstName: firstName,
-        lastName: lastName,
-        address1: _billingAddress1Controller.text,
-        city: selectedState ?? '', // Use state as city
-        state: selectedState ?? '',
-        postcode: '', // Optional
-        country: 'SA', // Hardcoded country
-        email: _billingEmailController.text, // Optional
-        phone: _billingPhoneController.text); // Required
+      firstName: firstName,
+      lastName: lastName,
+      address1: _billingAddress1Controller.text,
+      city: checkoutProvider.selectedStateCode ?? '',
+      state: checkoutProvider.selectedStateCode ?? '',
+      postcode: '',
+      country: 'SA',
+      email: _billingEmailController.text,
+      phone: _billingPhoneController.text,
+    );
 
-    // For simplicity, shipping is always the same as billing
     final shippingInfo = ShippingInfo.fromBilling(billingInfo);
-    
     final selectedShipping = checkoutProvider.selectedShippingMethod;
     final selectedPayment = checkoutProvider.selectedPaymentMethod!;
 
@@ -143,14 +112,14 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
           .map((item) => LineItem(productId: item.product.id, quantity: item.quantity))
           .toList(),
       shippingLines: selectedShipping != null
-        ? [
-            ShippingLine(
+          ? [
+              ShippingLine(
                 methodId: selectedShipping.methodId,
                 methodTitle: selectedShipping.title,
                 total: selectedShipping.cost.toString(),
-            )
-          ]
-        : [],
+              )
+            ]
+          : [],
       customerNote: _orderNotesController.text,
     );
 
@@ -179,74 +148,188 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
   @override
   Widget build(BuildContext context) {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final checkoutProvider = Provider.of<CheckoutProvider>(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: checkoutProvider.currentPage == 0
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            : IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () => checkoutProvider.previousPage(),
+              ),
         title: Text('Checkout', style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
-      body: Consumer<CheckoutProvider>(
-        builder: (context, checkout, child) {
-          if (checkout.isLoading && checkout.states.isEmpty && checkout.paymentMethods.isEmpty) {
-             return const Center(child: CircularProgressIndicator());
-          }
-          return _isPlacingOrder
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle('Billing Details'),
-                        _buildBillingForm(checkout),
-                        const SizedBox(height: 20),
-                        _buildSectionTitle('Your Order'),
-                        _buildOrderCard(checkout, currencyProvider),
-                        const SizedBox(height: 20),
-                        _buildSectionTitle('Order Notes'),
-                        _buildOrderNotesField(),
-                        const SizedBox(height: 100), // padding for bottom bar
-                      ],
-                    ),
+      body: _isPlacingOrder
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildStepper(checkoutProvider.currentPage),
+                Expanded(
+                  child: PageView(
+                    controller: checkoutProvider.pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildShippingPage(checkoutProvider),
+                      _buildPaymentPage(checkoutProvider, currencyProvider),
+                      _buildReviewPage(checkoutProvider, currencyProvider),
+                    ],
                   ),
-                );
-        },
-      ),
-      bottomNavigationBar: Consumer<CheckoutProvider>(
-        builder: (context, checkout, child) => _buildBottomBar(checkout, currencyProvider),
+                ),
+              ],
+            ),
+      bottomNavigationBar: _buildBottomBar(checkoutProvider, currencyProvider),
+    );
+  }
+
+  Widget _buildStepper(int currentPage) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(3, (index) {
+          bool isActive = index <= currentPage;
+          return Expanded(
+            child: Column(
+              children: [
+                Text(
+                  ['Shipping', 'Payment', 'Review'][index],
+                  style: GoogleFonts.poppins(
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    color: isActive ? Colors.orange : Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isActive ? Colors.orange : Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).expand((widget) => [widget, const SizedBox(width: 10)]).toList()..removeLast(),
       ),
     );
   }
 
-  // --- WIDGET BUILDERS ---
-  Widget _buildOrderCard(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+  Widget _buildShippingPage(CheckoutProvider checkout) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildOrderSummary(checkout, currencyProvider),
-            // --- Shipping Methods Section Removed ---
-            const Divider(height: 24),
-            Text('Payment Method', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            _buildPaymentMethods(checkout),
+            _buildSectionTitle('Shipping Details'),
+            _buildTextField(_billingFullNameController, 'Full Name'),
+            const SizedBox(height: 10),
+            _buildTextField(_billingAddress1Controller, 'Address'),
+            const SizedBox(height: 10),
+            _buildStateDropdown(checkout),
+             const SizedBox(height: 10),
+            _buildTextField(_billingPhoneController, 'Phone', keyboardType: TextInputType.phone),
+            const SizedBox(height: 10),
+            _buildTextField(_billingEmailController, 'Email', keyboardType: TextInputType.emailAddress, isOptional: true),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildPaymentPage(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+           _buildSectionTitle('Review Shipping Details'),
+          _buildReviewCard(
+            title: 'Shipping To',
+            content: 
+                '${_billingFullNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
+          ),
+          const SizedBox(height: 20),
+          _buildSectionTitle('Payment Method'),
+          _buildPaymentMethods(checkout),
+          const SizedBox(height: 20),
+          _buildSectionTitle('Order Notes'),
+          _buildTextField(_orderNotesController, 'Order Notes', isOptional: true, maxLines: 3, hint: 'Notes about your order...'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewPage(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle('Final Review'),
+          _buildReviewCard(
+            title: 'Shipping To',
+            content:
+                '${_billingFullNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
+          ),
+          const SizedBox(height: 10),
+          _buildReviewCard(
+            title: 'Payment Method',
+            content: checkout.selectedPaymentMethod?.title ?? 'Not Selected',
+          ),
+          const SizedBox(height: 20),
+          _buildSectionTitle('Order Summary'),
+          _buildOrderSummaryCard(checkout, currencyProvider),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
+    bool isLastPage = checkout.currentPage == 2;
+    bool isFirstPage = checkout.currentPage == 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.grey.withAlpha(51), spreadRadius: 2, blurRadius: 10)],
+      ),
+      child: ElevatedButton(
+        onPressed: () {
+          if (isFirstPage) {
+            if (_formKey.currentState!.validate()) {
+              checkout.nextPage();
+            }
+          } else if (isLastPage) {
+            _placeOrder();
+          } else {
+            checkout.nextPage();
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(
+          isLastPage ? 'Place Order' : 'Continue',
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+    // --- Reusable Widgets ---
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -254,48 +337,32 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     );
   }
 
-  Widget _buildBillingForm(CheckoutProvider checkout) {
-    return Column(
-      children: [
-        _buildTextField(_billingFullNameController, 'Full Name'), // Changed label
-        _buildTextField(_billingAddress1Controller, 'Address'),
-        _buildStateDropdown(checkout),
-        _buildTextField(_billingPhoneController, 'Phone', keyboardType: TextInputType.phone), // Made mandatory by default validator
-        _buildTextField(_billingEmailController, 'Email', keyboardType: TextInputType.emailAddress, isOptional: true), // Made optional
-      ].map((w) => Padding(padding: const EdgeInsets.only(bottom: 10), child: w)).toList(),
+  Widget _buildTextField(TextEditingController controller, String label, {TextInputType? keyboardType, bool isOptional = false, int maxLines = 1, String? hint, bool enabled = true}) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      enabled: enabled,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      keyboardType: keyboardType,
+      validator: (value) {
+        if (!isOptional && (value == null || value.isEmpty)) {
+          return 'Please enter $label';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildStateDropdown(CheckoutProvider checkout) {
-    if (checkout.errorMessage != null) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.1),
-          border: Border.all(color: Colors.red),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          'Error: Could not load regions.\nDetails: ${checkout.errorMessage}',
-          style: GoogleFonts.poppins(color: Colors.red[700], fontWeight: FontWeight.w500),
-        ),
-      );
-    }
-
     if (checkout.isLoading && checkout.states.isEmpty) {
-      return _buildTextField(
-        TextEditingController(text: 'Loading regions...'),
-        'Region',
-        enabled: false,
-      );
+      return const Center(child: CircularProgressIndicator());
     }
-    
-    if (!checkout.isLoading && checkout.states.isEmpty) {
-      return _buildTextField(
-        TextEditingController(text: 'No regions available'),
-        'Region',
-        enabled: false,
-      );
+    if (checkout.errorMessage != null) {
+      return Text('Error: ${checkout.errorMessage}', style: const TextStyle(color: Colors.red));
     }
 
     return DropdownButtonFormField<String>(
@@ -308,59 +375,19 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
           child: Text(state.name),
         );
       }).toList(),
-      onChanged: checkout.isLoading ? null : (String? newValue) {
+      onChanged: (String? newValue) {
         if (newValue != null) {
           checkout.selectState(newValue);
         }
       },
       validator: (value) => value == null ? 'Please select a region' : null,
       decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        filled: checkout.isLoading, 
-        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
-    );
-  }
-
-  Widget _buildOrderNotesField() {
-    return _buildTextField(_orderNotesController, 'Order Notes', isOptional: true, maxLines: 3, hint: 'Notes about your order, e.g. special notes for delivery.');
-  }
-
-  Widget _buildTextField(TextEditingController controller, String label, {TextInputType? keyboardType, bool isOptional = false, int maxLines = 1, String? hint, bool enabled = true}) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      enabled: enabled,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        hintStyle: GoogleFonts.poppins(color: Colors.grey[400]),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Colors.orange)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        filled: !enabled,
-        fillColor: Colors.grey[100],
-      ),
-      keyboardType: keyboardType,
-      validator: (value) {
-        if (!isOptional && (value == null || value.isEmpty)) {
-          return 'Please enter $label';
-        }
-        if (label == 'Phone' && (value == null || value.length < 9)) { // Example validation for phone
-          return 'Please enter a valid phone number';
-        }
-        return null;
-      },
     );
   }
 
   Widget _buildPaymentMethods(CheckoutProvider checkout) {
-    if (checkout.isLoading && checkout.paymentMethods.isEmpty) {
-      return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
-    }
-
     if (checkout.paymentMethods.isEmpty) {
       return const Text('No payment methods available.');
     }
@@ -372,10 +399,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
         final isSelected = checkout.selectedPaymentMethod?.id == method.id;
         return ChoiceChip(
           label: Text(method.title),
-          labelStyle: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : Colors.black,
-            fontWeight: FontWeight.w500,
-          ),
           selected: isSelected,
           onSelected: (selected) {
             if (selected) {
@@ -384,91 +407,78 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
           },
           selectedColor: Colors.orange,
           backgroundColor: Colors.grey[200],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: isSelected ? Colors.orange : Colors.grey.shade300)
-          ),
-          showCheckmark: false,
         );
       }).toList(),
     );
   }
 
-  Widget _buildOrderSummary(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
-    return Column(
-      children: [
-        _buildSummaryRow('Subtotal', checkout.subtotal, currencyProvider),
-        const SizedBox(height: 8),
-        _buildSummaryRow('Shipping', checkout.shippingCost, currencyProvider),
-        const SizedBox(height: 8),
-        _buildSummaryRow('Tax', checkout.tax, currencyProvider),
-        const Divider(height: 20, thickness: 1),
-        _buildSummaryRow('Total', checkout.total, currencyProvider, isTotal: true),
-      ],
+   Widget _buildReviewCard({required String title, required String content}) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(content, style: GoogleFonts.poppins(color: Colors.grey[700])),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderSummaryCard(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ...cart.items.values.map((item) {
+              final price = double.tryParse(item.product.price ?? '') ?? 0.0;
+              final lineTotal = price * item.quantity;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('${item.product.name} (x${item.quantity})'),
+                    Text('${currencyProvider.currencySymbol}${lineTotal.toStringAsFixed(2)}'),
+                  ],
+                ),
+              );
+            }),
+            const Divider(height: 20, thickness: 1),
+            _buildSummaryRow('Subtotal', checkout.subtotal, currencyProvider),
+            const SizedBox(height: 8),
+            _buildSummaryRow('Shipping', checkout.shippingCost, currencyProvider),
+            const SizedBox(height: 8),
+            _buildSummaryRow('Tax', checkout.tax, currencyProvider),
+            const Divider(height: 20, thickness: 1),
+            _buildSummaryRow('Total', checkout.total, currencyProvider, isTotal: true),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildSummaryRow(String label, double amount, CurrencyProvider currencyProvider, {bool isTotal = false}) {
     final style = GoogleFonts.poppins(
         fontSize: isTotal ? 16 : 14,
-        fontWeight: isTotal ? FontWeight.bold : FontWeight.normal
-    );
+        fontWeight: isTotal ? FontWeight.bold : FontWeight.normal);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: style),
-        Row(
-          children: [
-            Text('${amount.toStringAsFixed(2)} ', style: style),
-            _buildCurrencyDisplay(currencyProvider, isTotal ? 16 : 14, color: Colors.black)
-          ],
-        )
+        Text('${currencyProvider.currencySymbol}${amount.toStringAsFixed(2)}', style: style),
       ],
     );
-  }
-
-  Widget _buildBottomBar(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [BoxShadow(color: Colors.grey.withAlpha(51), spreadRadius: 2, blurRadius: 10)],
-      ),
-      child: ElevatedButton(
-        onPressed: _placeOrder,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Place Order', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(width: 10),
-            Text('${checkout.total.toStringAsFixed(2)} ', style: GoogleFonts.poppins(color: Colors.white, fontSize: 16)),
-            _buildCurrencyDisplay(currencyProvider, 16, color: Colors.white)
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider, double size, {Color? color}) {
-    final currencyImageUrl = currencyProvider.currencyImageUrl;
-    final currencySymbol = currencyProvider.currencySymbol;
-
-    final style = GoogleFonts.poppins(fontSize: size, fontWeight: FontWeight.bold, color: color);
-
-    if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
-      return Image.network(
-        currencyImageUrl,
-        height: size,
-        color: color,
-        errorBuilder: (context, error, stackTrace) => Text(currencySymbol, style: style),
-      );
-    } else {
-      return Text(currencySymbol, style: style);
-    }
   }
 }

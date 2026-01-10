@@ -26,6 +26,9 @@ class ShippingMethod {
 class CheckoutProvider with ChangeNotifier {
   final WooCommerceService _wooCommerceService = WooCommerceService();
 
+  int _currentPage = 0;
+  final PageController pageController = PageController();
+
   List<ShippingMethod> _shippingMethods = [];
   ShippingMethod? _selectedShippingMethod;
   List<PaymentMethod> _paymentMethods = [];
@@ -38,6 +41,7 @@ class CheckoutProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  int get currentPage => _currentPage;
   List<ShippingMethod> get shippingMethods => _shippingMethods;
   ShippingMethod? get selectedShippingMethod => _selectedShippingMethod;
   List<PaymentMethod> get paymentMethods => _paymentMethods;
@@ -183,5 +187,27 @@ class CheckoutProvider with ChangeNotifier {
   void setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  void nextPage() {
+    if (_currentPage < 2) {
+      _currentPage++;
+      pageController.animateToPage(_currentPage, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      notifyListeners();
+    }
+  }
+
+  void previousPage() {
+    if (_currentPage > 0) {
+      _currentPage--;
+      pageController.animateToPage(_currentPage, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
   }
 }
