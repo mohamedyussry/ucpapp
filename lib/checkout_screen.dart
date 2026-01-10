@@ -11,6 +11,7 @@ import '../models/order_payload_model.dart';
 import '../providers/cart_provider.dart';
 import '../services/woocommerce_service.dart';
 import 'package:flutter_paymob/flutter_paymob.dart';
+import 'package:hive/hive.dart';
 
 class CheckoutScreen extends StatelessWidget {
   final String categoryName;
@@ -185,6 +186,16 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);
+
+    if (orderResponse != null && orderResponse['id'] != null) {
+      final orderId = orderResponse['id'] as int;
+      final box = await Hive.openBox('guest_order_ids');
+      final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? []).cast<int>();
+      if (!orderIds.contains(orderId)) {
+        orderIds.add(orderId);
+        await box.put('ids', orderIds);
+      }
+    }
 
     if (!mounted) return;
 

@@ -22,14 +22,17 @@ class PaymentSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String orderId = orderData['id']?.toString() ?? 'N/A';
-    final double totalAmount = double.tryParse(orderData['total']?.toString() ?? '0.0') ?? 0.0;
+    final int orderId = orderData['id'] as int? ?? 0;
+    final double totalAmount =
+        double.tryParse(orderData['total']?.toString() ?? '0.0') ?? 0.0;
     final String dateCreated = orderData['date_created'] != null
-        ? DateFormat('MMMM dd, yyyy').format(DateTime.parse(orderData['date_created']))
+        ? DateFormat('MMMM dd, yyyy')
+            .format(DateTime.parse(orderData['date_created']))
         : 'N/A';
     final String paymentMethod = orderData['payment_method_title'] ?? 'N/A';
     final String status = orderData['status']?.toString() ?? 'N/A';
-    final String? currencyImageUrl = _extractImageUrl(orderData['currency_symbol']);
+    final String? currencyImageUrl =
+        _extractImageUrl(orderData['currency_symbol']);
 
     final Map<String, dynamic> billingInfo = orderData['billing'] ?? {};
     final String billingAddress = '''
@@ -46,7 +49,7 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
         MaterialPageRoute(
           builder: (context) => const HomeScreen(),
         ),
-        (route) => false, 
+        (route) => false,
       );
     }
 
@@ -57,9 +60,11 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: navigateToHome, 
+          onPressed: navigateToHome,
         ),
-        title: Text('Order Confirmed', style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text('Order Confirmed',
+            style: GoogleFonts.poppins(
+                color: Colors.black, fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -70,7 +75,7 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
             const SizedBox(height: 24),
             _buildSectionTitle('Order Details'),
             _buildCombinedDetailsCard(
-              orderId: orderId,
+              orderId: orderId.toString(),
               dateCreated: dateCreated,
               paymentMethod: paymentMethod,
               status: status,
@@ -87,7 +92,7 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
         elevation: 0,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _buildContinueShoppingButton(context, navigateToHome), 
+          child: _buildContinueShoppingButton(context, navigateToHome),
         ),
       ),
     );
@@ -103,7 +108,9 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
             child: Icon(Icons.check, color: Colors.white, size: 50),
           ),
           const SizedBox(height: 16),
-          Text('Thank You For Your Order!', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 24)),
+          Text('Thank You For Your Order!',
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold, fontSize: 24)),
           const SizedBox(height: 8),
           Text(
             'Your order has been placed successfully.',
@@ -118,7 +125,9 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+      child: Text(title,
+          style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold, fontSize: 18)),
     );
   }
 
@@ -129,7 +138,10 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: GoogleFonts.poppins(color: Colors.black54)),
-          Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: valueColor ?? Colors.black)),
+          Text(value,
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: valueColor ?? Colors.black)),
         ],
       ),
     );
@@ -159,13 +171,16 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
             _buildDetailRow('Order ID:', '#$orderId'),
             _buildDetailRow('Date:', dateCreated),
             _buildDetailRow('Payment Method:', paymentMethod),
-            _buildDetailRow('Status:', status.toUpperCase(), valueColor: Colors.orange),
+            _buildDetailRow('Status:', status.toUpperCase(),
+                valueColor: Colors.orange),
             const Divider(height: 24, thickness: 1),
-            Text('Shipping Address', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            Text('Shipping Address',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text(billingAddress, style: GoogleFonts.poppins(height: 1.5)),
             const Divider(height: 24, thickness: 1),
-            Text('Order Summary', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+            Text('Order Summary',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ...lineItems.map((item) {
               final String name = item['name'] ?? 'N/A';
@@ -176,13 +191,20 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(child: Text('$name (x$quantity)', style: GoogleFonts.poppins())),
+                    Expanded(
+                        child: Text('$name (x$quantity)',
+                            style: GoogleFonts.poppins())),
                     Row(
                       children: [
                         if (currencyImageUrl != null)
-                          Image.network(currencyImageUrl, height: 16, errorBuilder: (c, o, s) => const SizedBox()),
+                          Image.network(currencyImageUrl,
+                              height: 16,
+                              errorBuilder: (c, o, s) => const SizedBox()),
                         const SizedBox(width: 4),
-                        Text(double.tryParse(itemTotal)?.toStringAsFixed(2) ?? '0.00', style: GoogleFonts.poppins()),
+                        Text(
+                            double.tryParse(itemTotal)?.toStringAsFixed(2) ??
+                                '0.00',
+                            style: GoogleFonts.poppins()),
                       ],
                     ),
                   ],
@@ -193,13 +215,21 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Total', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('Total',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold, fontSize: 18)),
                 Row(
                   children: [
                     if (currencyImageUrl != null)
-                      Image.network(currencyImageUrl, height: 20, errorBuilder: (c, o, s) => const SizedBox()),
+                      Image.network(currencyImageUrl,
+                          height: 20,
+                          errorBuilder: (c, o, s) => const SizedBox()),
                     const SizedBox(width: 4),
-                    Text(totalAmount.toStringAsFixed(2), style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.orange)),
+                    Text(totalAmount.toStringAsFixed(2),
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.orange)),
                   ],
                 ),
               ],
@@ -211,7 +241,8 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
   }
 
   // Rewritten button for robust layout
-  Widget _buildContinueShoppingButton(BuildContext context, VoidCallback onPressed) {
+  Widget _buildContinueShoppingButton(
+      BuildContext context, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -232,10 +263,14 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
             ),
           ],
         ),
-        child: Center( // Centers the text perfectly
+        child: Center(
+          // Centers the text perfectly
           child: Text(
             'Continue Shopping',
-            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+            style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16),
           ),
         ),
       ),

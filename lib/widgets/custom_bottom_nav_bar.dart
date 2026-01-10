@@ -14,56 +14,35 @@ class CustomBottomNavBar extends StatelessWidget {
   void _onItemTapped(BuildContext context, int index) {
     if (index == selectedIndex) return; // Do nothing if already on the same screen
 
+    Widget page;
     switch (index) {
-      case 0: // Home
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => const HomeScreen(),
-            transitionDuration: Duration.zero,
-          ),
-        );
+      case 0:
+        page = const HomeScreen();
         break;
-      case 1: // Categories
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                const SelfCareScreen(),
-            transitionDuration: Duration.zero,
-          ),
-        );
+      case 1:
+        page = const SelfCareScreen();
         break;
-      case 2: // Orders
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => const MyOrdersScreen(),
-            transitionDuration: Duration.zero,
-          ),
-        );
+      case 2:
+        page = const MyOrdersScreen();
         break;
-      case 3: // Favorites
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                const WishlistScreen(),
-            transitionDuration: Duration.zero,
-          ),
-        );
+      case 3:
+        page = const WishlistScreen();
         break;
-      case 4: // Profile
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                const ProfileScreen(),
-            transitionDuration: Duration.zero,
-          ),
-        );
+      case 4:
+        page = const ProfileScreen();
         break;
+      default:
+        return;
     }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) => page,
+        transitionDuration: Duration.zero,
+      ),
+      (route) => false,
+    );
   }
 
   @override

@@ -51,6 +51,65 @@ class WooCommerceService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getOrders({required int customerId}) async {
+    try {
+      final response = await _dio.get(
+        '/orders',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'customer': customerId,
+          'per_page': 100, // Fetch up to 100 orders
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data as List);
+      } else {
+        developer.log(
+            'Error fetching orders: Status ${response.statusCode}, Body: ${response.data}');
+        return [];
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching orders');
+      return [];
+    } catch (e, s) {
+      developer.log('Unexpected error fetching orders', error: e, stackTrace: s);
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getOrdersByIds({required List<int> orderIds}) async {
+    if (orderIds.isEmpty) {
+      return [];
+    }
+    try {
+      final response = await _dio.get(
+        '/orders',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'include': orderIds.join(','),
+          'per_page': 100,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        return List<Map<String, dynamic>>.from(response.data as List);
+      } else {
+        developer.log(
+            'Error fetching orders by IDs: Status ${response.statusCode}, Body: ${response.data}');
+        return [];
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching orders by IDs');
+      return [];
+    } catch (e, s) {
+      developer.log('Unexpected error fetching orders by IDs', error: e, stackTrace: s);
+      return [];
+    }
+  }
+
    Future<List<PaymentMethod>> getPaymentMethods() async {
     try {
       final response = await _dio.get(

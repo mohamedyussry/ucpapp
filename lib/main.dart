@@ -8,10 +8,15 @@ import 'package:myapp/providers/currency_provider.dart';
 import 'package:myapp/providers/wishlist_provider.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:provider/provider.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   // Ensure the binding is initialized.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive
+  await Hive.initFlutter();
+  await Hive.openBox('guest_orders');
 
   // Initialize Paymob
   await FlutterPaymob.instance.initialize(
