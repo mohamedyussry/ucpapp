@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:myapp/products_screen.dart';
+import 'package:myapp/home_screen.dart'; // Import the home screen
 
 class PaymentSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> orderData;
@@ -32,22 +32,21 @@ class PaymentSuccessScreen extends StatelessWidget {
     final String? currencyImageUrl = _extractImageUrl(orderData['currency_symbol']);
 
     final Map<String, dynamic> billingInfo = orderData['billing'] ?? {};
-    final String billingAddress =
-        '${billingInfo['first_name'] ?? ''} ${billingInfo['last_name'] ?? ''}\n'
-        '${billingInfo['address_1'] ?? ''}, ${billingInfo['city'] ?? ''}\n'
-        '${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}';
+    final String billingAddress = '''
+${billingInfo['first_name'] ?? ''} ${billingInfo['last_name'] ?? ''}
+${billingInfo['address_1'] ?? ''}, ${billingInfo['city'] ?? ''}
+${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
+''';
 
     final List<dynamic> lineItems = orderData['line_items'] ?? [];
 
-    void navigateToCategory() {
+    void navigateToHome() {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => ProductsScreen(
-            category: categoryName,
-          ),
+          builder: (context) => const HomeScreen(),
         ),
-        (route) => route.isFirst, // Keep the home screen in the stack
+        (route) => false, 
       );
     }
 
@@ -58,7 +57,7 @@ class PaymentSuccessScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: navigateToCategory,
+          onPressed: navigateToHome, 
         ),
         title: Text('Order Confirmed', style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold)),
       ),
@@ -88,7 +87,7 @@ class PaymentSuccessScreen extends StatelessWidget {
         elevation: 0,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: _buildContinueShoppingButton(context, navigateToCategory),
+          child: _buildContinueShoppingButton(context, navigateToHome), 
         ),
       ),
     );
@@ -211,34 +210,33 @@ class PaymentSuccessScreen extends StatelessWidget {
     );
   }
 
+  // Rewritten button for robust layout
   Widget _buildContinueShoppingButton(BuildContext context, VoidCallback onPressed) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(
-          colors: [Colors.orange, Colors.deepOrange],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withAlpha(100),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: double.infinity, // Ensures the button takes the full width
+        height: 56, // Provides a consistent and modern height
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: const LinearGradient(
+            colors: [Colors.orange, Colors.deepOrange],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.withAlpha(100),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: Text(
-          'Continue Shopping',
-          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        child: Center( // Centers the text perfectly
+          child: Text(
+            'Continue Shopping',
+            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ),
       ),
     );
