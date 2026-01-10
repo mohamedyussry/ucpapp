@@ -3,6 +3,8 @@ import 'package:hive/hive.dart';
 import 'package:myapp/cart_screen.dart';
 import 'package:myapp/home_screen.dart';
 import 'package:myapp/models/order_model.dart';
+import 'package:myapp/order_details_screen.dart';
+import 'package:myapp/order_tracking_screen.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -64,6 +66,24 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         _errorMessage = 'Failed to load orders: $e';
       });
     }
+  }
+
+  void _navigateToDetails(Order order) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderDetailsScreen(order: order),
+      ),
+    );
+  }
+
+  void _navigateToTracking(Order order) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderTrackingScreen(order: order),
+      ),
+    );
   }
 
   @override
@@ -243,78 +263,82 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
     );
   }
 
-    Widget _buildOngoingOrderCard(Order order) {
+  Widget _buildOngoingOrderCard(Order order) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
       shadowColor: Colors.grey.withAlpha(51),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCE4EC), // Light pink background
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      order.status.toUpperCase(),
-                      style: const TextStyle(
-                        color: Color(0xFFD81B60), // Dark pink text
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: () => _navigateToDetails(order),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFCE4EC),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        order.status.toUpperCase(),
+                        style: const TextStyle(
+                          color: Color(0xFFD81B60),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 2),
-                  Text('Order #${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 2),
-                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
+                    const SizedBox(height: 6),
+                    Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 2),
+                    Text('Order #${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 2),
+                    Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
               ),
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () => _navigateToTracking(order),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                      ),
+                      child: const Text('Track', style: TextStyle(color: Colors.white, fontSize: 12)),
                     ),
-                    child: const Text('Track', style: TextStyle(color: Colors.white, fontSize: 12)),
                   ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFF3E0), // Lighter orange
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      elevation: 0,
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () => _navigateToDetails(order),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFF3E0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        elevation: 0,
+                      ),
+                      child: const Text('Details', style: TextStyle(color: Colors.black87, fontSize: 12)),
                     ),
-                    child: const Text('Details', style: TextStyle(color: Colors.black87, fontSize: 12)),
                   ),
-                ),
-              ],
-            )
-          ],
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -326,53 +350,57 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
       shadowColor: Colors.grey.withAlpha(51),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 2),
-                      Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      const SizedBox(height: 2),
-                      Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      const Text('View details', style: TextStyle(color: Colors.blue, fontSize: 12, decoration: TextDecoration.underline)),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: InkWell(
+        onTap: () => _navigateToDetails(order),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 2),
+                        Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        const SizedBox(height: 2),
+                        Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        const SizedBox(height: 4),
+                        const Text('View details', style: TextStyle(color: Colors.blue, fontSize: 12, decoration: TextDecoration.underline)),
+                      ],
                     ),
-                    child: const Text('Order again', style: TextStyle(color: Colors.white, fontSize: 12)),
                   ),
-                ),
-              ],
-            ),
-            const Divider(height: 24, thickness: 1, color: Color(0xFFEEEEEE)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Rate', style: TextStyle(fontSize: 14, color: Colors.black54)),
-                Row(
-                  children: List.generate(5, (index) => const Icon(Icons.star_border, color: Colors.grey, size: 20)),
-                ),
-              ],
-            )
-          ],
+                  SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                      ),
+                      child: const Text('Order again', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 24, thickness: 1, color: Color(0xFFEEEEEE)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Rate', style: TextStyle(fontSize: 14, color: Colors.black54)),
+                  Row(
+                    children: List.generate(5, (index) => const Icon(Icons.star_border, color: Colors.grey, size: 20)),
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -384,28 +412,32 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 3,
       shadowColor: Colors.grey.withAlpha(51),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 2),
-                  Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 2),
-                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  const SizedBox(height: 4),
-                   Text('Status: ${order.status.toUpperCase()}', style: const TextStyle(color: Colors.red, fontSize: 12)),
-                ],
+      child: InkWell(
+        onTap: () => _navigateToDetails(order),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(order.productNames.join(', '), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 2),
+                    Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 2),
+                    Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    Text('Status: ${order.status.toUpperCase()}', style: const TextStyle(color: Colors.red, fontSize: 12)),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ), 
+      ),
     );
   }
 }
