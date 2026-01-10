@@ -10,6 +10,7 @@ class OrderPayload {
   final List<LineItem> lineItems;
   final List<ShippingLine> shippingLines;
   final String? customerNote;
+  final String? transactionId;
 
   OrderPayload({
     required this.paymentMethod,
@@ -20,6 +21,7 @@ class OrderPayload {
     required this.lineItems,
     this.shippingLines = const [],
     this.customerNote,
+    this.transactionId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,6 +33,7 @@ class OrderPayload {
         'line_items': lineItems.map((item) => item.toJson()).toList(),
         'shipping_lines': shippingLines.map((line) => line.toJson()).toList(),
         if (customerNote != null && customerNote!.isNotEmpty) 'customer_note': customerNote,
+        if (transactionId != null) 'transaction_id': transactionId,
       };
 }
 

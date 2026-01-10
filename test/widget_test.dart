@@ -1,30 +1,38 @@
 // This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:myapp/main.dart';
+import 'package:myapp/language_selection_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('LanguageSelectionScreen has expected content', (WidgetTester tester) async {
+    // Build the LanguageSelectionScreen directly.
+    // We wrap it in a MaterialApp to provide the necessary context (like theme, navigation, etc.)
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: LanguageSelectionScreen(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that the language selection screen is shown and has the correct text.
+    expect(find.text('Choose Language'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('العربية'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // Verify the initial selection is English
+    final englishButton = tester.widget<GestureDetector>(find.ancestor(of: find.text('English'), matching: find.byType(GestureDetector)));
+    final englishContainer = englishButton.child as Container;
+    final englishDecoration = englishContainer.decoration as BoxDecoration;
+    expect(englishDecoration.border, isA<Border>().having((b) => b.top.color, 'color', Colors.orange));
+
+    // Tap on 'العربية' and verify the selection changes
+    await tester.tap(find.text('العربية'));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    final arabicButton = tester.widget<GestureDetector>(find.ancestor(of: find.text('العربية'), matching: find.byType(GestureDetector)));
+    final arabicContainer = arabicButton.child as Container;
+    final arabicDecoration = arabicContainer.decoration as BoxDecoration;
+    expect(arabicDecoration.border, isA<Border>().having((b) => b.top.color, 'color', Colors.orange));
   });
 }

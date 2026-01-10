@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/line_item_model.dart';
@@ -9,21 +10,26 @@ import 'package:provider/provider.dart';
 import '../models/order_payload_model.dart';
 import '../providers/cart_provider.dart';
 import '../services/woocommerce_service.dart';
+import 'package:flutter_paymob/flutter_paymob.dart';
 
 class CheckoutScreen extends StatelessWidget {
-  const CheckoutScreen({super.key});
+  final String categoryName;
+
+  const CheckoutScreen({super.key, required this.categoryName});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => CheckoutProvider(),
-      child: const _CheckoutScreenView(),
+      child: _CheckoutScreenView(categoryName: categoryName),
     );
   }
 }
 
 class _CheckoutScreenView extends StatefulWidget {
-  const _CheckoutScreenView();
+  final String categoryName;
+
+  const _CheckoutScreenView({required this.categoryName});
 
   @override
   State<_CheckoutScreenView> createState() => _CheckoutScreenViewState();
@@ -68,18 +74,72 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
 
     if (checkoutProvider.paymentMethods.isNotEmpty && checkoutProvider.selectedPaymentMethod == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a payment method.')),
       );
       return;
     }
 
+    if (checkoutProvider.selectedPaymentMethod!.id == 'paymob') {
+      _handlePaymobPayment();
+    } else {
+      _createWooCommerceOrder();
+    }
+  }
+
+  Future<void> _handlePaymobPayment() async {
     setState(() {
       _isPlacingOrder = true;
     });
 
+    try {
+      final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
+      if (!mounted) return;
+
+      final isSuccess = await FlutterPaymob.instance.payWithCard(
+        context: context,
+        currency: 'EGP',
+        amount: checkoutProvider.total,
+      );
+
+      if (isSuccess) {
+        final tempTransactionId = 'paymob_success_${DateTime.now().millisecondsSinceEpoch}';
+        _createWooCommerceOrder(isPaid: true, transactionId: tempTransactionId);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment failed or was cancelled. Please try again.')),
+        );
+         if (mounted) {
+          setState(() {
+            _isPlacingOrder = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('An error occurred: $e')),
+        );
+        setState(() {
+          _isPlacingOrder = false;
+        });
+      }
+    }
+  }
+
+
+  Future<void> _createWooCommerceOrder({bool isPaid = false, String? transactionId}) async {
+    final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final wooCommerceService = WooCommerceService();
+
+    if (!_isPlacingOrder) {
+      setState(() {
+        _isPlacingOrder = true;
+      });
+    }
 
     final fullName = _billingFullNameController.text.trim();
     final nameParts = fullName.split(' ');
@@ -105,9 +165,10 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     final orderPayload = OrderPayload(
       paymentMethod: selectedPayment.id,
       paymentMethodTitle: selectedPayment.title,
-      setPaid: false,
+      setPaid: isPaid,
       billing: billingInfo,
       shipping: shippingInfo,
+      transactionId: transactionId,
       lineItems: cartProvider.items.values
           .map((item) => LineItem(productId: item.product.id, quantity: item.quantity))
           .toList(),
@@ -135,7 +196,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
       cartProvider.clear();
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const PaymentSuccessScreen()),
+        MaterialPageRoute(
+          builder: (context) => PaymentSuccessScreen(
+            orderData: orderResponse,
+            categoryName: widget.categoryName,
+          ),
+        ),
         (route) => false,
       );
     } else {
@@ -216,7 +282,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
               ],
             ),
           );
-        }).expand((widget) => [widget, const SizedBox(width: 10)]).toList()..removeLast(),
+        }).expand((widget) => [widget, const SizedBox(width: 10)]).toList(),
       ),
     );
   }
@@ -327,8 +393,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
       ),
     );
   }
-
-    // --- Reusable Widgets ---
 
   Widget _buildSectionTitle(String title) {
     return Padding(

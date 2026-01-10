@@ -74,7 +74,7 @@ class CartScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 20),
-                  _buildCheckoutForm(context, subtotal, discount, total, currencyProvider),
+                  _buildCheckoutForm(context, subtotal, discount, total, currencyProvider, cart),
                 ],
               ),
             ),
@@ -221,7 +221,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, CurrencyProvider currencyProvider) {
+  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, CurrencyProvider currencyProvider, CartProvider cart) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -240,7 +240,7 @@ class CartScreen extends StatelessWidget {
           const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
           _buildPriceSummaryRow('Total :', total, currencyProvider, isTotal: true),
           const SizedBox(height: 20),
-          _buildCheckoutButton(context),
+          _buildCheckoutButton(context, cart),
         ],
       ),
     );
@@ -315,14 +315,26 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutButton(BuildContext context) {
+  Widget _buildCheckoutButton(BuildContext context, CartProvider cart) {
     return ElevatedButton(
       onPressed: () {
-        // Navigate to the Checkout Screen
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const CheckoutScreen()),
-        );
+        if (cart.items.isNotEmpty) {
+          final firstItem = cart.items.values.first;
+          final categoryName = firstItem.product.categories.isNotEmpty ? firstItem.product.categories.first.name : 'Category';
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CheckoutScreen(
+                categoryName: categoryName,
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Your cart is empty.')),
+          );
+        }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.orange,

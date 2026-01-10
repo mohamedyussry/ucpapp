@@ -1,17 +1,26 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_paymob/flutter_paymob.dart';
 import 'package:myapp/language_selection_screen.dart';
 import 'package:myapp/providers/cart_provider.dart';
 import 'package:myapp/providers/currency_provider.dart';
 import 'package:myapp/providers/wishlist_provider.dart';
-import 'package:myapp/checkout_screen.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   // Ensure the binding is initialized.
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Paymob
+  await FlutterPaymob.instance.initialize(
+    apiKey: "YOUR_PAYMOB_API_KEY", // Replace with your Production API Key
+    integrationID: 123456,         // Replace with your Card Integration ID
+    walletIntegrationId: 654321,   // Replace with your Wallet Integration ID
+    iFrameID: 789012,              // Replace with your iFrame ID
+  );
+
 
   runApp(
     MultiProvider(
@@ -40,7 +49,6 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
-        '/checkout': (context) => const CheckoutScreen(),
       },
     );
   }

@@ -55,6 +55,19 @@ class CheckoutProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  CheckoutProvider() {
+    _initializePaymentMethods();
+  }
+
+  void _initializePaymentMethods() {
+    _paymentMethods = [
+      PaymentMethod(id: 'cod', title: 'Cash on Delivery', description: 'Pay with cash upon delivery.', enabled: true),
+      PaymentMethod(id: 'paymob', title: 'Paymob', description: 'Pay with credit card via Paymob.', enabled: true),
+    ];
+    _selectedPaymentMethod = _paymentMethods.first;
+    notifyListeners();
+  }
+
   void updateSubtotal(double cartTotal) {
     _subtotal = cartTotal;
     notifyListeners();
@@ -72,7 +85,6 @@ class CheckoutProvider with ChangeNotifier {
       await Future.wait([
         if (_selectedStateCode != null)
           fetchShippingMethods(country, _selectedStateCode!, postcode),
-        fetchPaymentMethods(),
       ]);
     }
 
@@ -95,23 +107,6 @@ class CheckoutProvider with ChangeNotifier {
       _errorMessage = 'Error fetching shipping methods: $e';
       _shippingMethods = [];
       _selectedShippingMethod = null;
-    }
-  }
-
-  Future<void> fetchPaymentMethods() async {
-    try {
-      _paymentMethods = await _wooCommerceService.getPaymentMethods();
-      if (_paymentMethods.isNotEmpty) {
-        _selectedPaymentMethod = _paymentMethods.first;
-      } else {
-        _selectedPaymentMethod = null;
-      }
-      developer.log('Fetched ${_paymentMethods.length} payment methods.');
-    } catch (e) {
-      developer.log("Error fetching payment methods: $e");
-      _errorMessage = 'Error fetching payment methods: $e';
-      _paymentMethods = [];
-      _selectedPaymentMethod = null;
     }
   }
 

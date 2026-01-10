@@ -25,6 +25,12 @@ dependencies:
   badges: ^3.1.2
   dio: ^5.9.0
   shared_preferences: ^2.5.4
+  flutter_paymob: ^1.0.8
+  http: ^1.6.0
+  intl: ^0.20.2
+  html_unescape: ^2.0.0
+  flutter_html: ^3.0.0
+  # test
 
 dev_dependencies:
   flutter_test:

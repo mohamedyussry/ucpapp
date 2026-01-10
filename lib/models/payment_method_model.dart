@@ -14,10 +14,10 @@ class PaymentMethod {
 
   factory PaymentMethod.fromJson(Map<String, dynamic> json) {
     return PaymentMethod(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      enabled: json['enabled'] ?? false,
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      enabled: json['enabled'],
     );
   }
 }
