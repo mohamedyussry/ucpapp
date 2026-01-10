@@ -21,13 +21,14 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..productNames = (fields[1] as List).cast<String>()
       ..totalPrice = fields[2] as double
       ..date = fields[3] as DateTime
-      ..status = fields[4] as String;
+      ..status = fields[4] as String
+      ..currency = fields[5] as String;
   }
 
   @override
   void write(BinaryWriter writer, Order obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -37,7 +38,9 @@ class OrderAdapter extends TypeAdapter<Order> {
       ..writeByte(3)
       ..write(obj.date)
       ..writeByte(4)
-      ..write(obj.status);
+      ..write(obj.status)
+      ..writeByte(5)
+      ..write(obj.currency);
   }
 
   @override

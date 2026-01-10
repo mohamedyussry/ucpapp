@@ -4,6 +4,7 @@ import 'package:myapp/cart_screen.dart';
 import 'package:myapp/home_screen.dart';
 import 'package:myapp/models/order_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({super.key});
@@ -108,69 +109,79 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(child: Text(_errorMessage!))
-              : Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 45,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(25.0),
-                        ),
-                        child: TabBar(
-                          controller: _tabController,
-                          indicator: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(25.0),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Container(
+              height: 45,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(25.0),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(25.0),
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.black,
+                tabs: const [
+                  Tab(text: 'Ongoing'),
+                  Tab(text: 'Completed'),
+                  Tab(text: 'Cancelled'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? _buildShimmerEffect()
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(_errorMessage!, textAlign: TextAlign.center, style: TextStyle(color: Colors.red.shade700)),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                                onPressed: _fetchOrders,
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                              )
+                            ],
                           ),
-                          labelColor: Colors.white,
-                          unselectedLabelColor: Colors.black,
-                          tabs: const [
-                            Tab(text: 'Ongoing'),
-                            Tab(text: 'Completed'),
-                            Tab(text: 'Cancelled'),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: TabBarView(
+                        )
+                      : TabBarView(
                           controller: _tabController,
                           children: [
-                            _buildOngoingTab(_ongoingOrders),
-                            _buildCompletedTab(_completedOrders),
-                            _buildCancelledTab(_cancelledOrders),
+                            _buildOrdersTab(_ongoingOrders, _buildOngoingOrderCard, "No ongoing orders yet."),
+                            _buildOrdersTab(_completedOrders, _buildCompletedOrderCard, "No completed orders yet."),
+                            _buildOrdersTab(_cancelledOrders, _buildCancelledOrderCard, "No cancelled orders yet."),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildOngoingTab(List<Order> orders) {
-    if (orders.isEmpty) {
-      return const Center(
-        child: Text('No ongoing orders yet.', style: TextStyle(color: Colors.grey)),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 16.0),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return _buildOngoingOrderCard(order: order);
-      },
+  Widget _buildShimmerEffect() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(top: 16.0),
+        itemCount: 5, // Display 5 shimmer cards
+        itemBuilder: (context, index) => _buildPlaceholderOrderCard(),
+      ),
     );
   }
 
-  Widget _buildOngoingOrderCard({required Order order}) {
+  Widget _buildPlaceholderOrderCard() {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,15 +192,68 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/logo.png', // Placeholder image
-                width: 90,
-                height: 90,
-                fit: BoxFit.contain,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 80, height: 16, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Container(width: double.infinity, height: 18, color: Colors.white),
+                  const SizedBox(height: 4),
+                  Container(width: 100, height: 14, color: Colors.white),
+                  const SizedBox(height: 4),
+                  Container(width: 120, height: 14, color: Colors.white),
+                ],
               ),
             ),
+            Column(
+              children: [
+                Container(width: 80, height: 36, color: Colors.white),
+                const SizedBox(height: 8),
+                Container(width: 80, height: 36, color: Colors.white),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrdersTab(List<Order> orders, Widget Function(Order) cardBuilder, String noOrdersMessage) {
+    if (orders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.receipt_long, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(noOrdersMessage, style: const TextStyle(color: Colors.grey, fontSize: 16)),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 16.0),
+      itemCount: orders.length,
+      itemBuilder: (context, index) {
+        final order = orders[index];
+        return cardBuilder(order);
+      },
+    );
+  }
+
+    Widget _buildOngoingOrderCard(Order order) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      shadowColor: Colors.grey.withAlpha(51),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -201,9 +265,9 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
                       color: const Color(0xFFFCE4EC), // Light pink background
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
-                      'In Progress',
-                      style: TextStyle(
+                    child: Text(
+                      order.status.toUpperCase(),
+                      style: const TextStyle(
                         color: Color(0xFFD81B60), // Dark pink text
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -215,7 +279,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
                   const SizedBox(height: 2),
                   Text('Order #${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 2),
-                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} EUR', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 ],
               ),
             ),
@@ -256,23 +320,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
     );
   }
 
-  Widget _buildCompletedTab(List<Order> orders) {
-    if (orders.isEmpty) {
-      return const Center(
-        child: Text('No completed orders yet.', style: TextStyle(color: Colors.grey)),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 16.0),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return _buildCompletedOrderCard(order: order);
-      },
-    );
-  }
-
-  Widget _buildCompletedOrderCard({required Order order}) {
+  Widget _buildCompletedOrderCard(Order order) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -285,15 +333,6 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8.0),
-                  child: Image.asset(
-                    'assets/logo.png', // Placeholder image
-                    width: 90,
-                    height: 90,
-                    fit: BoxFit.contain,
-                  ),
-                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -303,7 +342,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
                       const SizedBox(height: 2),
                       Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                       const SizedBox(height: 2),
-                      Text('Price: ${order.totalPrice.toStringAsFixed(2)} EUR', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                       const SizedBox(height: 4),
                       const Text('View details', style: TextStyle(color: Colors.blue, fontSize: 12, decoration: TextDecoration.underline)),
                     ],
@@ -339,23 +378,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
     );
   }
 
-  Widget _buildCancelledTab(List<Order> orders) {
-    if (orders.isEmpty) {
-      return const Center(
-        child: Text('No cancelled orders yet.', style: TextStyle(color: Colors.grey)),
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 16.0),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        return _buildCancelledOrderCard(order: order);
-      },
-    );
-  }
-
-  Widget _buildCancelledOrderCard({required Order order}) {
+  Widget _buildCancelledOrderCard(Order order) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -365,15 +388,6 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.asset(
-                'assets/logo.png', // Placeholder image
-                width: 90,
-                height: 90,
-                fit: BoxFit.contain,
-              ),
-            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -383,7 +397,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
                   const SizedBox(height: 2),
                   Text('Order ID: ${order.id}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 2),
-                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} EUR', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text('Price: ${order.totalPrice.toStringAsFixed(2)} ${order.currency}', style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 4),
                    Text('Status: ${order.status.toUpperCase()}', style: const TextStyle(color: Colors.red, fontSize: 12)),
                 ],
