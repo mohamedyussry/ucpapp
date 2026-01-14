@@ -69,6 +69,13 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                 child: Row(
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.person, color: Colors.white), // Profile Icon
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/profile');
+                      },
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         decoration: InputDecoration(

@@ -1,6 +1,7 @@
 
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import 'package:myapp/models/customer_model.dart';
 import 'package:myapp/models/payment_method_model.dart';
 import 'package:myapp/models/state_model.dart';
 import 'package:myapp/providers/checkout_provider.dart';
@@ -22,6 +23,74 @@ class WooCommerceService {
       ),
     );
   }
+
+  Future<bool> createCustomer(
+      String email, String password, String firstName, String lastName) async {
+    try {
+      final response = await _dio.post(
+        '/customers',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+        },
+        data: {
+          'email': email,
+          'first_name': firstName,
+          'last_name': lastName,
+          'password': password,
+          'username': email, // Use email as username for simplicity
+        },
+      );
+
+      if (response.statusCode == 201) {
+        developer.log('Registration successful for email: $email');
+        return true;
+      } else {
+        developer.log(
+            'Registration failed: Status ${response.statusCode}, Body: ${response.data}');
+        return false;
+      }
+    } on DioException catch (e) {
+      developer.log(
+        'Error during registration: ${e.response?.data?['message'] ?? 'Unknown error'}',
+        error: e,
+      );
+      throw e.response?.data?['message'] ??
+          'An unknown error occurred during registration.';
+    } catch (e) {
+      developer.log('An unexpected error occurred during registration', error: e);
+      throw 'An unexpected error occurred.';
+    }
+  }
+
+  Future<Customer?> getCustomerById(int id) async {
+    try {
+      final response = await _dio.get(
+        '/customers/$id',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        // Diagnostic log
+        developer.log("CUSTOMER DATA FROM SERVER: ${response.data}"); 
+        return Customer.fromJson(response.data);
+      } else {
+        developer.log(
+            'Error fetching customer: Status ${response.statusCode}, Body: ${response.data}');
+        return null;
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'fetching customer');
+      return null;
+    } catch (e, s) {
+      developer.log('Unexpected error fetching customer', error: e, stackTrace: s);
+      return null;
+    }
+  }
+
 
   Future<Map<String, dynamic>?> createOrder(OrderPayload payload) async {
     try {

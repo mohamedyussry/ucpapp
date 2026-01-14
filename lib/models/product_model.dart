@@ -3,9 +3,9 @@ class WooProduct {
   final int id;
   final String name;
   final String type;
-  final String? price;
-  final String? salePrice;
-  final String? regularPrice;
+  final double? price;
+  final double? salePrice;
+  final double? regularPrice;
   final String description;
   final String permalink;
   final List<WooProductImage> images;
@@ -13,7 +13,7 @@ class WooProduct {
   final List<WooProductAttribute> attributes;
   final String stockStatus;
   final int? stockQuantity;
-  final String averageRating;
+  final double averageRating;
   final int ratingCount;
 
   WooProduct({
@@ -39,9 +39,9 @@ class WooProduct {
       id: json['id'],
       name: json['name'],
       type: json['type'] ?? 'simple',
-      price: json['price'],
-      salePrice: json['sale_price'],
-      regularPrice: json['regular_price'],
+      price: double.tryParse(json['price']?.toString() ?? ''),
+      salePrice: double.tryParse(json['sale_price']?.toString() ?? ''),
+      regularPrice: double.tryParse(json['regular_price']?.toString() ?? ''),
       description: json['description'] ?? '',
       permalink: json['permalink'] ?? '',
       images: (json['images'] as List<dynamic>?)
@@ -58,7 +58,7 @@ class WooProduct {
           [],
       stockStatus: json['stock_status'] ?? 'outofstock',
       stockQuantity: json['stock_quantity'],
-      averageRating: json['average_rating'] ?? '0.0',
+      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0.0') ?? 0.0,
       ratingCount: json['rating_count'] ?? 0,
     );
   }
@@ -68,9 +68,9 @@ class WooProduct {
       'id': id,
       'name': name,
       'type': type,
-      'price': price,
-      'sale_price': salePrice,
-      'regular_price': regularPrice,
+      'price': price?.toString(),
+      'sale_price': salePrice?.toString(),
+      'regular_price': regularPrice?.toString(),
       'description': description,
       'permalink': permalink,
       'images': images.map((img) => img.toJson()).toList(),
@@ -78,7 +78,7 @@ class WooProduct {
       'attributes': attributes.map((attr) => attr.toJson()).toList(),
       'stock_status': stockStatus,
       'stock_quantity': stockQuantity,
-      'average_rating': averageRating,
+      'average_rating': averageRating.toString(),
       'rating_count': ratingCount,
     };
   }
@@ -163,9 +163,9 @@ class WooProductAttribute {
 
 class WooProductVariation {
   final int id;
-  final String? price;
-  final String? regularPrice;
-  final String? salePrice;
+  final double? price;
+  final double? regularPrice;
+  final double? salePrice;
   final WooProductImage? image;
   final List<Map<String, dynamic>> attributes;
   final String stockStatus;
@@ -185,9 +185,9 @@ class WooProductVariation {
   factory WooProductVariation.fromJson(Map<String, dynamic> json) {
     return WooProductVariation(
       id: json['id'],
-      price: json['price'],
-      regularPrice: json['regular_price'],
-      salePrice: json['sale_price'],
+      price: double.tryParse(json['price']?.toString() ?? ''),
+      regularPrice: double.tryParse(json['regular_price']?.toString() ?? ''),
+      salePrice: double.tryParse(json['sale_price']?.toString() ?? ''),
       image: json['image'] != null ? WooProductImage.fromJson(json['image']) : null,
       attributes: List<Map<String, dynamic>>.from(json['attributes'] ?? []),
       stockStatus: json['stock_status'] ?? 'outofstock',

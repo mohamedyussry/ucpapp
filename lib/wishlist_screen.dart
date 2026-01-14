@@ -5,7 +5,9 @@ import 'package:myapp/providers/wishlist_provider.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:myapp/cart_screen.dart'; // Import CartScreen
+import 'package:myapp/home_screen.dart'; // Import HomeScreen
+import 'package:myapp/models/product_model.dart'; // Import WooProduct
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
@@ -33,7 +35,10 @@ class WishlistScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.shopping_cart, color: Colors.white),
             onPressed: () {
-              // TODO: Navigate to cart screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
             },
           ),
         ],
@@ -88,7 +93,7 @@ class WishlistScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FaIcon(FontAwesomeIcons.heartCrack, size: 100, color: Colors.grey[300]),
+          const Icon(Icons.favorite_border, size: 100, color: Colors.grey),
           const SizedBox(height: 20),
           const Text('You haven\'t add any products to your Wishlist yet!'),
           const SizedBox(height: 30),
@@ -96,7 +101,10 @@ class WishlistScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: ElevatedButton(
               onPressed: () {
-                // TODO: Navigate to categories
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
@@ -113,7 +121,7 @@ class WishlistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWishlistGrid(List<dynamic> products) {
+  Widget _buildWishlistGrid(List<WooProduct> products) {
     return GridView.builder(
       padding: const EdgeInsets.all(16.0),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

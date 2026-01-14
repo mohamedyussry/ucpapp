@@ -115,7 +115,7 @@ class ProductCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                '${product.price ?? '0'} ',
+                                '${product.price?.toStringAsFixed(2) ?? '0.00'} ',
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,

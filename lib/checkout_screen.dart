@@ -517,7 +517,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
         child: Column(
           children: [
             ...cart.items.values.map((item) {
-              final price = double.tryParse(item.product.price ?? '') ?? 0.0;
+              final price = item.product.price ?? 0.0;
               final lineTotal = price * item.quantity;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),

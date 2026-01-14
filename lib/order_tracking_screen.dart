@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:myapp/models/order_model.dart';
 
@@ -6,19 +7,18 @@ class OrderTrackingScreen extends StatelessWidget {
 
   const OrderTrackingScreen({super.key, required this.order});
 
-  // Helper to get the right image based on status
   String _getTrackingImage(String status) {
     switch (status) {
       case 'pending':
       case 'processing':
         return 'assets/images/track_received.png';
-      case 'on-hold': // Example for a shipping status
-      case 'shipped': // Example for a shipping status
+      case 'on-hold':
+      case 'shipped':
         return 'assets/images/track_on_the_way.png';
       case 'completed':
         return 'assets/images/track_delivered.png';
       default:
-        return 'assets/images/track_received.png'; // Default image
+        return 'assets/images/track_received.png';
     }
   }
 
@@ -45,12 +45,10 @@ class OrderTrackingScreen extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Background Tracking Image
           Positioned.fill(
             child: Image.asset(
               _getTrackingImage(order.status),
               fit: BoxFit.cover,
-              // In case the image file is missing, show a colored background
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.grey[200],
@@ -63,7 +61,6 @@ class OrderTrackingScreen extends StatelessWidget {
               },
             ),
           ),
-          // Bottom Status Card
           Positioned(
             left: 0,
             right: 0,
@@ -95,7 +92,6 @@ class OrderTrackingScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Order ID
           Row(
             children: [
               Container(
@@ -127,7 +123,6 @@ class OrderTrackingScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          // Timeline Tracker
           _buildTimelineTracker(),
         ],
       ),
@@ -143,13 +138,13 @@ class OrderTrackingScreen extends StatelessWidget {
           label: 'Received',
           time: '${order.date.hour}:${order.date.minute}',
           isActive: order.status == 'pending' || order.status == 'processing',
-          isCompleted: true, // Always completed if we are past this stage
+          isCompleted: true,
         ),
         _buildTimelineConnector(isCompleted: order.status == 'shipped' || order.status == 'completed'),
         _buildTimelineStep(
           icon: Icons.local_shipping_outlined,
           label: 'On the Way',
-          time: '--:--', // Placeholder time
+          time: '--:--',
           isActive: order.status == 'shipped',
           isCompleted: order.status == 'shipped' || order.status == 'completed',
         ),
@@ -157,7 +152,7 @@ class OrderTrackingScreen extends StatelessWidget {
         _buildTimelineStep(
           icon: Icons.home_outlined,
           label: 'Delivered',
-          time: '--:--', // Placeholder time
+          time: '--:--',
           isActive: order.status == 'completed',
           isCompleted: order.status == 'completed',
         ),
@@ -178,7 +173,7 @@ class OrderTrackingScreen extends StatelessWidget {
             color: isActive ? activeColor : Colors.white,
             shape: BoxShape.circle,
             border: Border.all(color: stepColor, width: 2),
-            boxShadow: isActive ? [BoxShadow(color: activeColor.withOpacity(0.4), blurRadius: 8, spreadRadius: 2)] : [],
+            boxShadow: isActive ? [BoxShadow(color: activeColor.withAlpha(102), blurRadius: 8, spreadRadius: 2)] : [],
           ),
           child: Icon(
             icon,
@@ -211,7 +206,7 @@ class OrderTrackingScreen extends StatelessWidget {
     return Expanded(
       child: Container(
         height: 3,
-        margin: const EdgeInsets.only(bottom: 40), // Align with the center of the icons
+        margin: const EdgeInsets.only(bottom: 40),
         color: isCompleted ? Colors.orange.shade700 : Colors.grey.shade400,
       ),
     );

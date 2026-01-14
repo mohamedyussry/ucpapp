@@ -191,7 +191,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const Icon(Icons.star, color: Colors.amber, size: 20),
         const SizedBox(width: 4),
         Text(
-          double.tryParse(widget.product.averageRating)?.toStringAsFixed(1) ?? '0.0',
+          widget.product.averageRating.toStringAsFixed(1),
           style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: 4),
@@ -210,21 +210,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final regularPrice = _selectedVariation?.regularPrice ?? widget.product.regularPrice;
     final salePrice = _selectedVariation?.salePrice ?? widget.product.salePrice;
 
-    final salePriceNum = double.tryParse(salePrice?.toString() ?? '');
-    final regularPriceNum = double.tryParse(regularPrice?.toString() ?? '');
-    final priceNum = double.tryParse(price?.toString() ?? '');
-
-    double? displayPrice = priceNum;
+    double? displayPrice = price;
     double? originalPrice;
     int? discount;
 
-    if (salePriceNum != null && regularPriceNum != null && regularPriceNum > salePriceNum) {
-      displayPrice = salePriceNum;
-      originalPrice = regularPriceNum;
-      discount = ((regularPriceNum - salePriceNum) / regularPriceNum * 100).round();
-    } else if (regularPriceNum != null && regularPriceNum > 0) {
-      displayPrice = priceNum;
-      originalPrice = (priceNum != null && priceNum < regularPriceNum) ? regularPriceNum : null;
+    if (salePrice != null && regularPrice != null && regularPrice > salePrice) {
+      displayPrice = salePrice;
+      originalPrice = regularPrice;
+      discount = ((regularPrice - salePrice) / regularPrice * 100).round();
+    } else if (regularPrice != null && regularPrice > 0) {
+      displayPrice = price;
+      originalPrice = (price != null && price < regularPrice) ? regularPrice : null;
       if (originalPrice != null && displayPrice != null) {
         discount = ((originalPrice - displayPrice) / originalPrice * 100).round();
       }

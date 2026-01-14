@@ -1,155 +1,144 @@
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:myapp/home_screen.dart';
-import 'package:myapp/otp_screen.dart';
 
-class LoginScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String _username = '';
+  String _password = '';
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      try {
+        final success = await authProvider.login(_username, _password);
+        if (!success && mounted) {
+          setState(() {
+            _errorMessage = 'Invalid username or password.';
+          });
+        }
+        // On success, the AuthWrapper in main.dart will handle navigation
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'An error occurred. Please try again.';
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 50),
-                Image.asset(
-                  'assets/logo.png',
-                  height: 100,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'UCP',
-                  style: TextStyle(
-                    color: Colors.orange,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Text(
-                  'Pharmacy | صيدلية',
-                  style: TextStyle(
-                    color: Colors.orange,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                const Text(
-                  'Log in to your account',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Enter your email and Password to log in',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                _buildTextField('Mobile Number'),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (BuildContext context) => const OTPScreen(),
-                      ),
-                    );
-                  },
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Welcome Back',
+            style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Login to your account',
+            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 40),
+          if (_errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Username',
+              prefixIcon: const Icon(Icons.person_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (value) =>
+                value!.isEmpty ? 'Please enter your username' : null,
+            onSaved: (value) => _username = value!,
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Password',
+              prefixIcon: const Icon(Icons.lock_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            obscureText: true,
+            validator: (value) =>
+                value!.isEmpty ? 'Please enter your password' : null,
+            onSaved: (value) => _password = value!,
+          ),
+          const SizedBox(height: 30),
+          _isLoading
+              ? const CircularProgressIndicator(color: Colors.orange)
+              : ElevatedButton(
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Colors.orange,
                     minimumSize: const Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'log in',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
+                  child: Text('Login', style: GoogleFonts.poppins(fontSize: 18, color: Colors.white)),
                 ),
-                const SizedBox(height: 20),
-                const Text('or', style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 20),
-                _buildSocialButton(
-                    'Continue with Google', FontAwesomeIcons.google),
-                const SizedBox(height: 15),
-                _buildSocialButton('Continue with Apple', FontAwesomeIcons.apple),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account?"),
-                    TextButton(
-                      onPressed: () {
-                        // TODO: Navigate to Sign up
-                      },
-                      child: const Text(
-                        'Sign up',
-                        style: TextStyle(color: Colors.orange),
-                      ),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () {
-                     Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (BuildContext context) => const HomeScreen(),
-                    ),
-                  );
-                  },
-                  child: const Text(
-                    'continue as a guest',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ],
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/signup');
+            },
+            child: Text(
+              "Don't have an account? Sign up",
+              style: GoogleFonts.poppins(color: Colors.orange),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(String hintText) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: hintText,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialButton(String text, IconData icon) {
-    return ElevatedButton.icon(
-      onPressed: () {},
-      icon: FaIcon(icon, size: 24),
-      label: Text(text),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.black,
-        backgroundColor: Colors.grey[200],
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+          const SizedBox(height: 10),
+          TextButton(
+            onPressed: () {
+              // This is now handled by AuthWrapper, but you might want to provide
+              // a guest-browsing feature differently in the future.
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+            child: Text(
+              'Continue as Guest',
+              style: GoogleFonts.poppins(color: Colors.grey[600]),
+            ),
+          ),
+        ],
       ),
     );
   }

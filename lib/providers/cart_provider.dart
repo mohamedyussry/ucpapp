@@ -17,7 +17,7 @@ class CartItem {
   }
 
   double get subTotal {
-    final price = double.tryParse(product.price?.toString() ?? '0.0') ?? 0.0;
+    final price = product.price ?? 0.0;
     return price * quantity;
   }
 }
