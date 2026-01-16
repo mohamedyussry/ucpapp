@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:myapp/cart_screen.dart';
@@ -5,7 +6,9 @@ import 'package:myapp/home_screen.dart';
 import 'package:myapp/models/order_model.dart';
 import 'package:myapp/order_details_screen.dart';
 import 'package:myapp/order_tracking_screen.dart';
+import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/services/woocommerce_service.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class MyOrdersScreen extends StatefulWidget {
@@ -29,7 +32,10 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
-    _fetchOrders();
+    // Defer fetching until after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchOrders();
+    });
   }
 
   Future<void> _fetchOrders() async {
@@ -38,32 +44,43 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
       _errorMessage = null;
     });
 
-    try {
-      final box = await Hive.openBox('guest_order_ids');
-      final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? []).cast<int>();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    List<Map<String, dynamic>> wooOrdersData = [];
 
-      if (orderIds.isEmpty) {
-        setState(() {
-          _isLoading = false;
-        });
-        return;
+    try {
+      if (authProvider.status == AuthStatus.authenticated && authProvider.customer != null) {
+        // Fetch orders for logged-in user
+        wooOrdersData = await _wooCommerceService.getOrders(customerId: authProvider.customer!.id);
+      } else {
+        // Fetch orders for guest user
+        final box = await Hive.openBox('guest_order_ids');
+        final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? []).cast<int>();
+
+        if (orderIds.isEmpty) {
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
+        wooOrdersData = await _wooCommerceService.getOrders(orderIds: orderIds);
       }
 
-      final wooOrdersData = await _wooCommerceService.getOrdersByIds(orderIds: orderIds);
+      if (wooOrdersData.isNotEmpty) {
+        final List<Order> allOrders = wooOrdersData.map((data) => Order.fromJson(data)).toList();
 
-      final List<Order> allOrders = wooOrdersData.map((data) => Order.fromJson(data)).toList();
-
-      setState(() {
-        _ongoingOrders = allOrders.where((o) => o.status == 'processing' || o.status == 'pending').toList();
-        _completedOrders = allOrders.where((o) => o.status == 'completed').toList();
-        _cancelledOrders = allOrders.where((o) => o.status == 'cancelled' || o.status == 'failed').toList();
-        _isLoading = false;
-      });
-
+        setState(() {
+          _ongoingOrders = allOrders.where((o) => o.status == 'processing' || o.status == 'pending').toList();
+          _completedOrders = allOrders.where((o) => o.status == 'completed').toList();
+          _cancelledOrders = allOrders.where((o) => o.status == 'cancelled' || o.status == 'failed' || o.status == 'refunded').toList();
+        });
+      }
     } catch (e) {
       setState(() {
-        _isLoading = false;
         _errorMessage = 'Failed to load orders: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -108,7 +125,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
             );
           },
         ),
-        title: Text(
+        title: const Text(
           'My orders',
           style: TextStyle(
             fontFamily: 'Cinzel',
@@ -241,6 +258,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
   }
 
   Widget _buildOrdersTab(List<Order> orders, Widget Function(Order) cardBuilder, String noOrdersMessage) {
+    if (_isLoading) return _buildShimmerEffect();
     if (orders.isEmpty) {
       return Center(
         child: Column(

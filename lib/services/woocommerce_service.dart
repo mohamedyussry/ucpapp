@@ -39,10 +39,8 @@ class WooCommerceService {
       if (response.statusCode == 200 && response.data is List) {
         final List<dynamic> data = response.data;
         if (data.isNotEmpty) {
-          // A valid coupon will return a list with one item.
           return Coupon.fromJson(data.first);
         } else {
-          // An invalid coupon returns an empty list.
           return null;
         }
       } else {
@@ -72,7 +70,7 @@ class WooCommerceService {
           'first_name': firstName,
           'last_name': lastName,
           'password': password,
-          'username': email, // Use email as username for simplicity
+          'username': email, 
         },
       );
 
@@ -108,7 +106,6 @@ class WooCommerceService {
       );
 
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        // Diagnostic log
         developer.log("CUSTOMER DATA FROM SERVER: ${response.data}"); 
         return Customer.fromJson(response.data);
       } else {
@@ -154,16 +151,29 @@ class WooCommerceService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getOrders({required int customerId}) async {
+  // Combined method to get orders either by customer ID or a list of order IDs.
+  Future<List<Map<String, dynamic>>> getOrders({int? customerId, List<int>? orderIds}) async {
+    if (customerId == null && (orderIds == null || orderIds.isEmpty)) {
+      developer.log('Either customerId or a non-empty list of orderIds must be provided.');
+      return [];
+    }
+
+    final Map<String, dynamic> queryParameters = {
+      'consumer_key': Config.consumerKey,
+      'consumer_secret': Config.consumerSecret,
+      'per_page': 100,
+    };
+
+    if (customerId != null) {
+      queryParameters['customer'] = customerId;
+    } else if (orderIds != null && orderIds.isNotEmpty) {
+      queryParameters['include'] = orderIds.join(',');
+    }
+
     try {
       final response = await _dio.get(
         '/orders',
-        queryParameters: {
-          'consumer_key': Config.consumerKey,
-          'consumer_secret': Config.consumerSecret,
-          'customer': customerId,
-          'per_page': 100, // Fetch up to 100 orders
-        },
+        queryParameters: queryParameters,
       );
 
       if (response.statusCode == 200 && response.data is List) {
@@ -182,37 +192,6 @@ class WooCommerceService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getOrdersByIds({required List<int> orderIds}) async {
-    if (orderIds.isEmpty) {
-      return [];
-    }
-    try {
-      final response = await _dio.get(
-        '/orders',
-        queryParameters: {
-          'consumer_key': Config.consumerKey,
-          'consumer_secret': Config.consumerSecret,
-          'include': orderIds.join(','),
-          'per_page': 100,
-        },
-      );
-
-      if (response.statusCode == 200 && response.data is List) {
-        return List<Map<String, dynamic>>.from(response.data as List);
-      } else {
-        developer.log(
-            'Error fetching orders by IDs: Status ${response.statusCode}, Body: ${response.data}');
-        return [];
-      }
-    } on DioException catch (e, s) {
-      _handleDioError(e, s, 'fetching orders by IDs');
-      return [];
-    } catch (e, s) {
-      developer.log('Unexpected error fetching orders by IDs', error: e, stackTrace: s);
-      return [];
-    }
-  }
-
    Future<List<PaymentMethod>> getPaymentMethods() async {
     try {
       final response = await _dio.get(
@@ -226,7 +205,7 @@ class WooCommerceService {
       if (response.statusCode == 200 && response.data is List) {
         return (response.data as List)
             .map((p) => PaymentMethod.fromJson(p))
-            .where((p) => p.enabled) // Only return enabled payment methods
+            .where((p) => p.enabled) 
             .toList();
       } else {
         developer.log(
@@ -336,7 +315,6 @@ class WooCommerceService {
 
     Future<List<ShippingMethod>> getShippingMethodsForLocation(String country, String state, String postcode) async {
     try {
-      // 1. Fetch all shipping zones at once.
       final zonesResponse = await _dio.get(
         '/shipping/zones',
         queryParameters: {
@@ -353,7 +331,6 @@ class WooCommerceService {
       final List<dynamic> allZones = zonesResponse.data;
       List<ShippingMethod> availableMethods = [];
 
-      // 2. Create a list of futures to fetch methods for each zone.
       List<Future> methodFutures = [];
 
       for (var zone in allZones) {
@@ -376,10 +353,8 @@ class WooCommerceService {
         }
       }
 
-      // 3. Concurrently fetch all methods.
       final results = await Future.wait(methodFutures);
 
-      // 4. Process the results to find matching and enabled methods.
       for (var result in results) {
         if (result == null) continue;
 
@@ -392,12 +367,11 @@ class WooCommerceService {
         if (isMatch) {
           for (var methodData in methods) {
             if (methodData['enabled'] == true) {
-              // Flexible cost extraction
               final settings = methodData['settings'];
               final costString = settings?['cost']?['value']?.toString();
               final cost = (costString != null && costString.isNotEmpty) 
                             ? double.tryParse(costString) ?? 0.0 
-                            : 0.0; // Default to 0.0 for free_shipping etc.
+                            : 0.0; 
 
               availableMethods.add(ShippingMethod(
                 instanceId: methodData['instance_id'],
@@ -411,9 +385,8 @@ class WooCommerceService {
         }
       }
 
-       // Also check the "Rest of the World" zone (ID 0)
       final restOfTheWorldMethods = await _getZoneMethods(0);
-      if (!_isCountryInAnyZone(allZones, country)) { // only add if country is not in any other zone
+      if (!_isCountryInAnyZone(allZones, country)) { 
           for (var methodData in restOfTheWorldMethods) {
               if (methodData['enabled'] == true) {
                   final settings = methodData['settings'];
@@ -458,20 +431,16 @@ class WooCommerceService {
             .map((s) => CountryState.fromJson(s))
             .toList();
       }
-      // If the response is not what we expect, throw a formatted error
       throw 'Failed to fetch states for $countryCode. Status: ${response.statusCode}, Body: ${response.data}';
 
     } on DioException catch (e) {
-      // Re-throw a more informative exception
       throw 'Failed to connect to the server while fetching states for $countryCode. Error: ${e.response?.data ?? e.message}';
     } catch (e) {
-      // Re-throw any other exceptions
       throw 'An unexpected error occurred while fetching states: $e';
     }
   }
 
 
-  // Helper to get locations for a zone
   Future<List<dynamic>> _getZoneLocations(int zoneId) async {
       try {
           final response = await _dio.get(
@@ -487,7 +456,6 @@ class WooCommerceService {
       }
   }
 
-  // Helper to get methods for a zone
   Future<List<dynamic>> _getZoneMethods(int zoneId) async {
       try {
           final response = await _dio.get(
@@ -503,15 +471,10 @@ class WooCommerceService {
       }
   }
 
-  // Helper to check if a country is in any of the defined zones
   bool _isCountryInAnyZone(List<dynamic> zones, String countryCode) {
-      // This is a simplification. A full implementation requires fetching locations for each zone.
-      // For now, we assume if there are zones, the country might be in one.
-      // This logic needs to be more robust for a production app.
-      return false; // Re-evaluate this logic based on how locations are fetched.
+      return false; 
   }
 
-  // Refactored location matching logic
   bool _isLocationInZone(List<dynamic> zoneLocations, String country, String state, String postcode) {
       if (zoneLocations.isEmpty) return false;
 
@@ -524,11 +487,9 @@ class WooCommerceService {
                   if (code == country) return true;
                   break;
               case 'state':
-                  // WooCommerce stores state codes as `COUNTRY:STATE`
                   if (code.contains(':') && code == '$country:$state') return true;
                   break;
               case 'postcode':
-                  // Postcode matching can be complex (wildcards, ranges). This is a simple check.
                   if (code == postcode) return true;
                   break;
           }
@@ -547,19 +508,18 @@ class WooCommerceService {
         },
       );
       if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        // The API returns a map with a 'symbol' key.
         return response.data['symbol'] as String;
       } else {
         developer.log(
             'Error fetching currency symbol: Status ${response.statusCode}, Body: ${response.data}');
-        return ''; // Return empty string on failure
+        return ''; 
       }
     } on DioException catch (e, s) {
       _handleDioError(e, s, 'fetching currency symbol');
-      return ''; // Return empty string on failure
+      return ''; 
     } catch (e, s) {
       developer.log('Unexpected error fetching currency symbol', error: e, stackTrace: s);
-      return ''; // Return empty string on failure
+      return ''; 
     }
   }
 
