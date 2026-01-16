@@ -8,17 +8,26 @@ import 'providers/cart_provider.dart';
 import 'checkout_screen.dart'; // Import the new checkout screen
 import 'widgets/custom_bottom_nav_bar.dart'; // Import the custom bottom nav bar
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  final _couponController = TextEditingController();
+
+  @override
+  void dispose() {
+    _couponController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final currencyProvider = Provider.of<CurrencyProvider>(context);
-    // Dummy discount for design purposes
-    const double discount = 25.0;
-    final double subtotal = cart.totalAmount;
-    final double total = subtotal > discount ? subtotal - discount : 0;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -37,12 +46,6 @@ class CartScreen extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black),
-          ),
-        ],
       ),
       body: cart.items.isEmpty
           ? Center(
@@ -74,11 +77,11 @@ class CartScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 20),
-                  _buildCheckoutForm(context, subtotal, discount, total, currencyProvider, cart),
+                  _buildCheckoutForm(context, cart, currencyProvider),
                 ],
               ),
             ),
-        bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
     );
   }
 
@@ -221,7 +224,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCheckoutForm(BuildContext context, double subtotal, double discount, double total, CurrencyProvider currencyProvider, CartProvider cart) {
+  Widget _buildCheckoutForm(BuildContext context, CartProvider cart, CurrencyProvider currencyProvider) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -232,18 +235,92 @@ class CartScreen extends StatelessWidget {
         children: [
           _buildTextFieldWithIcon(hint: 'attach picture of prescriptions', icon: Icons.camera_alt_outlined),
           const SizedBox(height: 12),
-          _buildDiscountCodeField(),
+          _buildDiscountCodeSection(cart),
           const SizedBox(height: 20),
-          _buildPriceSummaryRow('Sub total :', subtotal, currencyProvider),
-          const SizedBox(height: 8),
-          _buildPriceSummaryRow('Discount :', discount, currencyProvider),
+          _buildPriceSummaryRow('Sub total :', cart.subtotal, currencyProvider),
+          if (cart.discountAmount > 0) ...[
+            const SizedBox(height: 8),
+            _buildPriceSummaryRow('Discount :', cart.discountAmount, currencyProvider, isDiscount: true),
+          ],
           const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
-          _buildPriceSummaryRow('Total :', total, currencyProvider, isTotal: true),
+          _buildPriceSummaryRow('Total :', cart.totalAmount, currencyProvider, isTotal: true),
           const SizedBox(height: 20),
           _buildCheckoutButton(context, cart),
         ],
       ),
     );
+  }
+
+  Widget _buildDiscountCodeSection(CartProvider cart) {
+    if (cart.appliedCoupon != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.green[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.shade200),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Coupon applied: ${cart.appliedCoupon!.code}',
+              style: GoogleFonts.poppins(color: Colors.green.shade800, fontWeight: FontWeight.w600),
+            ),
+            IconButton(
+              icon: Icon(Icons.clear, color: Colors.green.shade700),
+              onPressed: () {
+                cart.removeCoupon();
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _couponController,
+            decoration: InputDecoration(
+              hintText: 'Enter Discount Code',
+              hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
+              filled: true,
+              fillColor: Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              suffixIcon: cart.isApplyingCoupon
+                  ? const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : TextButton(
+                      onPressed: () {
+                        if (_couponController.text.isNotEmpty) {
+                          cart.applyCoupon(_couponController.text.trim());
+                        }
+                      },
+                      child: Text(
+                        'Apply',
+                        style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+            ),
+          ),
+          if (cart.couponErrorMessage != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+              child: Text(
+                cart.couponErrorMessage!,
+                style: GoogleFonts.poppins(color: Colors.red, fontSize: 12),
+              ),
+            ),
+        ],
+      );
+    }
   }
 
   Widget _buildTextFieldWithIcon({required String hint, required IconData icon}) {
@@ -263,30 +340,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDiscountCodeField() {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: 'Enter Discount Code',
-        hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        suffixIcon: TextButton(
-          onPressed: () {},
-          child: Text(
-            'Apply',
-            style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPriceSummaryRow(String title, double amount, CurrencyProvider currencyProvider, {bool isTotal = false}) {
+  Widget _buildPriceSummaryRow(String title, double amount, CurrencyProvider currencyProvider, {bool isTotal = false, bool isDiscount = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -295,17 +349,26 @@ class CartScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isTotal ? Colors.black : Colors.grey[600],
+            color: isDiscount ? Colors.green.shade700 : (isTotal ? Colors.black : Colors.grey[600]),
           ),
         ),
         Row(
           children: [
+             if (isDiscount)
+              Text(
+                '-', // Add a minus sign for the discount
+                style: GoogleFonts.poppins(
+                  fontSize: isTotal ? 18 : 14,
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
+                  color: Colors.green.shade700,
+                ),
+              ),
             Text(
               '${amount.toStringAsFixed(2)} ',
               style: GoogleFonts.poppins(
                 fontSize: isTotal ? 18 : 14,
                 fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-                color: Colors.black,
+                color: isDiscount ? Colors.green.shade700 : Colors.black,
               ),
             ),
             _buildCurrencyDisplay(currencyProvider),

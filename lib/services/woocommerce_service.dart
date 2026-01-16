@@ -1,10 +1,11 @@
 
 import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
+import 'package:myapp/models/coupon_model.dart';
 import 'package:myapp/models/customer_model.dart';
 import 'package:myapp/models/payment_method_model.dart';
+import 'package:myapp/models/shipping_method_model.dart';
 import 'package:myapp/models/state_model.dart';
-import 'package:myapp/providers/checkout_provider.dart';
 import '../config.dart';
 import '../models/order_payload_model.dart';
 import '../models/product_model.dart';
@@ -22,6 +23,39 @@ class WooCommerceService {
         },
       ),
     );
+  }
+
+  Future<Coupon?> validateCoupon(String code) async {
+    try {
+      final response = await _dio.get(
+        '/coupons',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'code': code,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        final List<dynamic> data = response.data;
+        if (data.isNotEmpty) {
+          // A valid coupon will return a list with one item.
+          return Coupon.fromJson(data.first);
+        } else {
+          // An invalid coupon returns an empty list.
+          return null;
+        }
+      } else {
+        developer.log('Error validating coupon: Status ${response.statusCode}, Body: ${response.data}');
+        return null;
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'validating coupon');
+      return null;
+    } catch (e, s) {
+      developer.log('Unexpected error validating coupon', error: e, stackTrace: s);
+      return null;
+    }
   }
 
   Future<bool> createCustomer(

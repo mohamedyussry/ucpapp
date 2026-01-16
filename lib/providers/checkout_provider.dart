@@ -1,57 +1,42 @@
 
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:myapp/models/payment_method_model.dart';
+import 'package:myapp/models/shipping_method_model.dart';
 import 'package:myapp/models/state_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
-import 'dart:developer' as developer;
-import 'package:dio/dio.dart'; // Import Dio
-import 'package:myapp/config.dart'; // Import Config
-
-class ShippingMethod {
-  final int instanceId;
-  final String title;
-  final String methodId;
-  final double cost;
-  final String zoneName;
-
-  ShippingMethod({
-    required this.instanceId,
-    required this.title,
-    required this.methodId,
-    required this.cost,
-    required this.zoneName,
-  });
-}
 
 class CheckoutProvider with ChangeNotifier {
   final WooCommerceService _wooCommerceService = WooCommerceService();
-
-  int _currentPage = 0;
   final PageController pageController = PageController();
 
+  int _currentPage = 0;
+  List<CountryState> _states = [];
+  String? _selectedStateCode;
   List<ShippingMethod> _shippingMethods = [];
   ShippingMethod? _selectedShippingMethod;
   List<PaymentMethod> _paymentMethods = [];
   PaymentMethod? _selectedPaymentMethod;
-  List<CountryState> _states = [];
-  String? _selectedStateCode;
 
-  double _subtotal = 0;
-  final double _tax = 0;
+  double _subtotal = 0.0;
+  double _shippingCost = 0.0;
+  final double _tax = 0.0;
+
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Getters
   int get currentPage => _currentPage;
+  List<CountryState> get states => _states;
+  String? get selectedStateCode => _selectedStateCode;
   List<ShippingMethod> get shippingMethods => _shippingMethods;
   ShippingMethod? get selectedShippingMethod => _selectedShippingMethod;
   List<PaymentMethod> get paymentMethods => _paymentMethods;
   PaymentMethod? get selectedPaymentMethod => _selectedPaymentMethod;
-  List<CountryState> get states => _states;
-  String? get selectedStateCode => _selectedStateCode;
-  double get shippingCost => _selectedShippingMethod?.cost ?? 0;
-  double get tax => _tax;
   double get subtotal => _subtotal;
-  double get total => _subtotal + shippingCost + tax;
+  double get shippingCost => _shippingCost;
+  double get tax => _tax;
+  double get total => _subtotal + _shippingCost + _tax;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -60,9 +45,9 @@ class CheckoutProvider with ChangeNotifier {
   }
 
   void _initializePaymentMethods() {
+    // Paymob has been removed from the hardcoded list.
     _paymentMethods = [
       PaymentMethod(id: 'cod', title: 'Cash on Delivery', description: 'Pay with cash upon delivery.', enabled: true),
-      PaymentMethod(id: 'paymob', title: 'Paymob', description: 'Pay with credit card via Paymob.', enabled: true),
     ];
     _selectedPaymentMethod = _paymentMethods.first;
     notifyListeners();
@@ -88,106 +73,69 @@ class CheckoutProvider with ChangeNotifier {
       ]);
     }
 
-    developer.log('Checkout initialization complete.');
     setLoading(false);
+    developer.log('Checkout initialization finished.');
   }
 
-  Future<void> fetchShippingMethods(String country, String state, String postcode) async {
-    _shippingMethods = [];
-    _selectedShippingMethod = null;
-    
+  Future<void> fetchStates(String countryCode) async {
     try {
-      _shippingMethods = await _wooCommerceService.getShippingMethodsForLocation(country, state, postcode);
+      final fetchedStates = await _wooCommerceService.getStatesForCountry(countryCode);
+      _states = fetchedStates;
+      if (_states.isNotEmpty) {
+        _selectedStateCode = _states.first.code;
+        developer.log('States fetched. Default state: $_selectedStateCode');
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to load regions: ${e.toString()}';
+      developer.log(_errorMessage!);
+    }
+  }
+
+  Future<void> fetchShippingMethods(
+      String country, String state, String postcode) async {
+    try {
+      final methods = await _wooCommerceService.getShippingMethodsForLocation(
+          country, state, postcode);
+      _shippingMethods = methods;
       if (_shippingMethods.isNotEmpty) {
         _selectedShippingMethod = _shippingMethods.first;
+        _shippingCost = _selectedShippingMethod!.cost;
+        developer
+            .log('Shipping methods fetched. Default: ${_selectedShippingMethod?.title}');
+      } else {
+        _shippingCost = 0.0;
+        developer.log('No shipping methods available for the selected location.');
       }
-      developer.log('Fetched ${_shippingMethods.length} shipping methods for state $state.');
     } catch (e) {
-      developer.log("Error fetching shipping methods: $e");
-      _errorMessage = 'Error fetching shipping methods: $e';
-      _shippingMethods = [];
-      _selectedShippingMethod = null;
+      _errorMessage = 'Failed to load shipping options: ${e.toString()}';
+      developer.log(_errorMessage!);
     }
   }
 
-  // RADICAL CHANGE: Directly fetch states within the provider to bypass service interaction issues.
-  Future<void> fetchStates(String countryCode) async {
-    final Dio dio = Dio(
-      BaseOptions(
-        baseUrl: '${Config.wooCommerceUrl}/wp-json/wc/v3',
-        headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-        },
-      ),
-    );
-
-    try {
-      final response = await dio.get(
-        '/data/countries/$countryCode',
-        queryParameters: {
-          'consumer_key': Config.consumerKey,
-          'consumer_secret': Config.consumerSecret,
-        },
-      );
-
-      if (response.statusCode == 200 && response.data['states'] is List) {
-        _states = (response.data['states'] as List)
-            .map((s) => CountryState.fromJson(s))
-            .toList();
-         if (_states.isNotEmpty) {
-            _selectedStateCode = _states.first.code;
-         } else {
-            _selectedStateCode = null;
-         }
-        _errorMessage = null;
-        developer.log('Fetched ${_states.length} states directly. Default selected: $_selectedStateCode');
-      } else {
-        throw 'Failed to fetch states for $countryCode. Status: ${response.statusCode}, Body: ${response.data}';
-      }
-
-    } catch (e) {
-      developer.log("Error fetching states directly: $e");
-      _errorMessage = e.toString(); // Capture the specific error message
-      _states = [];
-      _selectedStateCode = null;
-    }
+  void selectState(String stateCode) {
+    _selectedStateCode = stateCode;
+    developer.log('State selected: $stateCode');
+    // Refetch shipping methods for the new state.
+    fetchShippingMethods('SA', stateCode, '');
+    notifyListeners();
   }
 
   void selectShippingMethod(ShippingMethod method) {
-    if (_selectedShippingMethod?.instanceId != method.instanceId) {
-      _selectedShippingMethod = method;
-      notifyListeners();
-    }
+    _selectedShippingMethod = method;
+    _shippingCost = method.cost;
+    notifyListeners();
   }
 
   void selectPaymentMethod(PaymentMethod method) {
-    if (_selectedPaymentMethod?.id != method.id) {
-      _selectedPaymentMethod = method;
-      notifyListeners();
-    }
-  }
-
-  Future<void> selectState(String stateCode) async {
-    if (_selectedStateCode != stateCode) {
-      setLoading(true);
-      _selectedStateCode = stateCode;
-      _errorMessage = null; // Clear error on new selection
-      developer.log('State selected: $stateCode. Refetching shipping methods.');
-      await fetchShippingMethods('SA', stateCode, '');
-      setLoading(false);
-    }
-  }
-
-  void setLoading(bool value) {
-    _isLoading = value;
+    _selectedPaymentMethod = method;
     notifyListeners();
   }
 
   void nextPage() {
     if (_currentPage < 2) {
       _currentPage++;
-      pageController.animateToPage(_currentPage, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      pageController.animateToPage(_currentPage,
+          duration: const Duration(milliseconds: 300), curve: Curves.ease);
       notifyListeners();
     }
   }
@@ -195,9 +143,15 @@ class CheckoutProvider with ChangeNotifier {
   void previousPage() {
     if (_currentPage > 0) {
       _currentPage--;
-      pageController.animateToPage(_currentPage, duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      pageController.animateToPage(_currentPage,
+          duration: const Duration(milliseconds: 300), curve: Curves.ease);
       notifyListeners();
     }
+  }
+
+  void setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
   }
 
   @override

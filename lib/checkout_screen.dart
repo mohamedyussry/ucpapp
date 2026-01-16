@@ -10,7 +10,6 @@ import 'package:provider/provider.dart';
 import '../models/order_payload_model.dart';
 import '../providers/cart_provider.dart';
 import '../services/woocommerce_service.dart';
-import 'package:flutter_paymob/flutter_paymob.dart';
 import 'package:hive/hive.dart';
 
 class CheckoutScreen extends StatelessWidget {
@@ -82,54 +81,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
       return;
     }
 
-    if (checkoutProvider.selectedPaymentMethod!.id == 'paymob') {
-      _handlePaymobPayment();
-    } else {
-      _createWooCommerceOrder();
-    }
+    // As Paymob is removed, we directly create the order.
+    _createWooCommerceOrder();
   }
-
-  Future<void> _handlePaymobPayment() async {
-    setState(() {
-      _isPlacingOrder = true;
-    });
-
-    try {
-      final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
-      if (!mounted) return;
-
-      final isSuccess = await FlutterPaymob.instance.payWithCard(
-        context: context,
-        currency: 'EGP',
-        amount: checkoutProvider.total,
-      );
-
-      if (isSuccess) {
-        final tempTransactionId = 'paymob_success_${DateTime.now().millisecondsSinceEpoch}';
-        _createWooCommerceOrder(isPaid: true, transactionId: tempTransactionId);
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment failed or was cancelled. Please try again.')),
-        );
-         if (mounted) {
-          setState(() {
-            _isPlacingOrder = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: $e')),
-        );
-        setState(() {
-          _isPlacingOrder = false;
-        });
-      }
-    }
-  }
-
 
   Future<void> _createWooCommerceOrder({bool isPaid = false, String? transactionId}) async {
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
