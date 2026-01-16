@@ -19,10 +19,7 @@ class CheckoutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CheckoutProvider(),
-      child: _CheckoutScreenView(categoryName: categoryName),
-    );
+    return _CheckoutScreenView(categoryName: categoryName);
   }
 }
 
@@ -39,7 +36,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
   final _formKey = GlobalKey<FormState>();
   bool _isPlacingOrder = false;
 
-  final _billingFullNameController = TextEditingController();
+  final _billingFirstNameController = TextEditingController();
+  final _billingLastNameController = TextEditingController();
   final _billingAddress1Controller = TextEditingController();
   final _billingEmailController = TextEditingController();
   final _billingPhoneController = TextEditingController();
@@ -49,13 +47,19 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeCheckoutData();
+      // Reset the provider and then initialize data
+      final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
+      checkoutProvider.reset();
+      
+      _initializeCheckoutData(checkoutProvider);
+      _populateFieldsFromProvider(checkoutProvider);
     });
   }
 
   @override
   void dispose() {
-    _billingFullNameController.dispose();
+    _billingFirstNameController.dispose();
+    _billingLastNameController.dispose();
     _billingAddress1Controller.dispose();
     _billingEmailController.dispose();
     _billingPhoneController.dispose();
@@ -63,54 +67,62 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     super.dispose();
   }
 
-  void _initializeCheckoutData() {
+  void _initializeCheckoutData(CheckoutProvider checkoutProvider) {
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
-    final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
     checkoutProvider.updateSubtotal(cartProvider.totalAmount);
     checkoutProvider.initializeCheckout('SA', '');
   }
 
+  void _populateFieldsFromProvider(CheckoutProvider checkoutProvider) {
+    final orderData = checkoutProvider.orderData;
+    _billingFirstNameController.text = orderData.billingFirstName ?? '';
+    _billingLastNameController.text = orderData.billingLastName ?? '';
+    _billingEmailController.text = orderData.billingEmail ?? '';
+    // Populate other fields as needed
+  }
+
   Future<void> _placeOrder() async {
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
-
-    if (checkoutProvider.paymentMethods.isNotEmpty && checkoutProvider.selectedPaymentMethod == null) {
+    if (checkoutProvider.selectedPaymentMethod == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a payment method.')),
       );
       return;
     }
-
-    // As Paymob is removed, we directly create the order.
-    _createWooCommerceOrder();
+    final status = checkoutProvider.selectedPaymentMethod!.id == 'cod' ? 'processing' : 'pending';
+    _createWooCommerceOrder(status: status);
   }
 
-  Future<void> _createWooCommerceOrder({bool isPaid = false, String? transactionId}) async {
+  Future<void> _createWooCommerceOrder({bool isPaid = false, String? transactionId, String? status}) async {
     final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
     final wooCommerceService = WooCommerceService();
 
-    if (!_isPlacingOrder) {
-      setState(() {
-        _isPlacingOrder = true;
-      });
-    }
+    setState(() {
+      _isPlacingOrder = true;
+    });
 
-    final fullName = _billingFullNameController.text.trim();
-    final nameParts = fullName.split(' ');
-    final firstName = nameParts.isNotEmpty ? nameParts.first : fullName;
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '.';
+    final orderData = checkoutProvider.orderData;
+    orderData.billingFirstName = _billingFirstNameController.text.trim();
+    orderData.billingLastName = _billingLastNameController.text.trim();
+    orderData.billingAddress1 = _billingAddress1Controller.text.trim();
+    orderData.billingCity = checkoutProvider.selectedStateCode ?? '';
+    orderData.billingState = checkoutProvider.selectedStateCode ?? '';
+    orderData.billingCountry = 'SA';
+    orderData.billingEmail = _billingEmailController.text.trim();
+    orderData.billingPhone = _billingPhoneController.text.trim();
 
     final billingInfo = BillingInfo(
-      firstName: firstName,
-      lastName: lastName,
-      address1: _billingAddress1Controller.text,
-      city: checkoutProvider.selectedStateCode ?? '',
-      state: checkoutProvider.selectedStateCode ?? '',
-      postcode: '',
-      country: 'SA',
-      email: _billingEmailController.text,
-      phone: _billingPhoneController.text,
+      firstName: orderData.billingFirstName ?? '',
+      lastName: orderData.billingLastName ?? '.', // Default to '.' if empty
+      address1: orderData.billingAddress1 ?? '',
+      city: orderData.billingCity ?? '',
+      state: orderData.billingState ?? '',
+      postcode: '', 
+      country: orderData.billingCountry ?? 'SA',
+      email: orderData.billingEmail ?? '',
+      phone: orderData.billingPhone ?? '',
     );
 
     final shippingInfo = ShippingInfo.fromBilling(billingInfo);
@@ -118,12 +130,14 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     final selectedPayment = checkoutProvider.selectedPaymentMethod!;
 
     final orderPayload = OrderPayload(
+      customerId: orderData.customerId, 
       paymentMethod: selectedPayment.id,
       paymentMethodTitle: selectedPayment.title,
       setPaid: isPaid,
       billing: billingInfo,
       shipping: shippingInfo,
       transactionId: transactionId,
+      status: status, 
       lineItems: cartProvider.items.values
           .map((item) => LineItem(productId: item.product.id, quantity: item.quantity))
           .toList(),
@@ -140,8 +154,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);
-
-    if (orderResponse != null && orderResponse['id'] != null) {
+    
+    if (orderResponse != null && orderResponse['id'] != null && orderData.customerId == null) {
       final orderId = orderResponse['id'] as int;
       final box = await Hive.openBox('guest_order_ids');
       final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? []).cast<int>();
@@ -221,7 +235,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
 
   Widget _buildStepper(int currentPage) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(3, (index) {
@@ -261,12 +275,18 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionTitle('Shipping Details'),
-            _buildTextField(_billingFullNameController, 'Full Name'),
+            Row(
+              children: [
+                Expanded(child: _buildTextField(_billingFirstNameController, 'First Name')),
+                const SizedBox(width: 10),
+                Expanded(child: _buildTextField(_billingLastNameController, 'Last Name')),
+              ],
+            ),
             const SizedBox(height: 10),
             _buildTextField(_billingAddress1Controller, 'Address'),
             const SizedBox(height: 10),
             _buildStateDropdown(checkout),
-             const SizedBox(height: 10),
+            const SizedBox(height: 10),
             _buildTextField(_billingPhoneController, 'Phone', keyboardType: TextInputType.phone),
             const SizedBox(height: 10),
             _buildTextField(_billingEmailController, 'Email', keyboardType: TextInputType.emailAddress, isOptional: true),
@@ -282,11 +302,11 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           _buildSectionTitle('Review Shipping Details'),
+          _buildSectionTitle('Review Shipping Details'),
           _buildReviewCard(
             title: 'Shipping To',
-            content: 
-                '${_billingFullNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
+            content:
+                '${_billingFirstNameController.text} ${_billingLastNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
           ),
           const SizedBox(height: 20),
           _buildSectionTitle('Payment Method'),
@@ -309,7 +329,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
           _buildReviewCard(
             title: 'Shipping To',
             content:
-                '${_billingFullNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
+                '${_billingFirstNameController.text} ${_billingLastNameController.text}\n${_billingAddress1Controller.text}\n${checkout.selectedStateCode ?? ''}',
           ),
           const SizedBox(height: 10),
           _buildReviewCard(
@@ -338,7 +358,13 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
         onPressed: () {
           if (isFirstPage) {
             if (_formKey.currentState!.validate()) {
-              checkout.nextPage();
+              final checkoutProvider = Provider.of<CheckoutProvider>(context, listen: false);
+              checkoutProvider.orderData.billingFirstName = _billingFirstNameController.text;
+              checkoutProvider.orderData.billingLastName = _billingLastNameController.text;
+              checkoutProvider.orderData.billingAddress1 = _billingAddress1Controller.text;
+              checkoutProvider.orderData.billingPhone = _billingPhoneController.text;
+              checkoutProvider.orderData.billingEmail = _billingEmailController.text;
+              checkoutProvider.nextPage();
             }
           } else if (isLastPage) {
             _placeOrder();
@@ -380,6 +406,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
       validator: (value) {
         if (!isOptional && (value == null || value.isEmpty)) {
           return 'Please enter $label';
+        }
+        if (label == 'Email' && !isOptional && value != null && !RegExp(r"^\S+@\S+\.\S+$").hasMatch(value)) {
+          return 'Please enter a valid email address';
         }
         return null;
       },
@@ -441,7 +470,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     );
   }
 
-   Widget _buildReviewCard({required String title, required String content}) {
+  Widget _buildReviewCard({required String title, required String content}) {
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -462,7 +491,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
 
   Widget _buildOrderSummaryCard(CheckoutProvider checkout, CurrencyProvider currencyProvider) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -478,14 +507,21 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('${item.product.name} (x${item.quantity})'),
+                    Expanded(
+                      child: Text('${item.product.name} (x${item.quantity})', overflow: TextOverflow.ellipsis),
+                    ),
                     Text('${currencyProvider.currencySymbol}${lineTotal.toStringAsFixed(2)}'),
                   ],
                 ),
               );
             }),
             const Divider(height: 20, thickness: 1),
-            _buildSummaryRow('Subtotal', checkout.subtotal, currencyProvider),
+            _buildSummaryRow('Subtotal', cart.subtotal, currencyProvider),
+             if (cart.discountAmount > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: _buildSummaryRow('Discount', cart.discountAmount, currencyProvider, isDiscount: true),
+              ),
             const SizedBox(height: 8),
             _buildSummaryRow('Shipping', checkout.shippingCost, currencyProvider),
             const SizedBox(height: 8),
@@ -498,15 +534,20 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView> {
     );
   }
 
-  Widget _buildSummaryRow(String label, double amount, CurrencyProvider currencyProvider, {bool isTotal = false}) {
+  Widget _buildSummaryRow(String label, double amount, CurrencyProvider currencyProvider, {bool isTotal = false, bool isDiscount = false}) {
     final style = GoogleFonts.poppins(
-        fontSize: isTotal ? 16 : 14,
-        fontWeight: isTotal ? FontWeight.bold : FontWeight.normal);
+      fontSize: isTotal ? 16 : 14,
+      fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+      color: isDiscount ? Colors.green.shade700 : Colors.black,
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: style),
-        Text('${currencyProvider.currencySymbol}${amount.toStringAsFixed(2)}', style: style),
+        Text(
+          (isDiscount ? '- ' : '') + '${currencyProvider.currencySymbol}${amount.toStringAsFixed(2)}',
+          style: style,
+        ),
       ],
     );
   }

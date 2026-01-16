@@ -4,11 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:myapp/models/payment_method_model.dart';
 import 'package:myapp/models/shipping_method_model.dart';
 import 'package:myapp/models/state_model.dart';
+import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/services/woocommerce_service.dart';
+
+// A simple data class for the order
+class OrderData {
+  int? customerId;
+  String? billingFirstName;
+  String? billingLastName;
+  String? billingEmail;
+  String? billingPhone;
+  String? billingAddress1;
+  String? billingCity;
+  String? billingState;
+  String? billingPostcode;
+  String? billingCountry;
+}
 
 class CheckoutProvider with ChangeNotifier {
   final WooCommerceService _wooCommerceService = WooCommerceService();
+  final AuthProvider? _authProvider;
   final PageController pageController = PageController();
+  final OrderData orderData = OrderData();
 
   int _currentPage = 0;
   List<CountryState> _states = [];
@@ -40,12 +57,50 @@ class CheckoutProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  CheckoutProvider() {
+  CheckoutProvider(this._authProvider) {
     _initializePaymentMethods();
+    _autofillUserDetails();
+  }
+
+  void reset() {
+    _currentPage = 0;
+    if (pageController.hasClients) {
+      pageController.jumpToPage(0);
+    }
+    // Reset other checkout-specific state
+    _states = [];
+    _selectedStateCode = null;
+    _shippingMethods = [];
+    _selectedShippingMethod = null;
+    _shippingCost = 0.0;
+    _errorMessage = null;
+    
+    // Re-autofill user details in case the user has changed
+    _autofillUserDetails();
+
+    notifyListeners();
+    developer.log('CheckoutProvider has been reset.');
+  }
+
+  void _autofillUserDetails() {
+    if (_authProvider != null && _authProvider.status == AuthStatus.authenticated) {
+      final user = _authProvider.customer;
+      orderData.customerId = user?.id;
+      orderData.billingFirstName = user?.firstName;
+      orderData.billingLastName = user?.lastName;
+      orderData.billingEmail = user?.email;
+      developer.log('Autofilled user details for user ID: ${user?.id}');
+    } else {
+      // Clear details if user is logged out
+      orderData.customerId = null;
+      orderData.billingFirstName = null;
+      orderData.billingLastName = null;
+      orderData.billingEmail = null;
+    }
+    notifyListeners();
   }
 
   void _initializePaymentMethods() {
-    // Paymob has been removed from the hardcoded list.
     _paymentMethods = [
       PaymentMethod(id: 'cod', title: 'Cash on Delivery', description: 'Pay with cash upon delivery.', enabled: true),
     ];
@@ -60,12 +115,11 @@ class CheckoutProvider with ChangeNotifier {
 
   Future<void> initializeCheckout(String country, String postcode) async {
     setLoading(true);
-    _errorMessage = null; // Clear previous errors
+    _errorMessage = null;
     developer.log('Initializing checkout...');
 
     await fetchStates(country);
 
-    // Only fetch shipping/payment if states were fetched successfully
     if (_errorMessage == null) {
       await Future.wait([
         if (_selectedStateCode != null)
@@ -114,8 +168,8 @@ class CheckoutProvider with ChangeNotifier {
 
   void selectState(String stateCode) {
     _selectedStateCode = stateCode;
+    orderData.billingState = stateCode;
     developer.log('State selected: $stateCode');
-    // Refetch shipping methods for the new state.
     fetchShippingMethods('SA', stateCode, '');
     notifyListeners();
   }

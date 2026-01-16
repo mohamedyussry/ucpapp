@@ -37,7 +37,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => CurrencyProvider(wooCommerceService)),
-        ChangeNotifierProvider(create: (_) => CheckoutProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, CheckoutProvider>(
+          create: (_) => CheckoutProvider(null),
+          update: (_, auth, previous) => CheckoutProvider(auth),
+        ),
       ],
       child: MaterialApp(
         title: 'UCP Pharmacy',
