@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:myapp/models/product_model.dart';
@@ -18,17 +19,35 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   late final WooCommerceService _wooCommerceService;
-  late Future<List<WooProduct>> _productsFuture;
+  List<WooProduct> _allProducts = [];
+  List<WooProduct> _filteredProducts = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _wooCommerceService = WooCommerceService();
-    _productsFuture = _fetchProductsForCategory();
+    _fetchProductsForCategory();
+    _searchController.addListener(_onSearchChanged);
   }
 
-  Future<List<WooProduct>> _fetchProductsForCategory() async {
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchProductsForCategory() async {
     try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
       final categories = await _wooCommerceService.getCategories();
       WooProductCategory? targetCategory;
       for (final cat in categories) {
@@ -39,14 +58,42 @@ class _ProductsScreenState extends State<ProductsScreen> {
       }
 
       if (targetCategory != null) {
-        return _wooCommerceService.getProducts(categoryId: targetCategory.id);
+        final products = await _wooCommerceService.getProducts(categoryId: targetCategory.id);
+        setState(() {
+          _allProducts = products;
+          _filteredProducts = products;
+          _isLoading = false;
+        });
       } else {
-        return [];
+        setState(() {
+          _allProducts = [];
+          _filteredProducts = [];
+          _isLoading = false;
+        });
       }
     } catch (e, s) {
       developer.log('An error occurred in _fetchProductsForCategory', error: e, stackTrace: s);
-      return [];
+      setState(() {
+        _errorMessage = 'Failed to load products. Please try again later.';
+        _isLoading = false;
+      });
     }
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _filterProducts();
+    });
+  }
+
+  void _filterProducts() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      _filteredProducts = _allProducts.where((product) {
+        return product.name.toLowerCase().contains(query);
+      }).toList();
+    });
   }
 
   @override
@@ -65,15 +112,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search Products',
                   prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: () {
-                      // Handle filter button press
-                    },
-                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.filter_list),
+                          onPressed: () {
+                            // Handle filter button press
+                          },
+                        ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -84,39 +139,43 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
             ),
             Expanded(
-              child: FutureBuilder<List<WooProduct>>(
-                future: _productsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No products found.'));
-                  } else {
-                    final products = snapshot.data!;
-                    return GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.7,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-                        return ProductCard(product: product);
-                      },
-                    );
-                  }
-                },
-              ),
+              child: _buildProductGrid(),
             ),
           ],
         ),
       ),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
+    );
+  }
+
+  Widget _buildProductGrid() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)));
+    }
+
+    if (_filteredProducts.isEmpty) {
+      if (_searchController.text.isNotEmpty) {
+        return const Center(child: Text('No products found matching your search.'));
+      }
+      return const Center(child: Text('No products available in this category.'));
+    }
+
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _filteredProducts.length,
+      itemBuilder: (context, index) {
+        final product = _filteredProducts[index];
+        return ProductCard(product: product);
+      },
     );
   }
 }

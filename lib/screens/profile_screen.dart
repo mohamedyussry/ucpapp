@@ -155,8 +155,6 @@ class ProfileScreen extends StatelessWidget {
                   _buildSection('My Account', [
                     _buildProfileOption(icon: FontAwesomeIcons.user, title: 'Personal Information'),
                     _buildProfileOption(icon: FontAwesomeIcons.box, title: 'My Orders'),
-                    _buildProfileOption(icon: FontAwesomeIcons.arrowsRotate, title: 'Return/Exchange'),
-                    _buildProfileOption(icon: FontAwesomeIcons.percent, title: 'My Points'),
                     _buildProfileOption(
                         icon: FontAwesomeIcons.globe,
                         title: 'Language',
