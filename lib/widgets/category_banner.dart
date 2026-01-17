@@ -5,18 +5,21 @@ import 'package:video_player/video_player.dart';
 class CategoryBanner extends StatefulWidget {
   final String title;
   final String subtitle;
-  final String videoAsset;
+  final String? videoAsset;
   final bool showFloatingIcon;
   final VoidCallback? onTap;
+  final VideoPlayerController? controller; // Accept an external controller
 
   const CategoryBanner({
     super.key,
     required this.title,
     required this.subtitle,
-    required this.videoAsset,
+    this.videoAsset,
     this.showFloatingIcon = false,
     this.onTap,
-  });
+    this.controller, // Make it nullable
+  }) : assert(controller != null || videoAsset != null,
+            'Either controller or videoAsset must be provided.');
 
   @override
   State<CategoryBanner> createState() => _CategoryBannerState();
@@ -24,24 +27,54 @@ class CategoryBanner extends StatefulWidget {
 
 class _CategoryBannerState extends State<CategoryBanner> {
   late VideoPlayerController _controller;
+  bool _isExternalController = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.asset(widget.videoAsset)
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {});
-          _controller.play();
-          _controller.setLooping(true);
-          _controller.setVolume(0);
-        }
-      });
+    if (widget.controller != null) {
+      // Use the external controller if it's provided
+      _controller = widget.controller!;
+      _isExternalController = true;
+    } else {
+      // Otherwise, create and manage the controller internally
+      _isExternalController = false;
+      _controller = VideoPlayerController.asset(widget.videoAsset!)
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() {});
+            _controller.play();
+            _controller.setLooping(true);
+            _controller.setVolume(0);
+          }
+        });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant CategoryBanner oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the controller is managed internally and the asset changes, update it.
+    if (!_isExternalController && widget.videoAsset != oldWidget.videoAsset) {
+      _controller.dispose();
+      _controller = VideoPlayerController.asset(widget.videoAsset!)
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() {});
+            _controller.play();
+            _controller.setLooping(true);
+            _controller.setVolume(0);
+          }
+        });
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    // Only dispose the controller if it was created and managed internally
+    if (!_isExternalController) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 
