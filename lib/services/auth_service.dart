@@ -67,15 +67,17 @@ class AuthService {
         return null;
       }
     } on DioException catch (e) {
+      // When login fails (e.g., wrong credentials), the server returns an error code.
+      // Instead of throwing an exception, we log it and return null.
       developer.log(
-        'Error during login: ${e.response?.data?['message'] ?? 'Unknown error'}',
+        'DioException during login: ${e.response?.data?['message'] ?? 'Unknown Dio error'}',
         error: e,
       );
-      throw e.response?.data?['message'] ??
-          'An unknown error occurred during login.';
+      return null; // The login failed, so we return null.
     } catch (e) {
+      // For any other unexpected errors, we log them and return null.
       developer.log('An unexpected error occurred during login: $e');
-      throw 'An unexpected error occurred.';
+      return null;
     }
   }
 

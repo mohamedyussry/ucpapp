@@ -58,6 +58,11 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          Image.asset(
+            'assets/logo.png',
+            height: 120,
+          ),
+          const SizedBox(height: 30),
           Text(
             'Welcome Back',
             style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.bold),
