@@ -16,44 +16,32 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
+      body: Row(
         children: [
-          Positioned.fill(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildCategoryPage(
-                    displayTitle: 'HIM',
-                    apiCategory: 'For Him',
-                    videoAsset: 'assets/him.mp4',
-                  ),
-                ),
-                Expanded(
-                  child: _buildCategoryPage(
-                    displayTitle: 'HER',
-                    apiCategory: 'For Her',
-                    videoAsset: 'assets/HER.mp4',
-                  ),
-                ),
-                Expanded(
-                  child: _buildCategoryPage(
-                    displayTitle: 'BABY',
-                    apiCategory: 'For Baby',
-                    videoAsset: 'assets/baby.mp4',
-                  ),
-                ),
-              ],
+          Expanded(
+            child: _buildCategoryPage(
+              displayTitle: 'HIM',
+              apiCategory: 'For Him',
+              videoAsset: 'assets/him.mp4',
             ),
           ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildHeader(context),
+          Expanded(
+            child: _buildCategoryPage(
+              displayTitle: 'HER',
+              apiCategory: 'For Her',
+              videoAsset: 'assets/HER.mp4',
+            ),
+          ),
+          Expanded(
+            child: _buildCategoryPage(
+              displayTitle: 'BABY',
+              apiCategory: 'For Baby',
+              videoAsset: 'assets/baby.mp4',
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1), // Using the unified widget
+      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );
   }
 
@@ -72,38 +60,6 @@ class _SelfCareScreenState extends State<SelfCareScreen> {
         );
       },
       child: _CategoryVideo(videoAsset: videoAsset, title: displayTitle),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withAlpha((255 * 0.7).round()),
-            Colors.transparent,
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 8, 16, 20),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'What can we help you find?',
-            hintStyle: TextStyle(color: Colors.grey.shade500),
-            suffixIcon: Icon(Icons.image_search_outlined, color: Colors.grey.shade500),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(30),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-          ),
-        ),
-      ),
     );
   }
 }
