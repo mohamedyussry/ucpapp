@@ -16,32 +16,20 @@ class _LoginScreenState extends State<LoginScreen> {
   String _username = '';
   String _password = '';
   bool _isLoading = false;
-  String? _errorMessage;
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       setState(() {
         _isLoading = true;
-        _errorMessage = null;
       });
 
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      try {
-        final success = await authProvider.login(_username, _password);
-        if (!success && mounted) {
-          setState(() {
-            _errorMessage = 'Invalid username or password.';
-          });
-        }
-        // On success, the AuthWrapper in main.dart will handle navigation
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _errorMessage = 'An error occurred. Please try again.';
-          });
-        }
-      }
+      // No need to check for success here, the AuthWrapper will navigate
+      // and the error message will be displayed via the provider.
+      await Provider.of<AuthProvider>(context, listen: false)
+          .login(_username, _password);
+
+      // No need to handle navigation or error messages here anymore
 
       if (mounted) {
         setState(() {
@@ -53,6 +41,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Use a Consumer to get the latest error message from the provider
+    final authProvider = Provider.of<AuthProvider>(context);
+    final errorMessage = authProvider.loginErrorMessage;
+
     return Form(
       key: _formKey,
       child: Column(
@@ -73,11 +65,12 @@ class _LoginScreenState extends State<LoginScreen> {
             style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
           ),
           const SizedBox(height: 40),
-          if (_errorMessage != null)
+          // Display the error message from the provider
+          if (errorMessage != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
               child: Text(
-                _errorMessage!,
+                errorMessage,
                 style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
             ),
@@ -134,8 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 10),
           TextButton(
             onPressed: () {
-              // This is now handled by AuthWrapper, but you might want to provide
-              // a guest-browsing feature differently in the future.
               Navigator.pushReplacementNamed(context, '/home');
             },
             child: Text(

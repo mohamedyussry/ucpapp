@@ -14,9 +14,10 @@ enum AuthStatus {
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  final WooCommerceService _wooCommerceService = WooCommerceService(); // Add this line
+  final WooCommerceService _wooCommerceService = WooCommerceService();
   AuthStatus _status = AuthStatus.uninitialized;
   Customer? _customer;
+  String? loginErrorMessage; // Add this line
 
   AuthStatus get status => _status;
   Customer? get customer => _customer;
@@ -26,6 +27,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> initAuth() async {
+    // ... (rest of the method is unchanged)
     developer.log('AuthProvider: Initializing...');
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
@@ -40,13 +42,13 @@ class AuthProvider with ChangeNotifier {
           developer.log('AuthProvider: User is authenticated.');
         } else {
           _status = AuthStatus.unauthenticated;
-          await _authService.logout(); // Clean up stale data
+          await _authService.logout();
           developer.log(
               'AuthProvider: Token found but user data fetch failed. Logging out.');
         }
       } catch (e) {
         _status = AuthStatus.unauthenticated;
-        await _authService.logout(); // Clean up on error
+        await _authService.logout();
         developer.log('AuthProvider: Error during initialization, logging out.',
             error: e);
       }
@@ -59,6 +61,7 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> login(String email, String password) async {
     _status = AuthStatus.uninitialized; // Show loading state
+    loginErrorMessage = null; // Clear previous error message
     notifyListeners();
 
     try {
@@ -66,17 +69,20 @@ class AuthProvider with ChangeNotifier {
       if (customer != null) {
         _customer = customer;
         _status = AuthStatus.authenticated;
+        loginErrorMessage = null; // Ensure error is cleared on success
         developer.log('AuthProvider: Login successful.');
         notifyListeners();
         return true;
       } else {
         _status = AuthStatus.unauthenticated;
+        loginErrorMessage = 'Invalid username or password.'; // Set error message
         developer.log('AuthProvider: Login failed.');
         notifyListeners();
         return false;
       }
     } catch (e) {
       _status = AuthStatus.unauthenticated;
+      loginErrorMessage = 'An error occurred. Please try again.'; // Set error message
       developer.log('AuthProvider: Exception during login.', error: e);
       notifyListeners();
       return false;
@@ -126,11 +132,6 @@ class AuthProvider with ChangeNotifier {
       _customer!.birthday = birthday ?? _customer!.birthday;
       _customer!.gender = gender ?? _customer!.gender;
       _customer!.phone = phone ?? _customer!.phone;
-
-      // Here you would typically also make an API call to your backend
-      // to persist these changes in the database.
-      // For example: await _wooCommerceService.updateCustomer(_customer!);
-
       notifyListeners();
       developer.log('AuthProvider: Customer details updated locally.');
     }
