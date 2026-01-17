@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/models/customer_model.dart';
 import 'package:myapp/providers/auth_provider.dart';
+import 'package:myapp/screens/edit_profile_screen.dart';
+import 'package:myapp/my_orders_screen.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 
@@ -83,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: Colors.orange));
       case AuthStatus.authenticated:
         if (authProvider.customer != null) {
-          return _buildProfileView(authProvider.customer!);
+          return _buildProfileView(context, authProvider.customer!);
         } else {
           // This should ideally not happen if status is authenticated
           return _buildLoginView(context);
@@ -104,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileView(Customer customer) {
+  Widget _buildProfileView(BuildContext context, Customer customer) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -126,7 +128,14 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         ElevatedButton(
-          onPressed: () {},
+           onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditProfileScreen(customer: customer),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
@@ -153,8 +162,30 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _buildSection('My Account', [
-                    _buildProfileOption(icon: FontAwesomeIcons.user, title: 'Personal Information'),
-                    _buildProfileOption(icon: FontAwesomeIcons.box, title: 'My Orders'),
+                    _buildProfileOption(
+                        icon: FontAwesomeIcons.user, 
+                        title: 'Personal Information',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(customer: customer),
+                            ),
+                          );
+                        },
+                    ),
+                    _buildProfileOption(
+                        icon: FontAwesomeIcons.box, 
+                        title: 'My Orders',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyOrdersScreen(),
+                            ),
+                          );
+                        },
+                    ),
                     _buildProfileOption(
                         icon: FontAwesomeIcons.globe,
                         title: 'Language',

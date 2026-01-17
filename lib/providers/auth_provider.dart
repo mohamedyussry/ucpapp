@@ -110,4 +110,29 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> updateCustomerDetails({
+    String? firstName,
+    String? lastName,
+    String? address,
+    String? birthday,
+    String? gender,
+    String? phone,
+  }) async {
+    if (_customer != null) {
+      _customer!.firstName = firstName ?? _customer!.firstName;
+      _customer!.lastName = lastName ?? _customer!.lastName;
+      _customer!.address = address ?? _customer!.address;
+      _customer!.birthday = birthday ?? _customer!.birthday;
+      _customer!.gender = gender ?? _customer!.gender;
+      _customer!.phone = phone ?? _customer!.phone;
+
+      // Here you would typically also make an API call to your backend
+      // to persist these changes in the database.
+      // For example: await _wooCommerceService.updateCustomer(_customer!);
+
+      notifyListeners();
+      developer.log('AuthProvider: Customer details updated locally.');
+    }
+  }
 }

@@ -1,11 +1,15 @@
 
 class Customer {
-  final int id;
-  final String email;
-  final String firstName;
-  final String lastName;
-  final String username;
-  final String avatarUrl;
+  int id;
+  String email;
+  String firstName;
+  String lastName;
+  String username;
+  String avatarUrl;
+  String? address;
+  String? birthday;
+  String? gender;
+  String? phone;
 
   Customer({
     required this.id,
@@ -14,6 +18,10 @@ class Customer {
     required this.lastName,
     required this.username,
     required this.avatarUrl,
+    this.address,
+    this.birthday,
+    this.gender,
+    this.phone,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -23,7 +31,11 @@ class Customer {
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
       username: json['username'] ?? '',
-      avatarUrl: json['avatar_url'] ?? '', // Corrected from avatar_urls['96']
+      avatarUrl: json['avatar_url'] ?? '',
+      address: json['billing']?['address_1'],
+      phone: json['billing']?['phone'],
+      // birthday and gender are not standard WooCommerce fields,
+      // they might need to be handled via metadata if you add them.
     );
   }
 }
