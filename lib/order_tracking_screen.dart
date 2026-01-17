@@ -8,12 +8,13 @@ class OrderTrackingScreen extends StatelessWidget {
   const OrderTrackingScreen({super.key, required this.order});
 
   String _getTrackingImage(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) { // Use toLowerCase for case-insensitivity
       case 'pending':
       case 'processing':
         return 'assets/images/track_received.png';
       case 'on-hold':
       case 'shipped':
+      case 'prepared': // Added 'prepared' status for stage 2
         return 'assets/images/track_on_the_way.png';
       case 'completed':
         return 'assets/images/track_delivered.png';
@@ -49,6 +50,7 @@ class OrderTrackingScreen extends StatelessWidget {
             child: Image.asset(
               _getTrackingImage(order.status),
               fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   color: Colors.grey[200],
@@ -130,6 +132,18 @@ class OrderTrackingScreen extends StatelessWidget {
   }
 
   Widget _buildTimelineTracker() {
+    final status = order.status.toLowerCase(); // Use a local, lowercase status for reliable comparison
+    
+    // Define which statuses belong to which stage
+    const receivedStatuses = ['pending', 'processing'];
+    const onTheWayStatuses = ['shipped', 'on-hold', 'prepared'];
+    const deliveredStatuses = ['completed'];
+
+    // Determine if stages are completed
+    bool isReceivedCompleted = true; // First step is always considered completed once order is made
+    bool isOnTheWayCompleted = onTheWayStatuses.contains(status) || deliveredStatuses.contains(status);
+    bool isDeliveredCompleted = deliveredStatuses.contains(status);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -137,24 +151,24 @@ class OrderTrackingScreen extends StatelessWidget {
           icon: Icons.access_time,
           label: 'Received',
           time: '${order.date.hour}:${order.date.minute}',
-          isActive: order.status == 'pending' || order.status == 'processing',
-          isCompleted: true,
+          isActive: receivedStatuses.contains(status),
+          isCompleted: isReceivedCompleted,
         ),
-        _buildTimelineConnector(isCompleted: order.status == 'shipped' || order.status == 'completed'),
+        _buildTimelineConnector(isCompleted: isOnTheWayCompleted),
         _buildTimelineStep(
           icon: Icons.local_shipping_outlined,
           label: 'On the Way',
           time: '--:--',
-          isActive: order.status == 'shipped',
-          isCompleted: order.status == 'shipped' || order.status == 'completed',
+          isActive: onTheWayStatuses.contains(status),
+          isCompleted: isOnTheWayCompleted,
         ),
-        _buildTimelineConnector(isCompleted: order.status == 'completed'),
+        _buildTimelineConnector(isCompleted: isDeliveredCompleted),
         _buildTimelineStep(
           icon: Icons.home_outlined,
           label: 'Delivered',
           time: '--:--',
-          isActive: order.status == 'completed',
-          isCompleted: order.status == 'completed',
+          isActive: isDeliveredCompleted,
+          isCompleted: isDeliveredCompleted,
         ),
       ],
     );

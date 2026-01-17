@@ -32,13 +32,19 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
-    // Defer fetching until after the first frame
+    
+    // Add listener to rebuild the UI when tab changes to update button styles
+    _tabController.addListener(() {
+      setState(() {});
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchOrders();
     });
   }
 
   Future<void> _fetchOrders() async {
+    // ... (rest of the fetch logic is unchanged)
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -49,17 +55,13 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
 
     try {
       if (authProvider.status == AuthStatus.authenticated && authProvider.customer != null) {
-        // Fetch orders for logged-in user
         wooOrdersData = await _wooCommerceService.getOrders(customerId: authProvider.customer!.id);
       } else {
-        // Fetch orders for guest user
         final box = await Hive.openBox('guest_order_ids');
         final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? []).cast<int>();
 
         if (orderIds.isEmpty) {
-          setState(() {
-            _isLoading = false;
-          });
+          setState(() { _isLoading = false; });
           return;
         }
         wooOrdersData = await _wooCommerceService.getOrders(orderIds: orderIds);
@@ -67,11 +69,18 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
 
       if (wooOrdersData.isNotEmpty) {
         final List<Order> allOrders = wooOrdersData.map((data) => Order.fromJson(data)).toList();
-
         setState(() {
-          _ongoingOrders = allOrders.where((o) => o.status == 'processing' || o.status == 'pending').toList();
-          _completedOrders = allOrders.where((o) => o.status == 'completed').toList();
-          _cancelledOrders = allOrders.where((o) => o.status == 'cancelled' || o.status == 'failed' || o.status == 'refunded').toList();
+          // Updated to include 'prepared' in the ongoing orders list
+          _ongoingOrders = allOrders.where((o) {
+            final status = o.status.toLowerCase();
+            return status == 'processing' || status == 'pending' || status == 'prepared';
+          }).toList();
+
+          _completedOrders = allOrders.where((o) => o.status.toLowerCase() == 'completed').toList();
+          _cancelledOrders = allOrders.where((o) {
+            final status = o.status.toLowerCase();
+            return status == 'cancelled' || status == 'failed' || status == 'refunded';
+          }).toList();
         });
       }
     } catch (e) {
@@ -83,6 +92,12 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         _isLoading = false;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _navigateToDetails(Order order) {
@@ -101,12 +116,6 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         builder: (context) => OrderTrackingScreen(order: order),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   @override
@@ -150,28 +159,9 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Container(
-              height: 45,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(25.0),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(25.0),
-                ),
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.black,
-                tabs: const [
-                  Tab(text: 'Ongoing'),
-                  Tab(text: 'Completed'),
-                  Tab(text: 'Cancelled'),
-                ],
-              ),
-            ),
+            // -- NEW: Custom Tab Buttons --
+            _buildCustomTabBar(),
+            const SizedBox(height: 16),
             Expanded(
               child: _isLoading
                   ? _buildShimmerEffect()
@@ -206,13 +196,62 @@ class MyOrdersScreenState extends State<MyOrdersScreen> with SingleTickerProvide
     );
   }
 
+  // -- NEW: Widget for the custom tab buttons --
+  Widget _buildCustomTabBar() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildTabButton(0, 'Ongoing'),
+        _buildTabButton(1, 'Completed'),
+        _buildTabButton(2, 'Cancelled'),
+      ],
+    );
+  }
+
+  // -- NEW: Widget for individual tab button --
+  Widget _buildTabButton(int index, String title) {
+    bool isSelected = _tabController.index == index;
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: isSelected
+            ? ElevatedButton(
+                onPressed: () => _tabController.animateTo(index),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 4,
+                  shadowColor: Colors.orange.withOpacity(0.4),
+                ),
+                child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              )
+            : OutlinedButton(
+                onPressed: () => _tabController.animateTo(index),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.black54,
+                  side: BorderSide(color: Colors.grey[300]!),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                   padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text(title),
+              ),
+      ),
+    );
+  }
+
   Widget _buildShimmerEffect() {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: ListView.builder(
         padding: const EdgeInsets.only(top: 16.0),
-        itemCount: 5, // Display 5 shimmer cards
+        itemCount: 5,
         itemBuilder: (context, index) => _buildPlaceholderOrderCard(),
       ),
     );
