@@ -1,51 +1,26 @@
 {
   "project_info": {
-    "project_number": "487457702310",
-    "project_id": "ucp-app-new",
-    "storage_bucket": "ucp-app-new.firebasestorage.app"
+    "project_number": "1062417228433",
+    "project_id": "ucp-app-d8c23",
+    "storage_bucket": "ucp-app-d8c23.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:487457702310:android:2e4583f81208e310af8f67",
+        "mobilesdk_app_id": "1:1062417228433:android:86bea6af22e16ea2165530",
         "android_client_info": {
-          "package_name": "meme.ucpksa.ucp"
+          "package_name": "khp.ucpksa.com"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "487457702310-ag4bh37u37c42p0bdmtn8orifmi16iik.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "meme.ucpksa.ucp",
-            "certificate_hash": "5e6add74ffe573e69d194c9e9cc0c7416f395d84"
-          }
-        },
-        {
-          "client_id": "487457702310-sj28i6quu0l526o0fr2bv834a9cecc87.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDRDVExIyN-3rhR-4VnRa3dvgQE2Xzht5c"
+          "current_key": "AIzaSyDVVSkxbBiyHFGWgc0IRhfP7txV14jTqQE"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "487457702310-sj28i6quu0l526o0fr2bv834a9cecc87.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "487457702310-tj79g7k9m6dujam2gpv5ig0ghfmmta1r.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "meme.ucpksa.ucp"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/login_screen.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class LanguageSelectionScreen extends StatefulWidget {
   const LanguageSelectionScreen({super.key});
@@ -14,6 +15,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -25,10 +27,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
               Column(
                 children: [
                   const SizedBox(height: 50),
-                  Image.asset(
-                    'assets/logo.png',
-                    height: 100,
-                  ),
+                  Image.asset('assets/logo.png', height: 100),
                   const SizedBox(height: 10),
                   const Text(
                     'UCP',
@@ -40,15 +39,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                   ),
                   const Text(
                     'Pharmacy | صيدلية',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.orange, fontSize: 16),
                   ),
                   const SizedBox(height: 50),
-                  const Text(
-                    'Choose Language',
-                    style: TextStyle(
+                  Text(
+                    l10n.choose_language,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -79,9 +75,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+                child: Text(
+                  l10n.continue_btn,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ],

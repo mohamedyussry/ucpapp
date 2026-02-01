@@ -1,4 +1,3 @@
-
 class WooProduct {
   final int id;
   final String name;
@@ -44,21 +43,25 @@ class WooProduct {
       regularPrice: double.tryParse(json['regular_price']?.toString() ?? ''),
       description: json['description'] ?? '',
       permalink: json['permalink'] ?? '',
-      images: (json['images'] as List<dynamic>?)
+      images:
+          (json['images'] as List<dynamic>?)
               ?.map((imgJson) => WooProductImage.fromJson(imgJson))
               .toList() ??
           [],
-      categories: (json['categories'] as List<dynamic>?)
+      categories:
+          (json['categories'] as List<dynamic>?)
               ?.map((catJson) => WooProductCategory.fromJson(catJson))
               .toList() ??
           [],
-      attributes: (json['attributes'] as List<dynamic>?)
+      attributes:
+          (json['attributes'] as List<dynamic>?)
               ?.map((attrJson) => WooProductAttribute.fromJson(attrJson))
               .toList() ??
           [],
       stockStatus: json['stock_status'] ?? 'outofstock',
       stockQuantity: json['stock_quantity'],
-      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0.0') ?? 0.0,
+      averageRating:
+          double.tryParse(json['average_rating']?.toString() ?? '0.0') ?? 0.0,
       ratingCount: json['rating_count'] ?? 0,
     );
   }
@@ -89,39 +92,47 @@ class WooProductImage {
   final String src;
   final String name;
 
-  WooProductImage({
-    required this.id,
-    required this.src,
-    required this.name,
-  });
+  WooProductImage({required this.id, required this.src, required this.name});
 
   factory WooProductImage.fromJson(Map<String, dynamic> json) {
     return WooProductImage(
-      id: json['id'],
-      src: json['src'] ?? '',
-      name: json['name'] ?? '',
+      id: json['id'] is int ? json['id'] : 0,
+      src: json['src']?.toString() ?? json['url']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'src': src,
-      'name': name,
-    };
+    return {'id': id, 'src': src, 'name': name};
   }
 }
 
 class WooProductCategory {
   final int id;
   final String name;
+  final int parent;
+  final WooProductImage? image;
+  final WooSliderData? sliderData;
 
-  WooProductCategory({required this.id, required this.name});
+  WooProductCategory({
+    required this.id,
+    required this.name,
+    this.parent = 0,
+    this.image,
+    this.sliderData,
+  });
 
   factory WooProductCategory.fromJson(Map<String, dynamic> json) {
     return WooProductCategory(
       id: json['id'],
       name: json['name'] ?? '',
+      parent: json['parent'] ?? 0,
+      image: json['image'] != null && json['image'] is Map<String, dynamic>
+          ? WooProductImage.fromJson(json['image'])
+          : null,
+      sliderData: json['slider_data'] != null
+          ? WooSliderData.fromJson(json['slider_data'])
+          : null,
     );
   }
 
@@ -129,7 +140,28 @@ class WooProductCategory {
     return {
       'id': id,
       'name': name,
+      'parent': parent,
+      'image': image?.toJson(),
+      'slider_data': sliderData?.toJson(),
     };
+  }
+}
+
+class WooSliderData {
+  final bool isFeatured;
+  final String? sliderImage;
+
+  WooSliderData({required this.isFeatured, this.sliderImage});
+
+  factory WooSliderData.fromJson(Map<String, dynamic> json) {
+    return WooSliderData(
+      isFeatured: json['is_featured'] ?? false,
+      sliderImage: json['slider_image'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'is_featured': isFeatured, 'slider_image': sliderImage};
   }
 }
 
@@ -153,11 +185,7 @@ class WooProductAttribute {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'options': options,
-    };
+    return {'id': id, 'name': name, 'options': options};
   }
 }
 
@@ -188,10 +216,80 @@ class WooProductVariation {
       price: double.tryParse(json['price']?.toString() ?? ''),
       regularPrice: double.tryParse(json['regular_price']?.toString() ?? ''),
       salePrice: double.tryParse(json['sale_price']?.toString() ?? ''),
-      image: json['image'] != null ? WooProductImage.fromJson(json['image']) : null,
+      image: json['image'] != null
+          ? WooProductImage.fromJson(json['image'])
+          : null,
       attributes: List<Map<String, dynamic>>.from(json['attributes'] ?? []),
       stockStatus: json['stock_status'] ?? 'outofstock',
       stockQuantity: json['stock_quantity'],
     );
+  }
+}
+
+class WooBrand {
+  final int id;
+  final String name;
+  final String slug;
+  final String? description;
+  final WooProductImage? image;
+  final bool isVisibleInApp;
+  final WooSliderData? sliderData;
+
+  WooBrand({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.description,
+    this.image,
+    this.isVisibleInApp = true,
+    this.sliderData,
+  });
+
+  factory WooBrand.fromJson(Map<String, dynamic> json) {
+    WooProductImage? brandImage;
+
+    final rawImage = json['image'] ?? json['thumbnail'];
+
+    if (rawImage != null) {
+      if (rawImage is Map<String, dynamic>) {
+        brandImage = WooProductImage.fromJson(rawImage);
+      } else if (rawImage is String && rawImage.isNotEmpty) {
+        brandImage = WooProductImage(
+          id: 0,
+          src: rawImage,
+          name: json['name'] ?? '',
+        );
+      }
+    }
+
+    final appSettings = json['app_settings'];
+    bool showInApp = true;
+    if (appSettings != null && appSettings is Map<String, dynamic>) {
+      showInApp = appSettings['show_in_app'] ?? true;
+    }
+
+    return WooBrand(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      slug: json['slug'] ?? '',
+      description: json['description'],
+      image: brandImage,
+      isVisibleInApp: showInApp,
+      sliderData: json['slider_data'] != null
+          ? WooSliderData.fromJson(json['slider_data'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'slug': slug,
+      'description': description,
+      'image': image?.toJson(),
+      'is_visible_in_app': isVisibleInApp,
+      'slider_data': sliderData?.toJson(),
+    };
   }
 }

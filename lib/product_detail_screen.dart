@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -11,6 +10,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/cart_provider.dart';
 import 'package:myapp/widgets/cart_badge.dart';
+import 'package:myapp/widgets/custom_cart_notification.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final WooProduct product;
@@ -46,7 +47,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _isLoadingVariations = true;
     });
     try {
-      final variations = await _wooCommerceService.getProductVariations(widget.product.id);
+      final variations = await _wooCommerceService.getProductVariations(
+        widget.product.id,
+      );
       setState(() {
         _variations = variations;
         if (widget.product.attributes.isNotEmpty) {
@@ -79,6 +82,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -88,9 +92,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: const [
-          CartBadge(),
-        ],
+        actions: const [CartBadge()],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -100,11 +102,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               _buildImageCarousel(),
               const SizedBox(height: 24),
-              _buildProductInfo(),
+              _buildProductInfo(l10n),
               const SizedBox(height: 24),
               if (widget.product.type == 'variable') _buildAttributeSelectors(),
               const SizedBox(height: 24),
-              _buildStockInfo(),
+              _buildStockInfo(l10n),
               const SizedBox(height: 32),
               _buildDescription(),
               const SizedBox(height: 100), // Space for the bottom bar
@@ -112,7 +114,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
       ),
-      bottomSheet: _buildBottomBar(),
+      bottomSheet: _buildBottomBar(l10n),
     );
   }
 
@@ -132,7 +134,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               return CachedNetworkImage(
                 imageUrl: images[index].src,
                 fit: BoxFit.contain,
-                placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                placeholder: (context, url) =>
+                    const Center(child: CircularProgressIndicator()),
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               );
             },
@@ -150,12 +153,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               dotColor: Colors.grey,
             ),
           ),
-        ]
+        ],
       ],
     );
   }
 
-  Widget _buildProductInfo() {
+  Widget _buildProductInfo(AppLocalizations l10n) {
     final brand = "Medicube"; // Dummy brand
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,14 +181,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        if (widget.product.ratingCount > 0) _buildRatingInfo(),
+        if (widget.product.ratingCount > 0) _buildRatingInfo(l10n),
         const SizedBox(height: 12),
         _buildPrice(),
       ],
     );
   }
 
-  Widget _buildRatingInfo() {
+  Widget _buildRatingInfo(AppLocalizations l10n) {
     return Row(
       children: [
         const Icon(Icons.star, color: Colors.amber, size: 20),
@@ -196,7 +199,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         const SizedBox(width: 4),
         Text(
-          "(${widget.product.ratingCount} Reviews)",
+          "(${widget.product.ratingCount} ${l10n.reviews})",
           style: GoogleFonts.poppins(color: Colors.grey),
         ),
       ],
@@ -207,7 +210,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final currencyProvider = Provider.of<CurrencyProvider>(context);
 
     final price = _selectedVariation?.price ?? widget.product.price;
-    final regularPrice = _selectedVariation?.regularPrice ?? widget.product.regularPrice;
+    final regularPrice =
+        _selectedVariation?.regularPrice ?? widget.product.regularPrice;
     final salePrice = _selectedVariation?.salePrice ?? widget.product.salePrice;
 
     double? displayPrice = price;
@@ -220,9 +224,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       discount = ((regularPrice - salePrice) / regularPrice * 100).round();
     } else if (regularPrice != null && regularPrice > 0) {
       displayPrice = price;
-      originalPrice = (price != null && price < regularPrice) ? regularPrice : null;
+      originalPrice = (price != null && price < regularPrice)
+          ? regularPrice
+          : null;
       if (originalPrice != null && displayPrice != null) {
-        discount = ((originalPrice - displayPrice) / originalPrice * 100).round();
+        discount = ((originalPrice - displayPrice) / originalPrice * 100)
+            .round();
       }
     }
 
@@ -231,7 +238,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       children: [
         Row(
           children: [
-             Text(
+            Text(
               '${displayPrice?.toStringAsFixed(2) ?? 'N/A'} ',
               style: GoogleFonts.poppins(
                 fontSize: 22,
@@ -244,19 +251,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         if (originalPrice != null) ...[
           const SizedBox(width: 8),
-           Row(
-             children: [
-                Text(
-                  '${originalPrice.toStringAsFixed(2)} ',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    decoration: TextDecoration.lineThrough,
-                  ),
+          Row(
+            children: [
+              Text(
+                '${originalPrice.toStringAsFixed(2)} ',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  decoration: TextDecoration.lineThrough,
                 ),
-                _buildCurrencyDisplay(currencyProvider, 16, color: Colors.grey),
-             ],
-           ),
+              ),
+              _buildCurrencyDisplay(currencyProvider, 16, color: Colors.grey),
+            ],
+          ),
         ],
         if (discount != null && discount > 0) ...[
           const SizedBox(width: 12),
@@ -296,7 +303,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             Text(
               attribute.name,
-              style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16),
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -319,7 +329,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   backgroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: isSelected ? Colors.black : Colors.grey.shade300),
+                    side: BorderSide(
+                      color: isSelected ? Colors.black : Colors.grey.shade300,
+                    ),
                   ),
                 );
               }).toList(),
@@ -331,21 +343,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildStockInfo() {
-    final stockStatus = _selectedVariation?.stockStatus ?? widget.product.stockStatus;
+  Widget _buildStockInfo(AppLocalizations l10n) {
+    final stockStatus =
+        _selectedVariation?.stockStatus ?? widget.product.stockStatus;
     final isInStock = stockStatus == 'instock';
 
     return Column(
       children: [
         _infoRow(
           FontAwesomeIcons.box,
-          isInStock ? "In stock" : "Out of stock",
+          isInStock ? l10n.in_stock : l10n.out_of_stock,
           isInStock ? Colors.green.shade700 : Colors.red.shade700,
         ),
         const SizedBox(height: 12),
-        _infoRow(FontAwesomeIcons.truck, "Free Delivery", Colors.black),
+        _infoRow(FontAwesomeIcons.truck, l10n.free_delivery, Colors.black),
         const SizedBox(height: 12),
-        _infoRow(FontAwesomeIcons.store, "Available in nearest store", Colors.black),
+        _infoRow(FontAwesomeIcons.store, l10n.available_in_store, Colors.black),
       ],
     );
   }
@@ -364,7 +377,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildDescription() {
-    final description = widget.product.description.replaceAll(RegExp(r'<[^>]*>'), '');
+    final description = widget.product.description.replaceAll(
+      RegExp(r'<[^>]*>'),
+      '',
+    );
     return Text(
       description,
       style: GoogleFonts.poppins(
@@ -375,27 +391,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(AppLocalizations l10n) {
     final cart = Provider.of<CartProvider>(context, listen: false);
-    final stockStatus = _selectedVariation?.stockStatus ?? widget.product.stockStatus;
+    final stockStatus =
+        _selectedVariation?.stockStatus ?? widget.product.stockStatus;
     final isInStock = stockStatus == 'instock';
 
-    final productToAdd = widget.product.type == 'variable' && _selectedVariation != null
+    final productToAdd =
+        widget.product.type == 'variable' && _selectedVariation != null
         ? WooProduct(
             id: _selectedVariation!.id,
-            name: "${widget.product.name} - ${_selectedOptions.values.join(', ')}",
+            name:
+                "${widget.product.name} - ${_selectedOptions.values.join(', ')}",
             type: 'variation',
             price: _selectedVariation!.price,
             regularPrice: _selectedVariation!.regularPrice,
             salePrice: _selectedVariation!.salePrice,
-            images: _selectedVariation!.image != null ? [_selectedVariation!.image!] : widget.product.images,
-            description: widget.product.description, 
+            images: _selectedVariation!.image != null
+                ? [_selectedVariation!.image!]
+                : widget.product.images,
+            description: widget.product.description,
             permalink: widget.product.permalink,
             categories: widget.product.categories,
             attributes: [],
             stockStatus: _selectedVariation!.stockStatus,
             stockQuantity: _selectedVariation!.stockQuantity,
-            averageRating: widget.product.averageRating, 
+            averageRating: widget.product.averageRating,
             ratingCount: widget.product.ratingCount,
           )
         : widget.product;
@@ -440,23 +461,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onPressed: isInStock
                   ? () {
                       cart.addItem(productToAdd);
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Added ${productToAdd.name} to cart!'),
-                          duration: const Duration(seconds: 2),
-                          action: SnackBarAction(
-                            label: 'UNDO',
-                            onPressed: () {
-                              cart.removeSingleItem(productToAdd.id);
-                            },
-                          ),
-                        ),
-                      );
+                      CustomCartNotification.show(context, productToAdd);
                     }
                   : null, // Disable button if out of stock
               style: ElevatedButton.styleFrom(
-                backgroundColor: isInStock ? Colors.orange : Colors.grey.shade400,
+                backgroundColor: isInStock
+                    ? Colors.orange
+                    : Colors.grey.shade400,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -464,7 +475,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 elevation: 0,
               ),
               child: Text(
-                isInStock ? 'Add to cart' : 'Out of Stock',
+                isInStock ? l10n.add_to_cart : l10n.out_of_stock,
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -478,7 +489,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider, double size, {Color? color}) {
+  Widget _buildCurrencyDisplay(
+    CurrencyProvider currencyProvider,
+    double size, {
+    Color? color,
+  }) {
     final currencyImageUrl = currencyProvider.currencyImageUrl;
     final currencySymbol = currencyProvider.currencySymbol;
 

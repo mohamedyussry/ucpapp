@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -6,17 +5,75 @@ import 'package:myapp/models/customer_model.dart';
 import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/screens/edit_profile_screen.dart';
 import 'package:myapp/my_orders_screen.dart';
+import 'package:myapp/screens/my_points_screen.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import 'package:provider/provider.dart';
 
-import '../login_screen.dart';
+import 'package:myapp/screens/phone_login_screen.dart';
+
+import '../l10n/generated/app_localizations.dart';
+import 'package:myapp/providers/language_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  void _showLanguageSelector(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    );
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.select_language,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ListTile(
+                title: Text('English', style: GoogleFonts.poppins()),
+                trailing: languageProvider.appLocale.languageCode == 'en'
+                    ? const Icon(Icons.check, color: Colors.orange)
+                    : null,
+                onTap: () {
+                  languageProvider.changeLanguage(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: Text('العربية', style: GoogleFonts.poppins()),
+                trailing: languageProvider.appLocale.languageCode == 'ar'
+                    ? const Icon(Icons.check, color: Colors.orange)
+                    : null,
+                onTap: () {
+                  languageProvider.changeLanguage(const Locale('ar'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
@@ -35,22 +92,31 @@ class ProfileScreen extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black, size: 20),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black,
+                  size: 20,
+                ),
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacementNamed(context, '/home');
                   }
                 },
-                tooltip: 'Back',
+                tooltip: l10n.go_back,
               ),
             ),
           ),
         ),
-        title: Text('Profile',
-            style: GoogleFonts.poppins(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 18)),
+        title: Text(
+          l10n.profile,
+          style: GoogleFonts.poppins(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
         centerTitle: true,
         actions: [
           if (authProvider.status == AuthStatus.authenticated)
@@ -65,27 +131,44 @@ class ProfileScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.black, size: 20),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: Colors.black,
+                      size: 20,
+                    ),
                     onPressed: () => authProvider.logout(),
-                    tooltip: 'Logout',
+                    tooltip: l10n.logout,
                   ),
                 ),
               ),
             ),
         ],
       ),
-      body: _buildBody(context, authProvider),
+      body: _buildBody(context, authProvider, languageProvider, l10n),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 4),
     );
   }
 
-  Widget _buildBody(BuildContext context, AuthProvider authProvider) {
+  Widget _buildBody(
+    BuildContext context,
+    AuthProvider authProvider,
+    LanguageProvider languageProvider,
+    AppLocalizations l10n,
+  ) {
     switch (authProvider.status) {
       case AuthStatus.uninitialized:
-        return const Center(child: CircularProgressIndicator(color: Colors.orange));
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        );
       case AuthStatus.authenticated:
         if (authProvider.customer != null) {
-          return _buildProfileView(context, authProvider.customer!);
+          return _buildProfileView(
+            context,
+            authProvider.customer!,
+            authProvider,
+            languageProvider,
+            l10n,
+          );
         } else {
           // This should ideally not happen if status is authenticated
           return _buildLoginView(context);
@@ -96,17 +179,16 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildLoginView(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: LoginScreen(),
-        ),
-      ),
-    );
+    return const PhoneLoginScreen();
   }
 
-  Widget _buildProfileView(BuildContext context, Customer customer) {
+  Widget _buildProfileView(
+    BuildContext context,
+    Customer customer,
+    AuthProvider authProvider,
+    LanguageProvider languageProvider,
+    AppLocalizations l10n,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -128,7 +210,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         ElevatedButton(
-           onPressed: () {
+          onPressed: () {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -145,7 +227,10 @@ class ProfileScreen extends StatelessWidget {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
           ),
-          child: Text('Edit Profile', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+          child: Text(
+            l10n.edit_profile,
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 30),
         Expanded(
@@ -161,49 +246,97 @@ class ProfileScreen extends StatelessWidget {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildSection('My Account', [
+                  _buildSection(l10n.my_account, [
                     _buildProfileOption(
-                        icon: FontAwesomeIcons.user, 
-                        title: 'Personal Information',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditProfileScreen(customer: customer),
-                            ),
-                          );
-                        },
+                      icon: FontAwesomeIcons.user,
+                      title: l10n.personal_info,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                EditProfileScreen(customer: customer),
+                          ),
+                        );
+                      },
                     ),
                     _buildProfileOption(
-                        icon: FontAwesomeIcons.box, 
-                        title: 'My Orders',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MyOrdersScreen(),
-                            ),
-                          );
-                        },
+                      icon: FontAwesomeIcons.box,
+                      title: l10n.my_orders,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyOrdersScreen(),
+                          ),
+                        );
+                      },
                     ),
                     _buildProfileOption(
-                        icon: FontAwesomeIcons.globe,
-                        title: 'Language',
-                        trailing: Text('English (US)', style: GoogleFonts.poppins(color: Colors.grey.shade600))),
-                    _buildProfileOption(icon: FontAwesomeIcons.circleQuestion, title: 'About App'),
-                    _buildProfileOption(icon: FontAwesomeIcons.headset, title: 'Help & Support'),
+                      icon: FontAwesomeIcons.coins,
+                      title: l10n.my_points,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyPointsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildProfileOption(
+                      icon: FontAwesomeIcons.globe,
+                      title: l10n.language,
+                      trailing: Text(
+                        languageProvider.appLocale.languageCode == 'ar'
+                            ? 'العربية'
+                            : 'English',
+                        style: GoogleFonts.poppins(color: Colors.grey.shade600),
+                      ),
+                      onTap: () => _showLanguageSelector(context),
+                    ),
                   ]),
                   const SizedBox(height: 20),
-                  _buildSection('Notification', [
-                    _buildNotificationOption(title: 'Push Notification', value: true),
-                    _buildNotificationOption(title: 'Promotional Notification', value: false),
+                  _buildSection(l10n.notification, [
+                    _buildNotificationOption(
+                      title: l10n.push_notification,
+                      value: true,
+                    ),
+                    _buildProfileOption(
+                      icon: FontAwesomeIcons.sync,
+                      title: authProvider.isSyncingFcm
+                          ? l10n.syncing
+                          : l10n.sync_notifications,
+                      trailing: authProvider.isSyncingFcm
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : null,
+                      onTap: () async {
+                        bool success = await authProvider.syncFcmToken();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                success ? l10n.sync_success : l10n.sync_failed,
+                              ),
+                              backgroundColor: success
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ]),
                   const SizedBox(height: 20),
                 ],
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -216,34 +349,54 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 16, bottom: 10, top: 10),
-            child: Text(title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
           Container(
             decoration: BoxDecoration(
               color: Colors.grey[100],
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Column(
-              children: children,
-            ),
-          )
+            child: Column(children: children),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileOption({required IconData icon, required String title, Widget? trailing, VoidCallback? onTap}) {
+  Widget _buildProfileOption({
+    required IconData icon,
+    required String title,
+    Widget? trailing,
+    VoidCallback? onTap,
+  }) {
     return ListTile(
       leading: FaIcon(icon, color: Colors.black87, size: 20),
-      title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16)),
-      trailing: trailing ?? const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16),
+      ),
+      trailing:
+          trailing ??
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: onTap ?? () {},
     );
   }
 
-  Widget _buildNotificationOption({required String title, required bool value}) {
+  Widget _buildNotificationOption({
+    required String title,
+    required bool value,
+  }) {
     return SwitchListTile(
-      title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16)),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16),
+      ),
       value: value,
       onChanged: (bool newValue) {},
       activeTrackColor: Colors.orange[200],

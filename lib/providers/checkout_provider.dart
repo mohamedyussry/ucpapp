@@ -1,4 +1,3 @@
-
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:myapp/models/payment_method_model.dart';
@@ -37,6 +36,7 @@ class CheckoutProvider with ChangeNotifier {
 
   double _subtotal = 0.0;
   double _shippingCost = 0.0;
+  double _loyaltyDiscount = 0.0;
   final double _tax = 0.0;
 
   bool _isLoading = false;
@@ -53,7 +53,9 @@ class CheckoutProvider with ChangeNotifier {
   double get subtotal => _subtotal;
   double get shippingCost => _shippingCost;
   double get tax => _tax;
-  double get total => _subtotal + _shippingCost + _tax;
+  double get loyaltyDiscount => _loyaltyDiscount;
+  double get total => (_subtotal + _shippingCost + _tax - _loyaltyDiscount)
+      .clamp(0.0, double.infinity);
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -74,7 +76,7 @@ class CheckoutProvider with ChangeNotifier {
     _selectedShippingMethod = null;
     _shippingCost = 0.0;
     _errorMessage = null;
-    
+
     // Re-autofill user details in case the user has changed
     _autofillUserDetails();
 
@@ -83,12 +85,29 @@ class CheckoutProvider with ChangeNotifier {
   }
 
   void _autofillUserDetails() {
-    if (_authProvider != null && _authProvider.status == AuthStatus.authenticated) {
+    if (_authProvider != null &&
+        _authProvider.status == AuthStatus.authenticated) {
       final user = _authProvider.customer;
+      final billing = user?.billing;
+
       orderData.customerId = user?.id;
       orderData.billingFirstName = user?.firstName;
       orderData.billingLastName = user?.lastName;
       orderData.billingEmail = user?.email;
+
+      if (billing != null) {
+        orderData.billingPhone = billing.phone;
+        orderData.billingAddress1 = billing.address1;
+        orderData.billingCity = billing.city;
+        orderData.billingState = billing.state;
+        orderData.billingPostcode = billing.postcode;
+        orderData.billingCountry = billing.country;
+
+        if (billing.state.isNotEmpty) {
+          _selectedStateCode = billing.state;
+        }
+      }
+
       developer.log('Autofilled user details for user ID: ${user?.id}');
     } else {
       // Clear details if user is logged out
@@ -96,13 +115,31 @@ class CheckoutProvider with ChangeNotifier {
       orderData.billingFirstName = null;
       orderData.billingLastName = null;
       orderData.billingEmail = null;
+      orderData.billingPhone = null;
+      orderData.billingAddress1 = null;
+      orderData.billingCity = null;
+      orderData.billingState = null;
+      orderData.billingPostcode = null;
+      orderData.billingCountry = null;
+      _selectedStateCode = null;
     }
     notifyListeners();
   }
 
   void _initializePaymentMethods() {
     _paymentMethods = [
-      PaymentMethod(id: 'cod', title: 'Cash on Delivery', description: 'Pay with cash upon delivery.', enabled: true),
+      PaymentMethod(
+        id: 'cod',
+        title: 'Cash on Delivery',
+        description: 'Pay with cash upon delivery.',
+        enabled: true,
+      ),
+      PaymentMethod(
+        id: 'paymob',
+        title: 'Online Payment (Paymob)',
+        description: 'Pay securely using your card.',
+        enabled: true,
+      ),
     ];
     _selectedPaymentMethod = _paymentMethods.first;
     notifyListeners();
@@ -110,6 +147,11 @@ class CheckoutProvider with ChangeNotifier {
 
   void updateSubtotal(double cartTotal) {
     _subtotal = cartTotal;
+    notifyListeners();
+  }
+
+  void updateLoyaltyDiscount(double discount) {
+    _loyaltyDiscount = discount;
     notifyListeners();
   }
 
@@ -133,7 +175,9 @@ class CheckoutProvider with ChangeNotifier {
 
   Future<void> fetchStates(String countryCode) async {
     try {
-      final fetchedStates = await _wooCommerceService.getStatesForCountry(countryCode);
+      final fetchedStates = await _wooCommerceService.getStatesForCountry(
+        countryCode,
+      );
       _states = fetchedStates;
       if (_states.isNotEmpty) {
         _selectedStateCode = _states.first.code;
@@ -146,19 +190,28 @@ class CheckoutProvider with ChangeNotifier {
   }
 
   Future<void> fetchShippingMethods(
-      String country, String state, String postcode) async {
+    String country,
+    String state,
+    String postcode,
+  ) async {
     try {
       final methods = await _wooCommerceService.getShippingMethodsForLocation(
-          country, state, postcode);
+        country,
+        state,
+        postcode,
+      );
       _shippingMethods = methods;
       if (_shippingMethods.isNotEmpty) {
         _selectedShippingMethod = _shippingMethods.first;
         _shippingCost = _selectedShippingMethod!.cost;
-        developer
-            .log('Shipping methods fetched. Default: ${_selectedShippingMethod?.title}');
+        developer.log(
+          'Shipping methods fetched. Default: ${_selectedShippingMethod?.title}',
+        );
       } else {
         _shippingCost = 0.0;
-        developer.log('No shipping methods available for the selected location.');
+        developer.log(
+          'No shipping methods available for the selected location.',
+        );
       }
     } catch (e) {
       _errorMessage = 'Failed to load shipping options: ${e.toString()}';
@@ -188,8 +241,11 @@ class CheckoutProvider with ChangeNotifier {
   void nextPage() {
     if (_currentPage < 2) {
       _currentPage++;
-      pageController.animateToPage(_currentPage,
-          duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
       notifyListeners();
     }
   }
@@ -197,8 +253,11 @@ class CheckoutProvider with ChangeNotifier {
   void previousPage() {
     if (_currentPage > 0) {
       _currentPage--;
-      pageController.animateToPage(_currentPage,
-          duration: const Duration(milliseconds: 300), curve: Curves.ease);
+      pageController.animateToPage(
+        _currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.ease,
+      );
       notifyListeners();
     }
   }
