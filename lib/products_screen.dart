@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
@@ -7,11 +6,29 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class ProductsScreen extends StatefulWidget {
-  final String category;
+  final String? category;
+  final int? categoryId; // إضافة دعم ID الفئة مباشرة
+  final int? brandId;
+  final String? brandName;
+  final bool? featured;
+  final String? orderby;
+  final String? order;
+  final String? customTitle;
 
-  const ProductsScreen({super.key, required this.category});
+  const ProductsScreen({
+    super.key,
+    this.category,
+    this.categoryId,
+    this.brandId,
+    this.brandName,
+    this.featured,
+    this.orderby,
+    this.order,
+    this.customTitle,
+  });
 
   @override
   State<ProductsScreen> createState() => _ProductsScreenState();
@@ -30,7 +47,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void initState() {
     super.initState();
     _wooCommerceService = WooCommerceService();
-    _fetchProductsForCategory();
+    // تأخير التنفيذ للتأكد من جاهزية الـ context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchProducts();
+    });
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -42,41 +62,87 @@ class _ProductsScreenState extends State<ProductsScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchProductsForCategory() async {
+  Future<void> _fetchProducts() async {
     try {
+      // نقل الكود الحساس للـ context داخل الـ try
+      final l10n = AppLocalizations.of(context);
+      if (l10n == null) return;
+
       setState(() {
         _isLoading = true;
         _errorMessage = '';
       });
-      final categories = await _wooCommerceService.getCategories();
-      WooProductCategory? targetCategory;
-      for (final cat in categories) {
-        if (cat.name.toLowerCase() == widget.category.toLowerCase()) {
-          targetCategory = cat;
-          break;
+
+      List<WooProduct> products = [];
+
+      // 1. إذا كان لدينا ID الماركة
+      if (widget.brandId != null) {
+        products = await _wooCommerceService.getProducts(
+          brandId: widget.brandId,
+          orderby: widget.orderby,
+          order: widget.order,
+          featured: widget.featured,
+        );
+      }
+      // 2. إذا كان لدينا ID الفئة مباشرة (الأفضل للأداء)
+      else if (widget.categoryId != null) {
+        products = await _wooCommerceService.getProducts(
+          categoryId: widget.categoryId,
+          orderby: widget.orderby,
+          order: widget.order,
+          featured: widget.featured,
+        );
+      }
+      // 3. إذا كان لدينا اسم الفئة فقط (للتوافق القديم)
+      else if (widget.category != null) {
+        final categories = await _wooCommerceService.getCategories();
+        WooProductCategory? targetCategory;
+        for (final cat in categories) {
+          if (cat.name.toLowerCase() == widget.category!.toLowerCase()) {
+            targetCategory = cat;
+            break;
+          }
+        }
+
+        if (targetCategory != null) {
+          products = await _wooCommerceService.getProducts(
+            categoryId: targetCategory.id,
+            orderby: widget.orderby,
+            order: widget.order,
+            featured: widget.featured,
+          );
         }
       }
+      // 4. جلب المنتجات العامة
+      else {
+        products = await _wooCommerceService.getProducts(
+          featured: widget.featured,
+          orderby: widget.orderby,
+          order: widget.order,
+        );
+      }
 
-      if (targetCategory != null) {
-        final products = await _wooCommerceService.getProducts(categoryId: targetCategory.id);
+      if (mounted) {
         setState(() {
           _allProducts = products;
           _filteredProducts = products;
           _isLoading = false;
         });
-      } else {
+      }
+    } catch (e, s) {
+      developer.log(
+        'An error occurred in _fetchProducts',
+        error: e,
+        stackTrace: s,
+      );
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
         setState(() {
-          _allProducts = [];
-          _filteredProducts = [];
+          _errorMessage =
+              l10n?.failed_load_products ?? 'Failed to load products';
           _isLoading = false;
         });
       }
-    } catch (e, s) {
-      developer.log('An error occurred in _fetchProductsForCategory', error: e, stackTrace: s);
-      setState(() {
-        _errorMessage = 'Failed to load products. Please try again later.';
-        _isLoading = false;
-      });
     }
   }
 
@@ -98,13 +164,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    String title =
+        widget.customTitle ??
+        widget.brandName ??
+        widget.category?.toUpperCase() ??
+        l10n.products;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category.toUpperCase()),
-        actions: const [
-          CartBadge(),
-        ],
-      ),
+      appBar: AppBar(title: Text(title), actions: const [CartBadge()]),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -114,7 +181,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search Products',
+                  hintText: l10n.search_products,
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -138,9 +205,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ),
               ),
             ),
-            Expanded(
-              child: _buildProductGrid(),
-            ),
+            Expanded(child: _buildProductGrid()),
           ],
         ),
       ),
@@ -149,19 +214,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   Widget _buildProductGrid() {
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage.isNotEmpty) {
-      return Center(child: Text(_errorMessage, style: const TextStyle(color: Colors.red)));
+      return Center(
+        child: Text(_errorMessage, style: const TextStyle(color: Colors.red)),
+      );
     }
 
     if (_filteredProducts.isEmpty) {
       if (_searchController.text.isNotEmpty) {
-        return const Center(child: Text('No products found matching your search.'));
+        return Center(child: Text(l10n.no_products_matching));
       }
-      return const Center(child: Text('No products available in this category.'));
+      return Center(child: Text(l10n.no_products_available));
     }
 
     return GridView.builder(

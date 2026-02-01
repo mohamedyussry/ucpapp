@@ -1,4 +1,3 @@
-
 class Customer {
   int id;
   String email;
@@ -6,10 +5,7 @@ class Customer {
   String lastName;
   String username;
   String avatarUrl;
-  String? address;
-  String? birthday;
-  String? gender;
-  String? phone;
+  Billing? billing;
 
   Customer({
     required this.id,
@@ -18,10 +14,7 @@ class Customer {
     required this.lastName,
     required this.username,
     required this.avatarUrl,
-    this.address,
-    this.birthday,
-    this.gender,
-    this.phone,
+    this.billing,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) {
@@ -32,10 +25,67 @@ class Customer {
       lastName: json['last_name'] ?? '',
       username: json['username'] ?? '',
       avatarUrl: json['avatar_url'] ?? '',
-      address: json['billing']?['address_1'],
-      phone: json['billing']?['phone'],
-      // birthday and gender are not standard WooCommerce fields,
-      // they might need to be handled via metadata if you add them.
+      billing: json['billing'] != null
+          ? Billing.fromJson(json['billing'])
+          : null,
     );
   }
+}
+
+class Billing {
+  String firstName;
+  String lastName;
+  String company;
+  String address1;
+  String address2;
+  String city;
+  String postcode;
+  String country;
+  String state;
+  String email;
+  String phone;
+
+  Billing({
+    required this.firstName,
+    required this.lastName,
+    required this.company,
+    required this.address1,
+    required this.address2,
+    required this.city,
+    required this.postcode,
+    required this.country,
+    required this.state,
+    required this.email,
+    required this.phone,
+  });
+
+  factory Billing.fromJson(Map<String, dynamic> json) {
+    return Billing(
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
+      company: json['company'] ?? '',
+      address1: json['address_1'] ?? '',
+      address2: json['address_2'] ?? '',
+      city: json['city'] ?? '',
+      postcode: json['postcode'] ?? '',
+      country: json['country'] ?? '',
+      state: json['state'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'first_name': firstName,
+    'last_name': lastName,
+    'company': company,
+    'address_1': address1,
+    'address_2': address2,
+    'city': city,
+    'postcode': postcode,
+    'country': country,
+    'state': state,
+    'email': email,
+    'phone': phone,
+  };
 }

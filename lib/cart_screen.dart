@@ -1,12 +1,12 @@
-
 import 'package:flutter/material.dart';
 import 'package:myapp/providers/currency_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'providers/cart_provider.dart';
-import 'checkout_screen.dart'; // Import the new checkout screen
-import 'widgets/custom_bottom_nav_bar.dart'; // Import the custom bottom nav bar
+import 'checkout_screen.dart';
+import 'widgets/custom_bottom_nav_bar.dart';
+import 'l10n/generated/app_localizations.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -28,6 +28,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -37,7 +38,7 @@ class _CartScreenState extends State<CartScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'My Cart',
+          l10n.my_cart,
           style: GoogleFonts.poppins(
             color: Colors.black,
             fontWeight: FontWeight.w600,
@@ -52,11 +53,18 @@ class _CartScreenState extends State<CartScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey[400]),
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 20),
                   Text(
-                    'Your cart is empty',
-                    style: GoogleFonts.poppins(fontSize: 20, color: Colors.grey[600]),
+                    l10n.cart_empty,
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      color: Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
@@ -73,7 +81,13 @@ class _CartScreenState extends State<CartScreen> {
                     itemBuilder: (ctx, i) {
                       final cartItem = cart.items.values.toList()[i];
                       final productId = cart.items.keys.toList()[i];
-                      return _buildCartItem(context, cart, cartItem, productId, currencyProvider);
+                      return _buildCartItem(
+                        context,
+                        cart,
+                        cartItem,
+                        productId,
+                        currencyProvider,
+                      );
                     },
                   ),
                   const SizedBox(height: 20),
@@ -85,9 +99,16 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCartItem(BuildContext context, CartProvider cart, CartItem cartItem, int productId, CurrencyProvider currencyProvider) {
+  Widget _buildCartItem(
+    BuildContext context,
+    CartProvider cart,
+    CartItem cartItem,
+    int productId,
+    CurrencyProvider currencyProvider,
+  ) {
     final product = cartItem.product;
     final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
+    final l10n = AppLocalizations.of(context)!;
 
     return Dismissible(
       key: ValueKey(productId),
@@ -96,7 +117,7 @@ class _CartScreenState extends State<CartScreen> {
         cart.removeItem(productId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${product.name} removed from cart'),
+            content: Text(l10n.removed_from_cart(product.name)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -109,9 +130,7 @@ class _CartScreenState extends State<CartScreen> {
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(Icons.delete, color: Colors.white),
-          ],
+          children: [Icon(Icons.delete, color: Colors.white)],
         ),
       ),
       child: Card(
@@ -130,8 +149,12 @@ class _CartScreenState extends State<CartScreen> {
                   width: 80,
                   height: 80,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(color: Colors.grey[200]),
-                  errorWidget: (context, url, error) => Container(color: Colors.grey[200], child: const Icon(Icons.error, color: Colors.grey)),
+                  placeholder: (context, url) =>
+                      Container(color: Colors.grey[200]),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.error, color: Colors.grey),
+                  ),
                 ),
               ),
               const SizedBox(width: 15),
@@ -141,20 +164,28 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     Text(
                       product.name,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      product.categories.isNotEmpty ? product.categories[0].name : 'Category',
-                      style: GoogleFonts.poppins(color: Colors.grey, fontSize: 12),
+                      product.categories.isNotEmpty
+                          ? product.categories[0].name
+                          : 'Category',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Text(
                           '${product.price ?? '0'} ',
-                           style: GoogleFonts.poppins(
+                          style: GoogleFonts.poppins(
                             color: Colors.black,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -171,14 +202,20 @@ class _CartScreenState extends State<CartScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${cartItem.quantity}x',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 12),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -201,7 +238,7 @@ class _CartScreenState extends State<CartScreen> {
                     ],
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -209,7 +246,11 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildQuantityButton({required IconData icon, required VoidCallback onPressed, bool isAdd = false}) {
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isAdd = false,
+  }) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -224,7 +265,12 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildCheckoutForm(BuildContext context, CartProvider cart, CurrencyProvider currencyProvider) {
+  Widget _buildCheckoutForm(
+    BuildContext context,
+    CartProvider cart,
+    CurrencyProvider currencyProvider,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -233,17 +279,33 @@ class _CartScreenState extends State<CartScreen> {
       ),
       child: Column(
         children: [
-          _buildTextFieldWithIcon(hint: 'attach picture of prescriptions', icon: Icons.camera_alt_outlined),
-          const SizedBox(height: 12),
           _buildDiscountCodeSection(cart),
           const SizedBox(height: 20),
-          _buildPriceSummaryRow('Sub total :', cart.subtotal, currencyProvider),
+          _buildPriceSummaryRow(
+            '${l10n.subtotal} :',
+            cart.subtotal,
+            currencyProvider,
+          ),
           if (cart.discountAmount > 0) ...[
             const SizedBox(height: 8),
-            _buildPriceSummaryRow('Discount :', cart.discountAmount, currencyProvider, isDiscount: true),
+            _buildPriceSummaryRow(
+              '${l10n.discount} :',
+              cart.discountAmount,
+              currencyProvider,
+              isDiscount: true,
+            ),
           ],
-          const Divider(height: 24, thickness: 1, color: Color.fromARGB(255, 236, 236, 236)),
-          _buildPriceSummaryRow('Total :', cart.totalAmount, currencyProvider, isTotal: true),
+          const Divider(
+            height: 24,
+            thickness: 1,
+            color: Color.fromARGB(255, 236, 236, 236),
+          ),
+          _buildPriceSummaryRow(
+            '${l10n.total} :',
+            cart.totalAmount,
+            currencyProvider,
+            isTotal: true,
+          ),
           const SizedBox(height: 20),
           _buildCheckoutButton(context, cart),
         ],
@@ -252,6 +314,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildDiscountCodeSection(CartProvider cart) {
+    final l10n = AppLocalizations.of(context)!;
     if (cart.appliedCoupon != null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -264,8 +327,11 @@ class _CartScreenState extends State<CartScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Coupon applied: ${cart.appliedCoupon!.code}',
-              style: GoogleFonts.poppins(color: Colors.green.shade800, fontWeight: FontWeight.w600),
+              l10n.coupon_applied(cart.appliedCoupon!.code),
+              style: GoogleFonts.poppins(
+                color: Colors.green.shade800,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             IconButton(
               icon: Icon(Icons.clear, color: Colors.green.shade700),
@@ -283,7 +349,7 @@ class _CartScreenState extends State<CartScreen> {
           TextField(
             controller: _couponController,
             decoration: InputDecoration(
-              hintText: 'Enter Discount Code',
+              hintText: l10n.enter_discount_code,
               hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
               filled: true,
               fillColor: Colors.grey[100],
@@ -291,7 +357,10 @@ class _CartScreenState extends State<CartScreen> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
               suffixIcon: cart.isApplyingCoupon
                   ? const Padding(
                       padding: EdgeInsets.all(12.0),
@@ -304,8 +373,11 @@ class _CartScreenState extends State<CartScreen> {
                         }
                       },
                       child: Text(
-                        'Apply',
-                        style: GoogleFonts.poppins(color: Colors.black, fontWeight: FontWeight.bold),
+                        l10n.apply,
+                        style: GoogleFonts.poppins(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
             ),
@@ -323,24 +395,13 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  Widget _buildTextFieldWithIcon({required String hint, required IconData icon}) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.poppins(color: Colors.grey[500]),
-        suffixIcon: Icon(icon, color: Colors.grey[500]),
-        filled: true,
-        fillColor: Colors.grey[100],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      ),
-    );
-  }
-
-  Widget _buildPriceSummaryRow(String title, double amount, CurrencyProvider currencyProvider, {bool isTotal = false, bool isDiscount = false}) {
+  Widget _buildPriceSummaryRow(
+    String title,
+    double amount,
+    CurrencyProvider currencyProvider, {
+    bool isTotal = false,
+    bool isDiscount = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -349,12 +410,14 @@ class _CartScreenState extends State<CartScreen> {
           style: GoogleFonts.poppins(
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-            color: isDiscount ? Colors.green.shade700 : (isTotal ? Colors.black : Colors.grey[600]),
+            color: isDiscount
+                ? Colors.green.shade700
+                : (isTotal ? Colors.black : Colors.grey[600]),
           ),
         ),
         Row(
           children: [
-             if (isDiscount)
+            if (isDiscount)
               Text(
                 '-', // Add a minus sign for the discount
                 style: GoogleFonts.poppins(
@@ -373,38 +436,37 @@ class _CartScreenState extends State<CartScreen> {
             ),
             _buildCurrencyDisplay(currencyProvider),
           ],
-        )
+        ),
       ],
     );
   }
 
   Widget _buildCheckoutButton(BuildContext context, CartProvider cart) {
+    final l10n = AppLocalizations.of(context)!;
     return ElevatedButton(
       onPressed: () {
         if (cart.items.isNotEmpty) {
           final firstItem = cart.items.values.first;
-          final categoryName = firstItem.product.categories.isNotEmpty ? firstItem.product.categories.first.name : 'Category';
+          final categoryName = firstItem.product.categories.isNotEmpty
+              ? firstItem.product.categories.first.name
+              : 'Category';
 
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => CheckoutScreen(
-                categoryName: categoryName,
-              ),
+              builder: (context) => CheckoutScreen(categoryName: categoryName),
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Your cart is empty.')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.cart_empty)));
         }
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.orange,
         minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         elevation: 0,
       ),
       child: Row(
@@ -417,10 +479,14 @@ class _CartScreenState extends State<CartScreen> {
               color: Colors.white.withAlpha((255 * 0.3).round()),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.arrow_forward_ios,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           Text(
-            'Checkout',
+            l10n.checkout,
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -433,7 +499,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-   Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider) {
+  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider) {
     final currencyImageUrl = currencyProvider.currencyImageUrl;
     final currencySymbol = currencyProvider.currencySymbol;
 

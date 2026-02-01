@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,6 +8,7 @@ import 'package:myapp/providers/currency_provider.dart';
 import '../product_detail_screen.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
+import 'custom_cart_notification.dart';
 
 class ProductCard extends StatelessWidget {
   final WooProduct product;
@@ -57,7 +57,8 @@ class ProductCard extends StatelessWidget {
                       imageUrl: imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.grey[200]),
+                      placeholder: (context, url) =>
+                          Container(color: Colors.grey[200]),
                       errorWidget: (context, url, error) => Container(
                         color: Colors.grey[200],
                         child: const Icon(Icons.error, color: Colors.grey),
@@ -68,16 +69,22 @@ class ProductCard extends StatelessWidget {
                       right: 8,
                       child: Consumer<WishlistProvider>(
                         builder: (context, wishlistProvider, child) {
-                          final isFavorite = wishlistProvider.isFavorite(product.id);
+                          final isFavorite = wishlistProvider.isFavorite(
+                            product.id,
+                          );
                           return GestureDetector(
                             onTap: () {
                               wishlistProvider.toggleWishlist(product);
                             },
                             child: CircleAvatar(
-                              backgroundColor: Colors.white.withAlpha((255 * 0.8).round()),
+                              backgroundColor: Colors.white.withAlpha(
+                                (255 * 0.8).round(),
+                              ),
                               radius: 15,
                               child: Icon(
-                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
                                 color: isFavorite ? Colors.red : Colors.grey,
                                 size: 20,
                               ),
@@ -97,16 +104,47 @@ class ProductCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        productName,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            productName,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          // Display old price if product is on sale
+                          if (product.salePrice != null &&
+                              product.regularPrice != null &&
+                              product.salePrice! < product.regularPrice!)
+                            Row(
+                              children: [
+                                Text(
+                                  '${product.regularPrice?.toStringAsFixed(2) ?? '0.00'} ',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade500,
+                                    decoration: TextDecoration.lineThrough,
+                                    decorationColor: Colors.grey.shade500,
+                                    decorationThickness: 2,
+                                  ),
+                                ),
+                                _buildCurrencyDisplay(
+                                  currencyProvider,
+                                  fontSize: 13,
+                                  isGrey: true,
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
+                      const Spacer(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -119,42 +157,42 @@ class ProductCard extends StatelessWidget {
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color:
+                                      (product.salePrice != null &&
+                                          product.regularPrice != null &&
+                                          product.salePrice! <
+                                              product.regularPrice!)
+                                      ? Colors.red.shade600
+                                      : Colors.black87,
                                 ),
                               ),
-                              _buildCurrencyDisplay(currencyProvider),
+                              _buildCurrencyDisplay(
+                                currencyProvider,
+                                fontSize: 18,
+                                isGrey: false,
+                              ),
                             ],
                           ),
                           GestureDetector(
                             onTap: () {
                               cart.addItem(product);
-                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Added ${product.name} to cart!'),
-                                  duration: const Duration(seconds: 2),
-                                  action: SnackBarAction(
-                                    label: 'UNDO',
-                                    onPressed: () {
-                                      cart.removeSingleItem(product.id);
-                                    },
-                                  ),
-                                ),
-                              );
+                              CustomCartNotification.show(context, product);
                             },
                             child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.rectangle,
-                                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                                ),
-                                child: const Icon(
-                                  Icons.shopping_cart_outlined,
-                                  color: Colors.white,
-                                  size: 20,
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Colors.black,
+                                shape: BoxShape.rectangle,
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8),
                                 ),
                               ),
+                              child: const Icon(
+                                Icons.shopping_cart_outlined,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -169,22 +207,28 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCurrencyDisplay(CurrencyProvider currencyProvider) {
+  Widget _buildCurrencyDisplay(
+    CurrencyProvider currencyProvider, {
+    double fontSize = 18,
+    bool isGrey = false,
+  }) {
     final currencyImageUrl = currencyProvider.currencyImageUrl;
     final currencySymbol = currencyProvider.currencySymbol;
 
     final style = GoogleFonts.poppins(
-      fontSize: 18,
+      fontSize: fontSize,
       fontWeight: FontWeight.bold,
-      color: Colors.black87,
+      color: isGrey ? Colors.grey.shade500 : Colors.black87,
+      decoration: isGrey ? TextDecoration.lineThrough : null,
+      decorationColor: isGrey ? Colors.grey.shade500 : null,
+      decorationThickness: isGrey ? 2 : null,
     );
 
     if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
       return Image.network(
         currencyImageUrl,
-        height: 18, // Adjust size as needed
+        height: fontSize,
         errorBuilder: (context, error, stackTrace) {
-          // Fallback to text if image fails to load
           return Text(currencySymbol, style: style);
         },
       );

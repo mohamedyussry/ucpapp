@@ -1,4 +1,3 @@
-
 class CountryState {
   final String code;
   final String name;

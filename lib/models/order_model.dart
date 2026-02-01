@@ -22,22 +22,36 @@ class Order extends HiveObject {
   @HiveField(5)
   late String currency;
 
+  @HiveField(6)
+  late List<int> productIds;
+
   Order();
 
   factory Order.fromJson(Map<String, dynamic> json) {
     final order = Order();
     order.id = json['id'];
     order.status = json['status'] ?? 'unknown';
-    order.totalPrice = double.tryParse(json['total']?.toString() ?? '0.0') ?? 0.0;
-    order.date = DateTime.tryParse(json['date_created']?.toString() ?? '') ?? DateTime.now();
+    order.totalPrice =
+        double.tryParse(json['total']?.toString() ?? '0.0') ?? 0.0;
+    order.date =
+        DateTime.tryParse(json['date_created']?.toString() ?? '') ??
+        DateTime.now();
     order.currency = json['currency']?.toString() ?? '';
 
     if (json['line_items'] != null && json['line_items'] is List) {
-      order.productNames = (json['line_items'] as List)
+      final List<dynamic> items = json['line_items'];
+      order.productNames = items
           .map((item) => item['name']?.toString() ?? 'Unnamed Product')
+          .toList();
+      order.productIds = items
+          .map(
+            (item) => int.tryParse(item['product_id']?.toString() ?? '0') ?? 0,
+          )
+          .where((id) => id > 0)
           .toList();
     } else {
       order.productNames = ['Unknown Products'];
+      order.productIds = [];
     }
 
     return order;

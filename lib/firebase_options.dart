@@ -47,29 +47,28 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB7HNxohQz_Dh_Bbu1FRG4bY_5FjWJ_HSc',
-    appId: '1:487457702310:web:00251ab1fae268baaf8f67',
-    messagingSenderId: '487457702310',
-    projectId: 'ucp-app-new',
-    authDomain: 'ucp-app-new.firebaseapp.com',
-    storageBucket: 'ucp-app-new.firebasestorage.app',
+    apiKey: 'AIzaSyDVVSkxbBiyHFGWgc0IRhfP7txV14jTqQE',
+    appId: '1:1062417228433:web:00251ab1fae268baaf8f67',
+    messagingSenderId: '1062417228433',
+    projectId: 'ucp-app-d8c23',
+    authDomain: 'ucp-app-d8c23.firebaseapp.com',
+    storageBucket: 'ucp-app-d8c23.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDRDVExIyN-3rhR-4VnRa3dvgQE2Xzht5c',
-    appId: '1:487457702310:android:2e4583f81208e310af8f67',
-    messagingSenderId: '487457702310',
-    projectId: 'ucp-app-new',
-    storageBucket: 'ucp-app-new.firebasestorage.app',
+    apiKey: 'AIzaSyDVVSkxbBiyHFGWgc0IRhfP7txV14jTqQE',
+    appId: '1:1062417228433:android:86bea6af22e16ea2165530',
+    messagingSenderId: '1062417228433',
+    projectId: 'ucp-app-d8c23',
+    storageBucket: 'ucp-app-d8c23.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCyTutTCNrU5EJ5Mq1rWAqBEnED1J64KO0',
-    appId: '1:487457702310:ios:a93afae32c564091af8f67',
-    messagingSenderId: '487457702310',
-    projectId: 'ucp-app-new',
-    storageBucket: 'ucp-app-new.firebasestorage.app',
-    iosBundleId: 'meme.ucpksa.ucp',
+    apiKey: 'AIzaSyDVVSkxbBiyHFGWgc0IRhfP7txV14jTqQE',
+    appId: '1:1062417228433:ios:a93afae32c564091af8f67',
+    messagingSenderId: '1062417228433',
+    projectId: 'ucp-app-d8c23',
+    storageBucket: 'ucp-app-d8c23.firebasestorage.app',
+    iosBundleId: 'khp.ucpksa.com',
   );
-
 }

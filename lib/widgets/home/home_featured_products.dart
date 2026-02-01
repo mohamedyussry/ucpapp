@@ -1,0 +1,174 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:myapp/models/product_model.dart';
+import 'package:myapp/services/woocommerce_service.dart';
+import 'package:myapp/widgets/product_card.dart';
+import 'package:myapp/products_screen.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../l10n/generated/app_localizations.dart';
+
+class HomeFeaturedProducts extends StatefulWidget {
+  final String title;
+  final bool isFeatured;
+  const HomeFeaturedProducts({
+    super.key,
+    required this.title,
+    this.isFeatured = false,
+  });
+
+  @override
+  State<HomeFeaturedProducts> createState() => _HomeFeaturedProductsState();
+}
+
+class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
+  final WooCommerceService _wooService = WooCommerceService();
+  List<WooProduct> _products = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts();
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      List<WooProduct> products;
+      if (widget.isFeatured) {
+        // جلب المنتجات المميزة (المحددة بنجمة في ووردبريس)
+        products = await _wooService.getProducts(featured: true);
+
+        // إذا لم يكن هناك منتجات مميزة، نجلب الأكثر مبيعاً أو تقييماً كاحتياط
+        if (products.isEmpty) {
+          products = await _wooService.getProducts(
+            orderby: 'popularity',
+            order: 'desc',
+          );
+        }
+      } else {
+        // جلب أحدث المنتجات
+        products = await _wooService.getProducts(
+          orderby: 'date',
+          order: 'desc',
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _products = products
+              .take(10)
+              .toList(); // نكتفي بأول 10 منتجات للعرض السريع
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return _buildShimmer();
+    }
+
+    if (_products.isEmpty) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context)!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.title,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductsScreen(
+                        featured: widget.isFeatured,
+                        orderby: widget.isFeatured ? 'popularity' : 'date',
+                        order: 'desc',
+                        customTitle: widget.title,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  l10n.see_all,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        CarouselSlider(
+          options: CarouselOptions(
+            height: 320,
+            viewportFraction: 0.55,
+            enlargeCenterPage: false,
+            enableInfiniteScroll: _products.length > 2,
+            padEnds: false,
+            disableCenter: true,
+            scrollPhysics: const BouncingScrollPhysics(),
+          ),
+          items: _products.map((product) {
+            return Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: ProductCard(product: product),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Container(width: 150, height: 20, color: Colors.white),
+        ),
+        SizedBox(
+          height: 300,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: 3,
+            itemBuilder: (context, index) => Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                width: 180,
+                margin: const EdgeInsets.only(left: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

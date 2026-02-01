@@ -1,0 +1,321 @@
+{
+  "@@locale": "en",
+  "app_title": "UCP PHARMACY",
+  "home": "Home",
+  "categories": "Categories",
+  "orders": "Orders",
+  "favorites": "Favorites",
+  "profile": "Profile",
+  "search_products": "Search Products",
+  "best_sellers": "Best Sellers",
+  "new_arrivals": "New Arrivals",
+  "see_all": "See All",
+  "shop_by_category": "Shop by Category",
+  "shop_by_brands": "Shop by Brands",
+  "loyalty_program": "Loyalty Program",
+  "personal_info": "Personal Information",
+  "my_orders": "My Orders",
+  "my_points": "My Points",
+  "language": "Language",
+  "about_app": "About App",
+  "help_support": "Help & Support",
+  "logout": "Logout",
+  "edit_profile": "Edit Profile",
+  "my_account": "My Account",
+  "notification": "Notification",
+  "push_notification": "Push Notification",
+  "sync_notifications": "Sync Notifications",
+  "select_language": "Select Language",
+  "search_placeholder": "Search for products...",
+  "all_categories": "All Categories",
+  "results_not_found": "No results found",
+  "close_search": "Close Search",
+  "add_to_cart": "Add to cart",
+  "reviews": "Reviews",
+  "in_stock": "In stock",
+  "out_of_stock": "Out of stock",
+  "free_delivery": "Free Delivery",
+  "available_in_store": "Available in nearest store",
+  "added_to_cart": "Added to Cart!",
+  "sar": "SAR",
+  "no_categories_found": "No categories found",
+  "retry": "Retry",
+  "explore_collections": "Explore all collections",
+  "products": "Products",
+  "failed_load_products": "Failed to load products. Please try again later.",
+  "no_products_matching": "No products found matching your search.",
+  "shop_now": "SHOP NOW",
+  "no_products_available": "No products available.",
+  "brands": "Brands",
+  "no_brands_found": "No brands found",
+  "connection_failed": "Connection Failed",
+  "unknown_error": "Unknown Error",
+  "close": "Close",
+  "phone_login": "Phone Login",
+  "enter_phone_subtitle": "Enter your phone number to receive a verification code.",
+  "phone_number": "Phone Number",
+  "enter_phone_hint": "5XXXXXXXX",
+  "err_enter_phone": "Please enter your phone number",
+  "err_invalid_phone": "Please enter a valid 9-digit mobile number",
+  "send_code": "Send Code",
+  "login_email": "Login with Email & Password",
+  "login_guest": "Login as Guest",
+  "syncing": "Syncing...",
+  "sync_success": "Notifications synced successfully!",
+  "sync_failed": "Failed to sync notifications.",
+  "otp_resent": "Verification code sent again!",
+  "otp_failed_resend": "Failed to resend",
+  "otp_enter_full": "Please enter the full 4-digit code",
+  "otp_invalid": "Invalid code",
+  "otp_title": "Verification Code",
+  "otp_subtitle": "We have sent the verification code to",
+  "otp_your_phone": "your phone",
+  "verify": "Verify",
+  "resend_code": "Resend Code",
+  "resend_in": "Resend code in ",
+  "currency_sar": "SAR",
+  "loyalty_card": "Loyalty Card",
+  "boost_points": "Boost Your Points",
+  "double_discounts": "& Multiply Double Your Discounts",
+  "points_conversion": "Every 10 SAR = {points} Points",
+  "@points_conversion": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "points_value": "Every 10 Points = 1 SAR",
+  "tier_basic": "Basic",
+  "tier_plus": "Plus",
+  "tier_premium": "Premium",
+  "tier_elite": "Elite",
+  "condition_plus": "Reach 2,000 SAR in purchases within a year to unlock.",
+  "condition_premium": "Reach 5,000 SAR in purchases within a year to unlock.",
+  "condition_elite": "Reach 10,000 SAR in purchases within a year to unlock.",
+  "cat_for_baby": "For Baby",
+  "cat_for_her": "For Her",
+  "cat_for_him": "For Him",
+  "cat_for_her": "For Her",
+  "cat_for_him": "For Him",
+  "cat_medicine": "Medicine",
+  "my_cart": "My Cart",
+  "cart_empty": "Your cart is empty",
+  "removed_from_cart": "{product} removed from cart",
+  "@removed_from_cart": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "total": "Total",
+  "checkout": "Checkout",
+  "enter_discount_code": "Enter Discount Code",
+  "apply": "Apply",
+  "coupon_applied": "Coupon applied: {code}",
+  "@coupon_applied": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "place_order": "Place Order",
+  "continue_step": "Continue",
+  "shipping": "Shipping",
+  "payment": "Payment",
+  "review": "Review",
+  "shipping_details": "Shipping Details",
+  "first_name": "First Name",
+  "last_name": "Last Name",
+  "address": "Address",
+  "email": "Email",
+  "select_location_map": "Select Location on Map",
+  "select_region": "Select Region",
+  "shipping_to": "Shipping To",
+  "payment_method": "Payment Method",
+  "order_notes": "Order Notes",
+  "order_notes_hint": "Notes about your order...",
+  "final_review": "Final Review",
+  "order_summary": "Order Summary",
+  "no_payment_methods": "No payment methods available.",
+  "please_select_payment": "Please select a payment method.",
+  "payment_init_failed": "Failed to initialize payment. Please try again.",
+  "payment_failed": "Payment failed or cancelled.",
+  "order_failed": "Failed to place order. Please try again.",
+  "err_please_enter": "Please enter {field}",
+  "@err_please_enter": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "err_invalid_email": "Please enter a valid email address",
+  "coupon_invalid": "Invalid coupon code",
+  "coupon_expired": "This coupon has expired",
+  "coupon_removed": "Coupon removed",
+  "my_orders": "My Orders",
+  "tab_ongoing": "Ongoing",
+  "tab_completed": "Completed",
+  "tab_cancelled": "Cancelled",
+  "no_ongoing_orders": "No ongoing orders yet.",
+  "no_completed_orders": "No completed orders yet.",
+  "no_cancelled_orders": "No cancelled orders yet.",
+  "retry": "Retry",
+  "order_number": "Order #{id}",
+  "@order_number": {
+    "placeholders": {
+      "id": {
+        "type": "Object"
+      }
+    }
+  },
+  "price_label": "Price: {price} {currency}",
+  "@price_label": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      },
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "track_btn": "Track",
+  "details_btn": "Details",
+  "view_details_link": "View details",
+  "order_again_btn": "Order again",
+  "rate_label": "Rate",
+  "err_no_products_reorder": "No products found to re-order.",
+  "msg_products_added_cart": "{count} products added to cart.",
+  "@msg_products_added_cart": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "err_products_not_found": "Failed to find products. They might be out of stock.",
+  "err_reordering": "Error re-ordering: {error}",
+  "@err_reordering": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "err_loading_orders": "Failed to load orders: {error}",
+  "@err_loading_orders": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "err_load_order_details": "Could not load order details",
+  "go_back": "Go Back",
+  "loading_order_tracking": "Loading order tracking...",
+  "unknown_error": "Unknown error",
+  "wishlist_title": "Your Wishlist ({count})",
+  "@wishlist_title": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "wishlist_empty": "You haven't added any products to your Wishlist yet!",
+  "shop_by_categories_btn": "Shop by Categories",
+  "profile_updated": "Profile updated successfully",
+  "profile_update_failed": "Failed to update profile",
+  "edit_photo": "Edit Photo",
+  "remove_btn": "Remove",
+  "personal_details": "Personal Details",
+  "billing_address": "Billing Address",
+  "contact_details": "Contact Details",
+  "company_label": "Company",
+  "address1_label": "Address Line 1",
+  "address2_label": "Address Line 2",
+  "city_label": "City",
+  "postcode_label": "Postcode",
+  "country_label": "Country",
+  "state_label": "State/Region",
+  "discard_btn": "Discard",
+  "save_changes_btn": "Save Changes",
+  "loyalty_rewards_title": "Loyalty Rewards",
+  "welcome_rewards": "Welcome to UCP Rewards",
+  "points_history": "Points History",
+  "refresh": "Refresh",
+  "no_history_found": "No history found.",
+  "loyalty_card_label": "Loyalty Card",
+  "current_points": "Current Points",
+  "ucp_loyalty_program": "UCP Loyalty Program",
+  "active_account": "Active Account",
+  "pts_suffix": "Pts",
+  "choose_language": "Choose Language",
+  "continue_btn": "Continue",
+  "welcome_back": "Welcome Back",
+  "login_to_account": "Login to your account",
+  "username": "Username",
+  "password": "Password",
+  "please_enter_username": "Please enter your username",
+  "please_enter_password": "Please enter your password",
+  "login_btn": "Login",
+  "no_account_signup": "Don't have an account? Sign up",
+  "back_to_phone_login": "Back to Phone Login",
+  "continue_as_guest": "Continue as Guest",
+  "order_confirmed": "Order Confirmed",
+  "thank_you_order": "Thank You For Your Order!",
+  "order_placed_successfully": "Your order has been placed successfully.",
+  "order_details": "Order Details",
+  "order_id_label": "Order ID:",
+  "date_label": "Date:",
+  "payment_method_label": "Payment Method:",
+  "status_label": "Status:",
+  "shipping_address_label": "Shipping Address",
+  "order_summary_label": "Order Summary",
+  "total_label": "Total",
+  "continue_shopping": "Continue Shopping",
+  "order_tracking_title": "Order Tracking",
+  "image_not_found": "Image not found",
+  "order_id_colon": "Order ID :",
+  "received_status": "Received",
+  "on_the_way_status": "On the Way",
+  "delivered_status": "Delivered",
+  "products_label": "Products",
+  "order_label": "Order",
+  "create_account": "Create Account",
+  "first_name": "First Name",
+  "last_name": "Last Name",
+  "email": "Email",
+  "please_enter_first_name": "Please enter your first name",
+  "please_enter_last_name": "Please enter your last name",
+  "please_enter_email": "Please enter your email",
+  "please_enter_valid_email": "Please enter a valid email",
+  "please_enter_password_signup": "Please enter a password",
+  "password_min_length": "Password must be at least 6 characters",
+  "register_btn": "Register",
+  "registration_successful": "Registration successful! Please log in.",
+  "registration_failed": "Registration failed. The email might already be in use.",
+  "error_occurred": "An error occurred: {error}",
+  "@error_occurred": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "what_can_we_help": "What can we help you find?",
+  "delivery_to": "Delivery to",
+  "change_btn": "Change",
+  "bestseller": "Bestseller",
+  "popular_brands": "Popular Brands",
+  "select_delivery_location": "Select Delivery Location",
+  "move_map_to_select": "Move the map to select your location",
+  "confirm_location": "Confirm Location",
+  "payment_title": "Payment"
+}

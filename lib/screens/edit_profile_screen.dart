@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:myapp/models/customer_model.dart';
 import 'package:myapp/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final Customer customer;
@@ -17,34 +17,59 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _addressController;
-  late TextEditingController _birthdayController;
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _companyController;
+  late TextEditingController _address1Controller;
+  late TextEditingController _address2Controller;
+  late TextEditingController _cityController;
+  late TextEditingController _postcodeController;
+  late TextEditingController _countryController;
+  late TextEditingController _stateController;
   late TextEditingController _phoneController;
-  late String _gender;
+  late TextEditingController _emailController;
+
   File? _imageFile;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: '${widget.customer.firstName} ${widget.customer.lastName}');
-    _addressController = TextEditingController(text: widget.customer.address ?? '');
-    _birthdayController = TextEditingController(text: widget.customer.birthday ?? '');
-    _phoneController = TextEditingController(text: widget.customer.phone ?? '');
-    _gender = widget.customer.gender ?? 'Male';
+    final billing = widget.customer.billing;
+    _firstNameController = TextEditingController(
+      text: widget.customer.firstName,
+    );
+    _lastNameController = TextEditingController(text: widget.customer.lastName);
+    _companyController = TextEditingController(text: billing?.company ?? '');
+    _address1Controller = TextEditingController(text: billing?.address1 ?? '');
+    _address2Controller = TextEditingController(text: billing?.address2 ?? '');
+    _cityController = TextEditingController(text: billing?.city ?? '');
+    _postcodeController = TextEditingController(text: billing?.postcode ?? '');
+    _countryController = TextEditingController(text: billing?.country ?? '');
+    _stateController = TextEditingController(text: billing?.state ?? '');
+    _phoneController = TextEditingController(text: billing?.phone ?? '');
+    _emailController = TextEditingController(text: widget.customer.email);
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _addressController.dispose();
-    _birthdayController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _companyController.dispose();
+    _address1Controller.dispose();
+    _address2Controller.dispose();
+    _cityController.dispose();
+    _postcodeController.dispose();
+    _countryController.dispose();
+    _stateController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -58,43 +83,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final nameParts = _nameController.text.split(' ');
-    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-    authProvider.updateCustomerDetails(
-      firstName: firstName,
-      lastName: lastName,
-      address: _addressController.text,
-      birthday: _birthdayController.text,
-      gender: _gender,
-      phone: _phoneController.text,
-      // In a real app, you would also upload the _imageFile if it's not null
+    final success = await authProvider.updateCustomerDetails(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      company: _companyController.text.trim(),
+      address1: _address1Controller.text.trim(),
+      address2: _address2Controller.text.trim(),
+      city: _cityController.text.trim(),
+      postcode: _postcodeController.text.trim(),
+      country: _countryController.text.trim(),
+      state: _stateController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
     );
 
-    Navigator.of(context).pop();
+    if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.profile_updated),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.profile_update_failed),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildProfilePhotoSection(),
-            _buildFormSection(),
-          ],
-        ),
-      ),
-      bottomNavigationBar: _buildBottomButtons(),
+      body: authProvider.isUpdatingCustomer
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          : SingleChildScrollView(
+              child: Column(
+                children: [_buildProfilePhotoSection(), _buildFormSection()],
+              ),
+            ),
+      bottomNavigationBar: authProvider.isUpdatingCustomer
+          ? null
+          : _buildBottomButtons(),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -112,32 +159,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
       title: Text(
-        'Edit Profile',
+        l10n.edit_profile,
         style: GoogleFonts.poppins(
           color: Colors.black,
           fontWeight: FontWeight.bold,
         ),
       ),
       centerTitle: true,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.logout, color: Colors.black), // Icon can be changed
-              onPressed: () {},
-            ),
-          ),
-        ),
-      ],
     );
   }
 
   Widget _buildProfilePhotoSection() {
+    final l10n = AppLocalizations.of(context)!;
     ImageProvider backgroundImage;
     if (_imageFile != null) {
       backgroundImage = FileImage(_imageFile!);
@@ -149,10 +182,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: backgroundImage,
-          ),
+          CircleAvatar(radius: 50, backgroundImage: backgroundImage),
           const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -163,9 +193,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   backgroundColor: Colors.grey[200],
                   foregroundColor: Colors.black,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Edit Photo'),
+                child: Text(l10n.edit_photo),
               ),
               const SizedBox(width: 10),
               ElevatedButton(
@@ -174,9 +206,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                child: const Text('Remove'),
+                child: Text(l10n.remove_btn),
               ),
             ],
           ),
@@ -186,6 +220,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildFormSection() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -198,11 +233,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle('Personal Information'),
+          _buildSectionTitle(l10n.personal_details),
           _buildPersonalInfoCard(),
           const SizedBox(height: 20),
-          _buildSectionTitle('Account Information'),
-          _buildAccountInfoCard(),
+          _buildSectionTitle(l10n.billing_address),
+          _buildBillingInfoCard(),
+          const SizedBox(height: 20),
+          _buildSectionTitle(l10n.contact_details),
+          _buildContactInfoCard(),
+          const SizedBox(height: 100), // Space for bottom buttons
         ],
       ),
     );
@@ -210,18 +249,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
+      padding: const EdgeInsets.only(bottom: 10.0, left: 5),
       child: Text(
         title,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18),
       ),
     );
   }
 
   Widget _buildPersonalInfoCard() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -230,18 +267,116 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),
       child: Column(
         children: [
-          _buildTextField(label: 'Your Name', controller: _nameController),
+          _buildTextField(
+            label: l10n.first_name,
+            controller: _firstNameController,
+          ),
           const SizedBox(height: 15),
-          _buildTextField(label: 'Address', controller: _addressController),
-          const SizedBox(height: 15),
-          _buildTextField(label: 'Birthday', controller: _birthdayController),
-          const SizedBox(height: 15),
-          _buildGenderSelector(),
+          _buildTextField(
+            label: l10n.last_name,
+            controller: _lastNameController,
+          ),
         ],
       ),
     );
   }
-    Widget _buildTextField({required String label, required TextEditingController controller}) {
+
+  Widget _buildBillingInfoCard() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _buildTextField(
+            label: l10n.company_label,
+            controller: _companyController,
+          ),
+          const SizedBox(height: 15),
+          _buildTextField(
+            label: l10n.address1_label,
+            controller: _address1Controller,
+          ),
+          const SizedBox(height: 15),
+          _buildTextField(
+            label: l10n.address2_label,
+            controller: _address2Controller,
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  label: l10n.city_label,
+                  controller: _cityController,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildTextField(
+                  label: l10n.postcode_label,
+                  controller: _postcodeController,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  label: l10n.country_label,
+                  controller: _countryController,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildTextField(
+                  label: l10n.state_label,
+                  controller: _stateController,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactInfoCard() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          _buildTextField(
+            label: l10n.email,
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 15),
+          _buildTextField(
+            label: l10n.phone_number,
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -251,6 +386,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         TextField(
           controller: controller,
+          keyboardType: keyboardType,
           decoration: const InputDecoration(
             isDense: true,
             border: UnderlineInputBorder(),
@@ -262,111 +398,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-
-  Widget _buildGenderSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Gender (Optional)',
-          style: GoogleFonts.poppins(color: Colors.grey[600], fontSize: 14),
-        ),
-        Row(
-          children: [
-            Radio<String>(
-              value: 'Male',
-              groupValue: _gender,
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _gender = value;
-                  });
-                }
-              },
-              activeColor: Colors.orange,
-            ),
-            const Text('Male'),
-            Radio<String>(
-              value: 'Female',
-              groupValue: _gender,
-              onChanged: (value) {
-                 if (value != null) {
-                  setState(() {
-                    _gender = value;
-                  });
-                }
-              },
-               activeColor: Colors.orange,
-            ),
-            const Text('Female'),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountInfoCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          _buildAccountInfoRow(
-            title: 'Email',
-            value: widget.customer.email,
-            isVerified: true,
-          ),
-          const Divider(),
-          _buildAccountInfoRow(
-            title: 'Phone',
-            value: _phoneController.text,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountInfoRow({
-    required String title,
-    required String value,
-    bool isVerified = false,
-  }) {
-    return InkWell(
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
-        child: Row(
-          children: [
-            Text(title, style: GoogleFonts.poppins(color: Colors.grey[600])),
-            const Spacer(),
-            if (isVerified)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'Verified',
-                  style: GoogleFonts.poppins(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ),
-            const SizedBox(width: 8),
-            Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomButtons() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      padding: const EdgeInsets.all(20),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -380,16 +415,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Row(
         children: [
           Expanded(
-            child: ElevatedButton(
+            child: OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
+              style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
-                'Discard',
-                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+                l10n.discard_btn,
+                style: GoogleFonts.poppins(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -400,11 +439,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
-                'Save',
-                style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold),
+                l10n.save_changes_btn,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
