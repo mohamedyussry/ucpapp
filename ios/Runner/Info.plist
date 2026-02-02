@@ -54,6 +54,10 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs access to location to let you select your delivery address on the map.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app needs access to location to let you select your delivery address on the map and provide better service even when the app is in the background.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>This app needs access to location to let you select your delivery address on the map.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>This app needs access to your photo library to select images.</string>
 		<key>NSCameraUsageDescription</key>
