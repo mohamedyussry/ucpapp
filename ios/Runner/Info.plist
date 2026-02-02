@@ -54,6 +54,12 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs access to location to let you select your delivery address on the map.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app needs access to your photo library to select images.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app needs access to the camera to take photos.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app needs access to the microphone for video recording.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 	</dict>

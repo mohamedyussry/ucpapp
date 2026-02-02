@@ -119,22 +119,43 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
             ],
           ),
         ),
-        CarouselSlider(
-          options: CarouselOptions(
-            height: 320,
-            viewportFraction: 0.55,
-            enlargeCenterPage: false,
-            enableInfiniteScroll: _products.length > 2,
-            padEnds: false,
-            disableCenter: true,
-            scrollPhysics: const BouncingScrollPhysics(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              double screenWidth = constraints.maxWidth;
+              double viewportFraction;
+
+              if (screenWidth > 1200) {
+                viewportFraction = 0.2; // 5 products
+              } else if (screenWidth > 900) {
+                viewportFraction = 0.25; // 4 products
+              } else if (screenWidth > 600) {
+                viewportFraction = 0.33; // 3 products
+              } else {
+                viewportFraction = 0.5; // 2 products
+              }
+
+              return CarouselSlider(
+                options: CarouselOptions(
+                  height: 330,
+                  viewportFraction: viewportFraction,
+                  enlargeCenterPage: false,
+                  enableInfiniteScroll:
+                      _products.length > (1 / viewportFraction).ceil(),
+                  padEnds: false,
+                  disableCenter: true,
+                  scrollPhysics: const BouncingScrollPhysics(),
+                ),
+                items: _products.map((product) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: ProductCard(product: product),
+                  );
+                }).toList(),
+              );
+            },
           ),
-          items: _products.map((product) {
-            return Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: ProductCard(product: product),
-            );
-          }).toList(),
         ),
         const SizedBox(height: 20),
       ],
@@ -149,22 +170,41 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
           padding: const EdgeInsets.all(16.0),
           child: Container(width: 150, height: 20, color: Colors.white),
         ),
-        SizedBox(
-          height: 300,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 3,
-            itemBuilder: (context, index) => Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Container(
-                width: 180,
-                margin: const EdgeInsets.only(left: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: SizedBox(
+            height: 330,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double screenWidth = constraints.maxWidth;
+                double width;
+                if (screenWidth > 1200)
+                  width = screenWidth / 5;
+                else if (screenWidth > 900)
+                  width = screenWidth / 4;
+                else if (screenWidth > 600)
+                  width = screenWidth / 3;
+                else
+                  width = screenWidth / 2;
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 4,
+                  itemBuilder: (context, index) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: width - 16,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
