@@ -255,6 +255,22 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> deleteAccount() async {
+    if (_customer == null) return false;
+
+    try {
+      final success = await _wooCommerceService.deleteCustomer(_customer!.id);
+      if (success) {
+        await logout();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      developer.log('AuthProvider: Error deleting account', error: e);
+      return false;
+    }
+  }
+
   Future<bool> register({
     required String email,
     required String password,

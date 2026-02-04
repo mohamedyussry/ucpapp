@@ -730,4 +730,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get payment_title => 'Payment';
+
+  @override
+  String get delete_account => 'Delete Account';
+
+  @override
+  String get delete_account_warning =>
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.';
+
+  @override
+  String get delete_account_confirm => 'Confirm Account Deletion';
+
+  @override
+  String get cancel_btn => 'Cancel';
+
+  @override
+  String get delete_btn => 'Delete';
 }

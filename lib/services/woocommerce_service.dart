@@ -188,6 +188,39 @@ class WooCommerceService {
     }
   }
 
+  Future<bool> deleteCustomer(int id) async {
+    try {
+      final response = await _dio.delete(
+        '/customers/$id',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'force': true, // Required to permanently delete instead of trashing
+        },
+      );
+
+      if (response.statusCode == 200) {
+        developer.log('Customer $id deleted successfully');
+        return true;
+      } else {
+        developer.log(
+          'Failed to delete customer: Status ${response.statusCode}, Body: ${response.data}',
+        );
+        return false;
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'deleting customer');
+      return false;
+    } catch (e, s) {
+      developer.log(
+        'Unexpected error deleting customer',
+        error: e,
+        stackTrace: s,
+      );
+      return false;
+    }
+  }
+
   Future<bool> updateCustomerMeta(
     int customerId,
     List<Map<String, dynamic>> metaData,

@@ -17,6 +17,82 @@ import 'package:myapp/providers/language_provider.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  void _showDeleteAccountDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+    AppLocalizations l10n,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          l10n.delete_account_confirm,
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          l10n.delete_account_warning,
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              l10n.cancel_btn,
+              style: GoogleFonts.poppins(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              // Show loading
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(color: Colors.red),
+                ),
+              );
+
+              bool success = await authProvider.deleteAccount();
+
+              if (context.mounted) {
+                Navigator.pop(context); // Close loading
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Account deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/home',
+                    (route) => false,
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to delete account'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(
+              l10n.delete_btn,
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showLanguageSelector(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(
       context,
@@ -332,6 +408,17 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ]),
                   const SizedBox(height: 20),
+                  _buildSection(l10n.help_support, [
+                    _buildProfileOption(
+                      icon: FontAwesomeIcons.userSlash,
+                      title: l10n.delete_account,
+                      iconColor: Colors.red,
+                      textColor: Colors.red,
+                      onTap: () =>
+                          _showDeleteAccountDialog(context, authProvider, l10n),
+                    ),
+                  ]),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -374,12 +461,18 @@ class ProfileScreen extends StatelessWidget {
     required String title,
     Widget? trailing,
     VoidCallback? onTap,
+    Color? iconColor,
+    Color? textColor,
   }) {
     return ListTile(
-      leading: FaIcon(icon, color: Colors.black87, size: 20),
+      leading: FaIcon(icon, color: iconColor ?? Colors.black87, size: 20),
       title: Text(
         title,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 16),
+        style: GoogleFonts.poppins(
+          fontWeight: FontWeight.w500,
+          fontSize: 16,
+          color: textColor,
+        ),
       ),
       trailing:
           trailing ??

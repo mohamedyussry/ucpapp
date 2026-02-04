@@ -237,5 +237,10 @@
   "select_delivery_location": "اختر موقع التوصيل",
   "move_map_to_select": "حرك الخريطة لاختيار موقعك",
   "confirm_location": "تأكيد الموقع",
-  "payment_title": "الدفع"
+  "payment_title": "الدفع",
+  "delete_account": "حذف الحساب",
+  "delete_account_warning": "هل أنت متأكد من رغبتك في حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك نهائياً.",
+  "delete_account_confirm": "تأكيد حذف الحساب",
+  "cancel_btn": "إلغاء",
+  "delete_btn": "حذف"
 }

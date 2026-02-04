@@ -724,4 +724,20 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get payment_title => 'الدفع';
+
+  @override
+  String get delete_account => 'حذف الحساب';
+
+  @override
+  String get delete_account_warning =>
+      'هل أنت متأكد من رغبتك في حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك نهائياً.';
+
+  @override
+  String get delete_account_confirm => 'تأكيد حذف الحساب';
+
+  @override
+  String get cancel_btn => 'إلغاء';
+
+  @override
+  String get delete_btn => 'حذف';
 }

@@ -317,5 +317,10 @@
   "select_delivery_location": "Select Delivery Location",
   "move_map_to_select": "Move the map to select your location",
   "confirm_location": "Confirm Location",
-  "payment_title": "Payment"
+  "payment_title": "Payment",
+  "delete_account": "Delete Account",
+  "delete_account_warning": "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.",
+  "delete_account_confirm": "Confirm Account Deletion",
+  "cancel_btn": "Cancel",
+  "delete_btn": "Delete"
 }
