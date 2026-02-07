@@ -49,6 +49,17 @@ class _SelfCareScreenState extends State<SelfCareScreen>
         setState(() {
           _allCategories = categories;
           _mainCategories = categories.where((c) => c.parent == 0).toList();
+
+          // Find "FOR HIM" category and set it as default
+          final forHimIndex = _mainCategories.indexWhere(
+            (cat) => cat.name.toUpperCase().contains('FOR HIM'),
+          );
+
+          // If found, set it as selected, otherwise keep 0
+          if (forHimIndex != -1) {
+            _selectedMainIndex = forHimIndex;
+          }
+
           _isLoading = false;
         });
         _fadeController.forward();

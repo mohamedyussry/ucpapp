@@ -14,8 +14,16 @@ import 'package:myapp/screens/phone_login_screen.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'package:myapp/providers/language_provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  // Use state variable instead of Dialog for loading to avoid context issues
+  bool _isDeleting = false;
 
   void _showDeleteAccountDialog(
     BuildContext context,
@@ -43,36 +51,52 @@ class ProfileScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context); // Close dialog
-              // Show loading
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) => const Center(
-                  child: CircularProgressIndicator(color: Colors.red),
-                ),
-              );
+              Navigator.of(context).pop(); // Close confirmation dialog
 
-              bool success = await authProvider.deleteAccount();
+              setState(() {
+                _isDeleting = true;
+              });
 
-              if (context.mounted) {
-                Navigator.pop(context); // Close loading
+              bool success = false;
+              try {
+                // Attempt to delete with a UI-level timeout for safety
+                success = await authProvider
+                    .deleteAccount(autoLogout: false)
+                    .timeout(const Duration(seconds: 15));
+              } catch (e) {
+                debugPrint('Delete account error: $e');
+                success = false;
+              }
+
+              if (mounted) {
+                setState(() {
+                  _isDeleting = false;
+                });
+
                 if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Account deleted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/home',
-                    (route) => false,
-                  );
+                  // Manually logout to clear state and trigger UI switch
+                  await authProvider.logout();
+
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Account deleted successfully'),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+
+                    // Navigate to home and clear stack
+                    Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/home', (route) => false);
+                  }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Failed to delete account'),
+                      content: Text(
+                        'Failed to delete account. Please try again.',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -151,53 +175,16 @@ class ProfileScreen extends StatelessWidget {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.grey[100],
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Center(
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.black,
-                  size: 20,
-                ),
-                onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  } else {
-                    Navigator.pushReplacementNamed(context, '/home');
-                  }
-                },
-                tooltip: l10n.go_back,
-              ),
-            ),
-          ),
-        ),
-        title: Text(
-          l10n.profile,
-          style: GoogleFonts.poppins(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          if (authProvider.status == AuthStatus.authenticated)
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.grey[100],
+          appBar: AppBar(
+            scrolledUnderElevation: 0,
+            backgroundColor: Colors.grey[100],
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16.0),
               child: Center(
                 child: Container(
                   width: 40,
@@ -208,20 +195,68 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   child: IconButton(
                     icon: const Icon(
-                      Icons.logout,
+                      Icons.arrow_back,
                       color: Colors.black,
                       size: 20,
                     ),
-                    onPressed: () => authProvider.logout(),
-                    tooltip: l10n.logout,
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/home');
+                      }
+                    },
+                    tooltip: l10n.go_back,
                   ),
                 ),
               ),
             ),
-        ],
-      ),
-      body: _buildBody(context, authProvider, languageProvider, l10n),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 4),
+            title: Text(
+              l10n.profile,
+              style: GoogleFonts.poppins(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            centerTitle: true,
+            actions: [
+              if (authProvider.status == AuthStatus.authenticated)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Center(
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.logout,
+                          color: Colors.black,
+                          size: 20,
+                        ),
+                        onPressed: () => authProvider.logout(),
+                        tooltip: l10n.logout,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          body: _buildBody(context, authProvider, languageProvider, l10n),
+          bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 4),
+        ),
+        if (_isDeleting)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.red),
+            ),
+          ),
+      ],
     );
   }
 
@@ -285,27 +320,59 @@ class ProfileScreen extends StatelessWidget {
           style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
         ),
         const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EditProfileScreen(customer: customer),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EditProfileScreen(customer: customer),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: Text(
+                    l10n.edit_profile,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-          ),
-          child: Text(
-            l10n.edit_profile,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _showDeleteAccountDialog(context, authProvider, l10n),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                    foregroundColor: Colors.red,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: BorderSide(color: Colors.red.shade100),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: Text(
+                    l10n.delete_account,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 30),
@@ -405,17 +472,6 @@ class ProfileScreen extends StatelessWidget {
                           );
                         }
                       },
-                    ),
-                  ]),
-                  const SizedBox(height: 20),
-                  _buildSection(l10n.help_support, [
-                    _buildProfileOption(
-                      icon: FontAwesomeIcons.userSlash,
-                      title: l10n.delete_account,
-                      iconColor: Colors.red,
-                      textColor: Colors.red,
-                      onTap: () =>
-                          _showDeleteAccountDialog(context, authProvider, l10n),
                     ),
                   ]),
                   const SizedBox(height: 40),

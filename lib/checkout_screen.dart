@@ -15,6 +15,7 @@ import 'package:myapp/screens/paymob_payment_screen.dart';
 import 'package:myapp/services/paymob_service.dart';
 import 'package:myapp/screens/location_picker_screen.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class CheckoutScreen extends StatelessWidget {
@@ -66,7 +67,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     );
     _fadeController.forward();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final checkoutProvider = Provider.of<CheckoutProvider>(
         context,
         listen: false,
@@ -74,6 +75,11 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       checkoutProvider.reset();
 
       _initializeCheckoutData(checkoutProvider);
+
+      // Load saved billing details first
+      await _loadSavedBillingDetails();
+
+      // Then populate from provider (which might override with customer data)
       _populateFieldsFromProvider(checkoutProvider);
 
       final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
@@ -107,11 +113,56 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
   void _populateFieldsFromProvider(CheckoutProvider checkoutProvider) {
     final orderData = checkoutProvider.orderData;
-    _billingFirstNameController.text = orderData.billingFirstName ?? '';
-    _billingLastNameController.text = orderData.billingLastName ?? '';
-    _billingEmailController.text = orderData.billingEmail ?? '';
-    _billingPhoneController.text = orderData.billingPhone ?? '';
-    _billingAddress1Controller.text = orderData.billingAddress1 ?? '';
+    // Only populate if fields are empty (to not override saved data)
+    if (_billingFirstNameController.text.isEmpty) {
+      _billingFirstNameController.text = orderData.billingFirstName ?? '';
+    }
+    if (_billingLastNameController.text.isEmpty) {
+      _billingLastNameController.text = orderData.billingLastName ?? '';
+    }
+    if (_billingEmailController.text.isEmpty) {
+      _billingEmailController.text = orderData.billingEmail ?? '';
+    }
+    if (_billingPhoneController.text.isEmpty) {
+      _billingPhoneController.text = orderData.billingPhone ?? '';
+    }
+    if (_billingAddress1Controller.text.isEmpty) {
+      _billingAddress1Controller.text = orderData.billingAddress1 ?? '';
+    }
+  }
+
+  // Load saved billing details from SharedPreferences
+  Future<void> _loadSavedBillingDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _billingFirstNameController.text =
+          prefs.getString('billing_first_name') ?? '';
+      _billingLastNameController.text =
+          prefs.getString('billing_last_name') ?? '';
+      _billingEmailController.text = prefs.getString('billing_email') ?? '';
+      _billingPhoneController.text = prefs.getString('billing_phone') ?? '';
+      _billingAddress1Controller.text =
+          prefs.getString('billing_address') ?? '';
+    });
+  }
+
+  // Save billing details to SharedPreferences
+  Future<void> _saveBillingDetails() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'billing_first_name',
+      _billingFirstNameController.text.trim(),
+    );
+    await prefs.setString(
+      'billing_last_name',
+      _billingLastNameController.text.trim(),
+    );
+    await prefs.setString('billing_email', _billingEmailController.text.trim());
+    await prefs.setString('billing_phone', _billingPhoneController.text.trim());
+    await prefs.setString(
+      'billing_address',
+      _billingAddress1Controller.text.trim(),
+    );
   }
 
   Future<void> _placeOrder() async {
@@ -222,6 +273,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     orderData.billingCountry = 'SA';
     orderData.billingEmail = _billingEmailController.text.trim();
     orderData.billingPhone = _billingPhoneController.text.trim();
+
+    // Save billing details for future use
+    await _saveBillingDetails();
 
     final billingInfo = BillingInfo(
       firstName: orderData.billingFirstName ?? '',

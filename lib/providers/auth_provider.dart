@@ -255,13 +255,18 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> deleteAccount() async {
+  Future<bool> deleteAccount({bool autoLogout = true}) async {
     if (_customer == null) return false;
 
     try {
-      final success = await _wooCommerceService.deleteCustomer(_customer!.id);
+      final success = await _wooCommerceService
+          .deleteCustomer(_customer!.id)
+          .timeout(const Duration(seconds: 15), onTimeout: () => false);
+
       if (success) {
-        await logout();
+        if (autoLogout) {
+          await logout();
+        }
         return true;
       }
       return false;

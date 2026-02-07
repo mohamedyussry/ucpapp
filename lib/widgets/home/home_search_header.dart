@@ -254,7 +254,7 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: Colors.orange,
         boxShadow: [
           BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
         ],
@@ -265,7 +265,7 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.person_outline, color: Colors.black87),
+                icon: const Icon(Icons.person_outline, color: Colors.white),
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -281,7 +281,7 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
                 errorBuilder: (context, error, stackTrace) => Text(
                   l10n.app_title,
                   style: GoogleFonts.poppins(
-                    color: Colors.orange,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),

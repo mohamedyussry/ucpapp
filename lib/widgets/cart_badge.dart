@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:badges/badges.dart' as badges;
@@ -19,11 +18,9 @@ class CartBadge extends StatelessWidget {
             style: const TextStyle(color: Colors.white, fontSize: 10),
           ),
           position: badges.BadgePosition.topEnd(top: -5, end: -5),
-          badgeStyle: badges.BadgeStyle(
-            badgeColor: Colors.orange,
-          ),
+          badgeStyle: badges.BadgeStyle(badgeColor: Colors.orange),
           child: IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black),
+            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
