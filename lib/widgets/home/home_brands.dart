@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
@@ -117,7 +118,7 @@ class _HomeBrandsState extends State<HomeBrands> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       ),
@@ -126,12 +127,14 @@ class _HomeBrandsState extends State<HomeBrands> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: brand.image != null
-                        ? Image.network(
-                            brand.image!.src,
+                        ? CachedNetworkImage(
+                            imageUrl: brand.image!.src,
                             fit: BoxFit.cover,
                             width: 150,
                             height: 240,
-                            errorBuilder: (context, error, stackTrace) =>
+                            placeholder: (context, url) =>
+                                _buildBrandPlaceholder(),
+                            errorWidget: (context, url, error) =>
                                 _buildBrandPlaceholder(),
                           )
                         : _buildBrandPlaceholder(),

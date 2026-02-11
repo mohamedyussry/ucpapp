@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:developer' as developer;
 import 'package:myapp/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../widgets/language_toggle.dart';
 
@@ -15,8 +16,47 @@ class PhoneLoginScreen extends StatefulWidget {
 
 class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _phoneController = TextEditingController();
   String _phoneNumber = '';
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _getAppSignature();
+  }
+
+  Future<void> _getAppSignature() async {
+    // For sms_autofill to work, the SMS must contain this signature at the end.
+    // Example SMS: <#> Your code is: 1234 7yX+Y5z6A8B
+    try {
+      final signature = await SmsAutoFill().getAppSignature;
+      developer.log("SMS App Signature: $signature");
+    } catch (e) {
+      developer.log("Error getting signature: $e");
+    }
+  }
+
+  void _showPhoneHint() async {
+    try {
+      final phone = await SmsAutoFill().hint;
+      if (phone != null && mounted) {
+        // Remove country code if present (assuming +966)
+        String cleaned = phone;
+        if (cleaned.startsWith('+966')) {
+          cleaned = cleaned.replaceFirst('+966', '');
+        } else if (cleaned.startsWith('966')) {
+          cleaned = cleaned.replaceFirst('966', '');
+        }
+
+        setState(() {
+          _phoneController.text = cleaned;
+        });
+      }
+    } catch (e) {
+      developer.log("Error getting phone hint: $e");
+    }
+  }
 
   void _sendOtp() async {
     final l10n = AppLocalizations.of(context)!;
@@ -173,6 +213,12 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
                     return null;
                   },
                   onSaved: (value) => _phoneNumber = value!,
+                  controller: _phoneController,
+                  onTap: () {
+                    if (_phoneController.text.isEmpty) {
+                      _showPhoneHint();
+                    }
+                  },
                 ),
                 const SizedBox(height: 30),
                 _isLoading

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/loyalty_provider.dart';
 import '../l10n/generated/app_localizations.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MyPointsScreen extends StatefulWidget {
   const MyPointsScreen({super.key});
@@ -82,7 +83,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
         ),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
+          ? _buildShimmer()
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -150,7 +151,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 10),
           ),
@@ -166,7 +167,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
               Text(
                 l10n.loyalty_card_label,
                 style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 18,
                 ),
               ),
@@ -176,7 +177,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -203,7 +204,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
           Text(
             l10n.current_points,
             style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 16,
             ),
           ),
@@ -222,14 +223,14 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
               Text(
                 l10n.ucp_loyalty_program,
                 style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
               Text(
                 l10n.active_account,
                 style: GoogleFonts.poppins(
-                  color: Colors.white.withOpacity(0.6),
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 12,
                 ),
               ),
@@ -269,7 +270,7 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -282,8 +283,8 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
                 height: 45,
                 decoration: BoxDecoration(
                   color: isEarn
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -331,5 +332,50 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Widget _buildShimmer() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            Container(width: 150, height: 20, color: Colors.white),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            const SizedBox(height: 30),
+            Container(width: 120, height: 25, color: Colors.white),
+            const SizedBox(height: 20),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 5,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Container(
+                  width: double.infinity,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

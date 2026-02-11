@@ -37,13 +37,14 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
       List<WooProduct> products;
       if (widget.isFeatured) {
         // جلب المنتجات المميزة (المحددة بنجمة في ووردبريس)
-        products = await _wooService.getProducts(featured: true);
+        products = await _wooService.getProducts(featured: true, perPage: 10);
 
         // إذا لم يكن هناك منتجات مميزة، نجلب الأكثر مبيعاً أو تقييماً كاحتياط
         if (products.isEmpty) {
           products = await _wooService.getProducts(
             orderby: 'popularity',
             order: 'desc',
+            perPage: 10,
           );
         }
       } else {
@@ -51,14 +52,13 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
         products = await _wooService.getProducts(
           orderby: 'date',
           order: 'desc',
+          perPage: 10,
         );
       }
 
       if (mounted) {
         setState(() {
-          _products = products
-              .take(10)
-              .toList(); // نكتفي بأول 10 منتجات للعرض السريع
+          _products = products;
           _isLoading = false;
         });
       }
@@ -178,14 +178,15 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
               builder: (context, constraints) {
                 double screenWidth = constraints.maxWidth;
                 double width;
-                if (screenWidth > 1200)
+                if (screenWidth > 1200) {
                   width = screenWidth / 5;
-                else if (screenWidth > 900)
+                } else if (screenWidth > 900) {
                   width = screenWidth / 4;
-                else if (screenWidth > 600)
+                } else if (screenWidth > 600) {
                   width = screenWidth / 3;
-                else
+                } else {
                   width = screenWidth / 2;
+                }
 
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,

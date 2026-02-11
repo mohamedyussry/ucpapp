@@ -86,10 +86,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.orange,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: const [CartBadge()],
@@ -504,11 +504,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
 
     if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
-      return Image.network(
-        currencyImageUrl,
+      return CachedNetworkImage(
+        imageUrl: currencyImageUrl,
         height: size, // Adjust size as needed
         color: color,
-        errorBuilder: (context, error, stackTrace) {
+        placeholder: (context, url) => Text(currencySymbol, style: style),
+        errorWidget: (context, url, error) {
           // Fallback to text if image fails to load
           return Text(currencySymbol, style: style);
         },

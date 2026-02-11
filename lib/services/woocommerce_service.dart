@@ -8,7 +8,8 @@ import 'package:myapp/models/state_model.dart';
 import '../config.dart';
 import '../models/order_payload_model.dart';
 import '../models/order_model.dart';
-import '../models/product_model.dart';
+import 'package:myapp/models/product_model.dart';
+import 'package:myapp/services/cache_service.dart';
 
 class WooCommerceService {
   late final Dio _dio;
@@ -496,41 +497,49 @@ class WooCommerceService {
     String? order,
     List<int>? include,
     String? search,
+    int perPage = 100,
+    bool useCache = true,
   }) async {
     try {
       final Map<String, dynamic> queryParameters = {
         'consumer_key': Config.consumerKey,
         'consumer_secret': Config.consumerSecret,
-        'per_page': 100,
+        'per_page': perPage,
         'status': 'publish',
       };
 
       if (categoryId != null) {
         queryParameters['category'] = categoryId.toString();
       }
-
       if (brandId != null) {
         queryParameters['brand'] = brandId.toString();
       }
-
       if (featured == true) {
         queryParameters['featured'] = true;
       }
-
       if (orderby != null) {
         queryParameters['orderby'] = orderby;
       }
-
       if (order != null) {
         queryParameters['order'] = order;
       }
-
       if (search != null && search.isNotEmpty) {
         queryParameters['search'] = search;
       }
-
       if (include != null && include.isNotEmpty) {
         queryParameters['include'] = include.join(',');
+      }
+
+      final cacheKey = 'products_${queryParameters.toString()}';
+
+      if (useCache) {
+        final cachedData = await CacheService.get(cacheKey);
+        if (cachedData != null) {
+          developer.log('Returning cached products for key: $cacheKey');
+          return (cachedData as List)
+              .map((p) => WooProduct.fromJson(p))
+              .toList();
+        }
       }
 
       final response = await _dio.get(
@@ -539,6 +548,14 @@ class WooCommerceService {
       );
 
       if (response.statusCode == 200 && response.data is List) {
+        // Cache the successful response
+        if (useCache) {
+          await CacheService.set(
+            cacheKey,
+            response.data,
+            expiration: const Duration(minutes: 60),
+          ); // Cache for 1 hour
+        }
         return (response.data as List)
             .map((p) => WooProduct.fromJson(p))
             .toList();
@@ -561,8 +578,30 @@ class WooCommerceService {
     }
   }
 
-  Future<List<WooBrand>> getBrands() async {
+  Future<List<WooProduct>> getProductsFromCache(String cacheKey) async {
     try {
+      final cachedData = await CacheService.get(cacheKey);
+      if (cachedData != null && cachedData is List) {
+        return cachedData.map((p) => WooProduct.fromJson(p)).toList();
+      }
+    } catch (e) {
+      developer.log('Error reading products from cache: $e');
+    }
+    return [];
+  }
+
+  Future<List<WooBrand>> getBrands({bool useCache = true}) async {
+    try {
+      const cacheKey = 'brands_all';
+
+      if (useCache) {
+        final cachedData = await CacheService.get(cacheKey);
+        if (cachedData != null) {
+          developer.log('Returning cached brands');
+          return (cachedData as List).map((b) => WooBrand.fromJson(b)).toList();
+        }
+      }
+
       final response = await _dio.get(
         '/products/brands',
         queryParameters: {
@@ -573,6 +612,13 @@ class WooCommerceService {
         },
       );
       if (response.statusCode == 200 && response.data is List) {
+        if (useCache) {
+          await CacheService.set(
+            cacheKey,
+            response.data,
+            expiration: const Duration(hours: 24),
+          ); // Brands don't change often
+        }
         return (response.data as List)
             .map((b) => WooBrand.fromJson(b))
             .toList();
@@ -628,8 +674,20 @@ class WooCommerceService {
     }
   }
 
-  Future<List<WooProductCategory>> getCategories() async {
+  Future<List<WooProductCategory>> getCategories({bool useCache = true}) async {
     try {
+      const cacheKey = 'categories_all';
+
+      if (useCache) {
+        final cachedData = await CacheService.get(cacheKey);
+        if (cachedData != null) {
+          developer.log('Returning cached categories');
+          return (cachedData as List)
+              .map((c) => WooProductCategory.fromJson(c))
+              .toList();
+        }
+      }
+
       final response = await _dio.get(
         '/products/categories',
         queryParameters: {
@@ -640,6 +698,13 @@ class WooCommerceService {
         },
       );
       if (response.statusCode == 200 && response.data is List) {
+        if (useCache) {
+          await CacheService.set(
+            cacheKey,
+            response.data,
+            expiration: const Duration(hours: 24),
+          );
+        }
         return (response.data as List)
             .map((c) => WooProductCategory.fromJson(c))
             .toList();

@@ -251,7 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         if (_isDeleting)
           Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             child: const Center(
               child: CircularProgressIndicator(color: Colors.red),
             ),
@@ -446,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       value: true,
                     ),
                     _buildProfileOption(
-                      icon: FontAwesomeIcons.sync,
+                      icon: FontAwesomeIcons.arrowsRotate,
                       title: authProvider.isSyncingFcm
                           ? l10n.syncing
                           : l10n.sync_notifications,

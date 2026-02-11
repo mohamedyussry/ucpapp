@@ -6,6 +6,7 @@ import '../models/customer_model.dart';
 import '../services/auth_service.dart';
 import '../services/woocommerce_service.dart';
 import '../services/notification_service.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 enum AuthStatus { uninitialized, authenticated, unauthenticated }
 
@@ -51,7 +52,8 @@ class AuthProvider with ChangeNotifier {
       developer.log('Generated OTP for $phoneNumber: $otp');
 
       // Reverting to the required template by the provider
-      final message = 'OTP Code : $otp\nحياك الله فى عائلة UCP';
+      final signature = await SmsAutoFill().getAppSignature;
+      final message = 'OTP Code : $otp\nحياك الله فى عائلة UCP\n$signature';
 
       // sendSms now returns a Map {success, message}
       final result = await _authService.sendSms(phoneNumber, message);

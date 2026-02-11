@@ -52,7 +52,7 @@ class HomeLoyaltySection extends StatelessWidget {
         ),
         CarouselSlider(
           options: CarouselOptions(
-            height: 200,
+            height: 220,
             viewportFraction: 0.85,
             enlargeCenterPage: true,
             enableInfiniteScroll: true,
@@ -70,7 +70,7 @@ class HomeLoyaltySection extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: tier.colors,
@@ -80,7 +80,7 @@ class HomeLoyaltySection extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: tier.colors.first.withOpacity(0.3),
+            color: tier.colors.first.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -140,7 +140,7 @@ class HomeLoyaltySection extends StatelessWidget {
                       l10n.boost_points,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 20,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -148,7 +148,7 @@ class HomeLoyaltySection extends StatelessWidget {
                       l10n.double_discounts,
                       style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         height: 0.9,
                       ),
@@ -167,14 +167,14 @@ class HomeLoyaltySection extends StatelessWidget {
                       Text(
                         l10n.points_conversion(tier.points),
                         style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 11,
                         ),
                       ),
                       Text(
                         l10n.points_value,
                         style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 11,
                         ),
                       ),
@@ -186,7 +186,7 @@ class HomeLoyaltySection extends StatelessWidget {
                         tier.condition,
                         textAlign: TextAlign.right,
                         style: GoogleFonts.poppins(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 8,
                         ),
                       ),

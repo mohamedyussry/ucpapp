@@ -276,8 +276,8 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
                 },
               ),
               Image.asset(
-                'assets/home/logo.png',
-                height: 35,
+                'assets/icon-logo.png',
+                height: 40,
                 errorBuilder: (context, error, stackTrace) => Text(
                   l10n.app_title,
                   style: GoogleFonts.poppins(

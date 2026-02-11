@@ -5,6 +5,8 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/self_care_screen.dart';
 import 'package:myapp/products_screen.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeCategories extends StatefulWidget {
   const HomeCategories({super.key});
@@ -12,6 +14,7 @@ class HomeCategories extends StatefulWidget {
   @override
   State<HomeCategories> createState() => _HomeCategoriesState();
 }
+// ... (skip lines)
 
 class _HomeCategoriesState extends State<HomeCategories> {
   final WooCommerceService _wooService = WooCommerceService();
@@ -43,10 +46,7 @@ class _HomeCategoriesState extends State<HomeCategories> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(
-        height: 100,
-        child: Center(child: CircularProgressIndicator(color: Colors.orange)),
-      );
+      return _buildShimmer();
     }
 
     if (_categories.isEmpty) return const SizedBox.shrink();
@@ -107,7 +107,10 @@ class _HomeCategoriesState extends State<HomeCategories> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ProductsScreen(category: cat.name),
+                      builder: (context) => ProductsScreen(
+                        categoryId: cat.id,
+                        category: cat.name,
+                      ),
                     ),
                   );
                 },
@@ -128,7 +131,7 @@ class _HomeCategoriesState extends State<HomeCategories> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.03),
+                              color: Colors.black.withValues(alpha: 0.03),
                               blurRadius: 5,
                               offset: const Offset(0, 2),
                             ),
@@ -136,10 +139,19 @@ class _HomeCategoriesState extends State<HomeCategories> {
                         ),
                         child: ClipOval(
                           child: imageUrl.isNotEmpty
-                              ? Image.network(
-                                  imageUrl,
+                              ? CachedNetworkImage(
+                                  imageUrl: imageUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
+                                  placeholder: (context, url) => Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
                                       const Icon(
                                         Icons.category_outlined,
                                         color: Colors.orange,
@@ -165,6 +177,51 @@ class _HomeCategoriesState extends State<HomeCategories> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Container(width: 150, height: 20, color: Colors.white),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 115,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  width: 85,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 75,
+                        height: 75,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(width: 60, height: 10, color: Colors.white),
                     ],
                   ),
                 ),

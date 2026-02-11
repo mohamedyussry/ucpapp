@@ -88,27 +88,10 @@ class CheckoutProvider with ChangeNotifier {
     if (_authProvider != null &&
         _authProvider.status == AuthStatus.authenticated) {
       final user = _authProvider.customer;
-      final billing = user?.billing;
-
       orderData.customerId = user?.id;
-      orderData.billingFirstName = user?.firstName;
-      orderData.billingLastName = user?.lastName;
-      orderData.billingEmail = user?.email;
-
-      if (billing != null) {
-        orderData.billingPhone = billing.phone;
-        orderData.billingAddress1 = billing.address1;
-        orderData.billingCity = billing.city;
-        orderData.billingState = billing.state;
-        orderData.billingPostcode = billing.postcode;
-        orderData.billingCountry = billing.country;
-
-        if (billing.state.isNotEmpty) {
-          _selectedStateCode = billing.state;
-        }
-      }
-
-      developer.log('Autofilled user details for user ID: ${user?.id}');
+      developer.log(
+        'Set customer ID: ${user?.id} (Autofill of billing details disabled by request)',
+      );
     } else {
       // Clear details if user is logged out
       orderData.customerId = null;

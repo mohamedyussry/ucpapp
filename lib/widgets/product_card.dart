@@ -225,10 +225,10 @@ class ProductCard extends StatelessWidget {
     );
 
     if (currencyImageUrl != null && currencyImageUrl.isNotEmpty) {
-      return Image.network(
-        currencyImageUrl,
+      return CachedNetworkImage(
+        imageUrl: currencyImageUrl,
         height: fontSize,
-        errorBuilder: (context, error, stackTrace) {
+        errorWidget: (context, url, error) {
           return Text(currencySymbol, style: style);
         },
       );

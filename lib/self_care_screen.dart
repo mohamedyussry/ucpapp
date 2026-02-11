@@ -7,6 +7,7 @@ import 'package:myapp/models/product_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:glass_kit/glass_kit.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:myapp/widgets/cart_badge.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class SelfCareScreen extends StatefulWidget {
@@ -77,18 +78,27 @@ class _SelfCareScreenState extends State<SelfCareScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: _isLoading
-            ? _buildLoadingState()
-            : _allCategories.isEmpty
-            ? _buildEmptyState()
-            : FadeTransition(
-                opacity: _fadeController,
-                child: _buildMainLayout(),
-              ),
+      appBar: AppBar(
+        title: Text(
+          l10n.categories,
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.orange,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        actions: const [CartBadge()],
       ),
+      body: _isLoading
+          ? _buildLoadingState()
+          : _allCategories.isEmpty
+          ? _buildEmptyState()
+          : FadeTransition(opacity: _fadeController, child: _buildMainLayout()),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );
   }
@@ -112,7 +122,7 @@ class _SelfCareScreenState extends State<SelfCareScreen>
                   childAspectRatio: 0.8,
                 ),
                 itemCount: 6,
-                itemBuilder: (_, __) => Container(
+                itemBuilder: (context, index) => Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
@@ -352,7 +362,10 @@ class _SelfCareScreenState extends State<SelfCareScreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductsScreen(category: category.name),
+            builder: (context) => ProductsScreen(
+              categoryId: category.id,
+              category: category.name,
+            ),
           ),
         );
       },

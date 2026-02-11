@@ -122,10 +122,12 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
       }
     } catch (e, s) {
       developer.log('Error fetching orders', error: e, stackTrace: s);
-      final l10n = AppLocalizations.of(context)!;
-      setState(() {
-        _errorMessage = l10n.err_loading_orders(e);
-      });
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        setState(() {
+          _errorMessage = l10n.err_loading_orders(e);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -341,7 +343,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   elevation: 4,
-                  shadowColor: Colors.orange.withOpacity(0.4),
+                  shadowColor: Colors.orange.withValues(alpha: 0.4),
                 ),
                 child: Text(
                   title,

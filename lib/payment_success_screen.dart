@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:myapp/home_screen.dart';
+import 'package:myapp/models/order_model.dart';
+import 'package:myapp/order_tracking_screen.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
@@ -95,12 +97,33 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
           ],
         ),
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _buildContinueShoppingButton(context, navigateToHome, l10n),
+      bottomNavigationBar: Container(
+        height: 100,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              Expanded(child: _buildTrackOrderButton(context, orderData, l10n)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildContinueShoppingButton(
+                  context,
+                  navigateToHome,
+                  l10n,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -284,36 +307,68 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
     VoidCallback onPressed,
     AppLocalizations l10n,
   ) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: double.infinity,
-        height: 56,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: const LinearGradient(
-            colors: [Colors.orange, Colors.deepOrange],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return _buildBaseActionButton(
+      onPressed: onPressed,
+      label: l10n.continue_shopping,
+      icon: Icons.shopping_bag_outlined,
+      isPrimary: false,
+    );
+  }
+
+  Widget _buildTrackOrderButton(
+    BuildContext context,
+    Map<String, dynamic> orderData,
+    AppLocalizations l10n,
+  ) {
+    return _buildBaseActionButton(
+      onPressed: () {
+        final order = Order.fromJson(orderData);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderTrackingScreen(order: order),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.orange.withAlpha(100),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            l10n.continue_shopping,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+        );
+      },
+      label: l10n.track_btn,
+      icon: Icons.local_shipping_outlined,
+      isPrimary: true,
+    );
+  }
+
+  Widget _buildBaseActionButton({
+    required VoidCallback onPressed,
+    required String label,
+    required IconData icon,
+    required bool isPrimary,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isPrimary ? Colors.orange : Colors.grey[200],
+        foregroundColor: isPrimary ? Colors.white : Colors.black87,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/products_screen.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomePromoGrid extends StatefulWidget {
   const HomePromoGrid({super.key});
@@ -80,10 +81,7 @@ class _HomePromoGridState extends State<HomePromoGrid> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: CircularProgressIndicator(color: Colors.orange)),
-      );
+      return _buildShimmer();
     }
 
     if (_promoCategories.isEmpty) return const SizedBox.shrink();
@@ -109,7 +107,10 @@ class _HomePromoGridState extends State<HomePromoGrid> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProductsScreen(category: category.name),
+                builder: (context) => ProductsScreen(
+                  categoryId: category.id,
+                  category: category.name,
+                ),
               ),
             );
           },
@@ -122,7 +123,7 @@ class _HomePromoGridState extends State<HomePromoGrid> {
                       image: NetworkImage(imageUrl),
                       fit: BoxFit.cover,
                       colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(0.35),
+                        Colors.black.withValues(alpha: 0.35),
                         BlendMode.darken,
                       ),
                     )
@@ -139,6 +140,33 @@ class _HomePromoGridState extends State<HomePromoGrid> {
                 ),
                 textAlign: TextAlign.center,
               ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildShimmer() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: 4,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
             ),
           ),
         );

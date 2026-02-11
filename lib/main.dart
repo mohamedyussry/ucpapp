@@ -24,6 +24,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:myapp/providers/language_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
+import 'package:myapp/services/app_initializer.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -32,7 +33,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   try {
     if (Firebase.apps.isEmpty) {
@@ -47,6 +49,9 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await Hive.initFlutter();
+
+  // Preload keys data
+  await AppInitializer.preloadData();
 
   // Initialize notifications (Non-blocking to prevent splash hang)
   NotificationService().initialize().catchError((e) {

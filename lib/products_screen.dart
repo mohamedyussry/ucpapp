@@ -6,6 +6,7 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
+import 'package:shimmer/shimmer.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -64,7 +65,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   Future<void> _fetchProducts() async {
     try {
-      // نقل الكود الحساس للـ context داخل الـ try
       final l10n = AppLocalizations.of(context);
       if (l10n == null) return;
 
@@ -73,59 +73,50 @@ class _ProductsScreenState extends State<ProductsScreen> {
         _errorMessage = '';
       });
 
-      List<WooProduct> products = [];
+      // 1. Try to load from cache first for instant UI
+      final String cacheKey = _getCacheKey();
+      final cachedData = await _wooCommerceService.getProductsFromCache(
+        cacheKey,
+      );
 
-      // 1. إذا كان لدينا ID الماركة
-      if (widget.brandId != null) {
-        products = await _wooCommerceService.getProducts(
-          brandId: widget.brandId,
-          orderby: widget.orderby,
-          order: widget.order,
-          featured: widget.featured,
-        );
+      if (cachedData.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _allProducts = cachedData;
+            _filteredProducts = cachedData;
+            _isLoading = false;
+          });
+        }
       }
-      // 2. إذا كان لدينا ID الفئة مباشرة (الأفضل للأداء)
-      else if (widget.categoryId != null) {
-        products = await _wooCommerceService.getProducts(
-          categoryId: widget.categoryId,
-          orderby: widget.orderby,
-          order: widget.order,
-          featured: widget.featured,
-        );
-      }
-      // 3. إذا كان لدينا اسم الفئة فقط (للتوافق القديم)
-      else if (widget.category != null) {
+
+      // 2. Fetch from network in background/parallel
+      int? targetCategoryId = widget.categoryId;
+
+      // If we only have name, find the ID quickly
+      if (targetCategoryId == null && widget.category != null) {
         final categories = await _wooCommerceService.getCategories();
-        WooProductCategory? targetCategory;
         for (final cat in categories) {
           if (cat.name.toLowerCase() == widget.category!.toLowerCase()) {
-            targetCategory = cat;
+            targetCategoryId = cat.id;
             break;
           }
         }
+      }
 
-        if (targetCategory != null) {
-          products = await _wooCommerceService.getProducts(
-            categoryId: targetCategory.id,
+      final List<WooProduct> networkProducts = await _wooCommerceService
+          .getProducts(
+            categoryId: targetCategoryId,
+            brandId: widget.brandId,
             orderby: widget.orderby,
             order: widget.order,
             featured: widget.featured,
+            perPage: 20, // Fetch small first for speed
           );
-        }
-      }
-      // 4. جلب المنتجات العامة
-      else {
-        products = await _wooCommerceService.getProducts(
-          featured: widget.featured,
-          orderby: widget.orderby,
-          order: widget.order,
-        );
-      }
 
       if (mounted) {
         setState(() {
-          _allProducts = products;
-          _filteredProducts = products;
+          _allProducts = networkProducts;
+          _filteredProducts = networkProducts;
           _isLoading = false;
         });
       }
@@ -135,7 +126,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         error: e,
         stackTrace: s,
       );
-      if (mounted) {
+      if (mounted && _allProducts.isEmpty) {
         final l10n = AppLocalizations.of(context);
         setState(() {
           _errorMessage =
@@ -144,6 +135,10 @@ class _ProductsScreenState extends State<ProductsScreen> {
         });
       }
     }
+  }
+
+  String _getCacheKey() {
+    return 'products_${widget.categoryId}_${widget.brandId}_${widget.featured}_${widget.orderby}_${widget.order}';
   }
 
   void _onSearchChanged() {
@@ -171,7 +166,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
         widget.category?.toUpperCase() ??
         l10n.products;
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: const [CartBadge()]),
+      appBar: AppBar(
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+        backgroundColor: Colors.orange,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: const [CartBadge()],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -216,7 +216,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Widget _buildProductGrid() {
     final l10n = AppLocalizations.of(context)!;
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildShimmerGrid();
     }
 
     if (_errorMessage.isNotEmpty) {
@@ -243,6 +243,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
       itemBuilder: (context, index) {
         final product = _filteredProducts[index];
         return ProductCard(product: product);
+      },
+    );
+  }
+
+  Widget _buildShimmerGrid() {
+    return GridView.builder(
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.7,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+        );
       },
     );
   }

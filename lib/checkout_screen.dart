@@ -76,14 +76,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
       _initializeCheckoutData(checkoutProvider);
 
-      // Load saved billing details first
-      await _loadSavedBillingDetails();
-
-      // Then populate from provider (which might override with customer data)
-      _populateFieldsFromProvider(checkoutProvider);
+      // Load saved billing details from local storage
+      await _loadSavedBillingDetails(checkoutProvider);
 
       final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
       loyalty.initialize().then((_) {
+        if (!mounted) return;
         final cart = Provider.of<CartProvider>(context, listen: false);
         final autoPoints = loyalty.getAutomaticDiscount(cart.subtotal);
         checkoutProvider.updateLoyaltyDiscount(
@@ -111,29 +109,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     checkoutProvider.initializeCheckout('SA', '');
   }
 
-  void _populateFieldsFromProvider(CheckoutProvider checkoutProvider) {
-    final orderData = checkoutProvider.orderData;
-    // Only populate if fields are empty (to not override saved data)
-    if (_billingFirstNameController.text.isEmpty) {
-      _billingFirstNameController.text = orderData.billingFirstName ?? '';
-    }
-    if (_billingLastNameController.text.isEmpty) {
-      _billingLastNameController.text = orderData.billingLastName ?? '';
-    }
-    if (_billingEmailController.text.isEmpty) {
-      _billingEmailController.text = orderData.billingEmail ?? '';
-    }
-    if (_billingPhoneController.text.isEmpty) {
-      _billingPhoneController.text = orderData.billingPhone ?? '';
-    }
-    if (_billingAddress1Controller.text.isEmpty) {
-      _billingAddress1Controller.text = orderData.billingAddress1 ?? '';
-    }
-  }
-
   // Load saved billing details from SharedPreferences
-  Future<void> _loadSavedBillingDetails() async {
+  Future<void> _loadSavedBillingDetails(
+    CheckoutProvider checkoutProvider,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _billingFirstNameController.text =
           prefs.getString('billing_first_name') ?? '';
@@ -143,11 +124,16 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       _billingPhoneController.text = prefs.getString('billing_phone') ?? '';
       _billingAddress1Controller.text =
           prefs.getString('billing_address') ?? '';
+
+      final savedState = prefs.getString('billing_state');
+      if (savedState != null && savedState.isNotEmpty) {
+        checkoutProvider.selectState(savedState);
+      }
     });
   }
 
   // Save billing details to SharedPreferences
-  Future<void> _saveBillingDetails() async {
+  Future<void> _saveBillingDetails({String? stateCode}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       'billing_first_name',
@@ -163,6 +149,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       'billing_address',
       _billingAddress1Controller.text.trim(),
     );
+    if (stateCode != null) {
+      await prefs.setString('billing_state', stateCode);
+    }
   }
 
   Future<void> _placeOrder() async {
@@ -230,6 +219,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       return;
     }
 
+    if (!mounted) return;
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -238,6 +229,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     );
 
     if (result == true) {
+      if (!mounted) return;
       _createWooCommerceOrder(status: 'processing', isPaid: true);
     } else {
       if (!mounted) return;
@@ -275,7 +267,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     orderData.billingPhone = _billingPhoneController.text.trim();
 
     // Save billing details for future use
-    await _saveBillingDetails();
+    await _saveBillingDetails(stateCode: checkoutProvider.selectedStateCode);
 
     final billingInfo = BillingInfo(
       firstName: orderData.billingFirstName ?? '',
@@ -384,6 +376,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         );
       }
 
+      if (!mounted) return;
       cartProvider.clear();
       Navigator.pushAndRemoveUntil(
         context,
@@ -423,7 +416,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -441,7 +434,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -509,7 +502,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.2),
+                    color: Colors.orange.withValues(alpha: 0.2),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -554,23 +547,26 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Colors.white, Colors.orange.shade50.withOpacity(0.3)],
+          colors: [Colors.white, Colors.orange.shade50.withValues(alpha: 0.3)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.08),
+            color: Colors.orange.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.orange.withOpacity(0.1), width: 1),
+        border: Border.all(
+          color: Colors.orange.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -605,8 +601,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                             shape: BoxShape.circle,
                             gradient: RadialGradient(
                               colors: [
-                                Colors.orange.withOpacity(0.2),
-                                Colors.orange.withOpacity(0.0),
+                                Colors.orange.withValues(alpha: 0.2),
+                                Colors.orange.withValues(alpha: 0.0),
                               ],
                             ),
                           ),
@@ -633,7 +629,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                           boxShadow: isActive
                               ? [
                                   BoxShadow(
-                                    color: Colors.orange.withOpacity(0.5),
+                                    color: Colors.orange.withValues(alpha: 0.5),
                                     blurRadius: isCurrent ? 16 : 12,
                                     spreadRadius: isCurrent ? 3 : 1,
                                     offset: const Offset(0, 4),
@@ -641,14 +637,14 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                           border: Border.all(
                             color: isActive
-                                ? Colors.white.withOpacity(0.3)
+                                ? Colors.white.withValues(alpha: 0.3)
                                 : Colors.grey.shade300,
                             width: 2,
                           ),
@@ -720,7 +716,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     boxShadow: isCompleted
                         ? [
                             BoxShadow(
-                              color: Colors.orange.withOpacity(0.3),
+                              color: Colors.orange.withValues(alpha: 0.3),
                               blurRadius: 4,
                               offset: const Offset(0, 1),
                             ),
@@ -816,7 +812,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -855,6 +851,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       context,
       MaterialPageRoute(builder: (context) => const LocationPickerScreen()),
     );
+
+    if (!mounted) return;
 
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
@@ -973,7 +971,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -1023,7 +1021,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.4),
+                    color: Colors.orange.withValues(alpha: 0.4),
                     blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
@@ -1049,6 +1047,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                             _billingPhoneController.text;
                         checkoutProvider.orderData.billingEmail =
                             _billingEmailController.text;
+
+                        // Save details automatically when moving to next step
+                        _saveBillingDetails(
+                          stateCode: checkoutProvider.selectedStateCode,
+                        );
+
                         checkoutProvider.nextPage();
                       }
                     } else if (isLastPage) {
@@ -1103,7 +1107,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.orange.withOpacity(0.3),
+                color: Colors.orange.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -1132,7 +1136,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1277,7 +1281,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
               boxShadow: [
                 if (isSelected)
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.3),
+                    color: Colors.orange.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -1318,7 +1322,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             color: isSelected
-                                ? Colors.white.withOpacity(0.9)
+                                ? Colors.white.withValues(alpha: 0.9)
                                 : Colors.grey.shade600,
                           ),
                         ),
@@ -1348,7 +1352,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         border: Border.all(color: Colors.orange.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -1414,7 +1418,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
+            color: Colors.orange.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 5),
           ),

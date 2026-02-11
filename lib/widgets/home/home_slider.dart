@@ -4,6 +4,7 @@ import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/products_screen.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 // نموذج موحد لعناصر السلايدر
 class SliderItem {
@@ -154,12 +155,12 @@ class _HomeSliderState extends State<HomeSlider> {
             onTap: () => _handleSliderTap(item),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                item.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: item.imageUrl,
                 fit: BoxFit.cover,
                 width: 1000,
-                errorBuilder: (context, error, stackTrace) =>
-                    _buildErrorPlaceholder(),
+                placeholder: (context, url) => _buildShimmer(),
+                errorWidget: (context, url, error) => _buildErrorPlaceholder(),
               ),
             ),
           );
@@ -189,12 +190,12 @@ class _HomeSliderState extends State<HomeSlider> {
         items: imgList.map((item) {
           return ClipRRect(
             borderRadius: BorderRadius.circular(15),
-            child: Image.network(
-              item,
+            child: CachedNetworkImage(
+              imageUrl: item,
               fit: BoxFit.cover,
               width: 1000,
-              errorBuilder: (context, error, stackTrace) =>
-                  _buildErrorPlaceholder(),
+              placeholder: (context, url) => _buildShimmer(),
+              errorWidget: (context, url, error) => _buildErrorPlaceholder(),
             ),
           );
         }).toList(),
@@ -220,7 +221,7 @@ class _HomeSliderState extends State<HomeSlider> {
   Widget _buildErrorPlaceholder() {
     return Container(
       width: 1000,
-      color: Colors.orange.withOpacity(0.1),
+      color: Colors.orange.withValues(alpha: 0.1),
       child: const Center(
         child: Icon(Icons.image, color: Colors.orange, size: 50),
       ),

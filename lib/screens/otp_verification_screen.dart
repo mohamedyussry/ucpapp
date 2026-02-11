@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/providers/auth_provider.dart';
@@ -34,6 +35,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
     super.initState();
     startTimer();
     listenForCode();
+    _printSignature();
+  }
+
+  void _printSignature() async {
+    final signature = await SmsAutoFill().getAppSignature;
+    developer.log("OTP App Signature: $signature");
   }
 
   @override

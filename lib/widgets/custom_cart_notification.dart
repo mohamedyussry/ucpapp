@@ -105,7 +105,7 @@ class _NotificationWidgetState extends State<_NotificationWidget>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.deepOrange.withOpacity(0.3),
+                      color: Colors.deepOrange.withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -121,7 +121,7 @@ class _NotificationWidgetState extends State<_NotificationWidget>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 5,
                           ),
                         ],
@@ -156,7 +156,7 @@ class _NotificationWidgetState extends State<_NotificationWidget>
                           Text(
                             widget.product.name,
                             style: GoogleFonts.poppins(
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 13,
                             ),
                             maxLines: 1,
