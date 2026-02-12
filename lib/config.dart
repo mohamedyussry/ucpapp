@@ -8,7 +8,7 @@ class Config {
       "cs_44e786513c6dae0fed97eb19822bf75de0eee71e";
   // Paymob Settings
   static const String paymobApiKey =
-      "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRVNU1ETXNJbTVoYldVaU9pSXhOelk0TXpZd056STFMalEwT0RVd09TSjkuTTZNM1BzWkxuaUNTS2s3UGNOY0ZwbEhIbDBGWVd1WUtQX0V4akV4dEhhNTJmU19nTTg2MGp2TmxaODlHU3JVMHFSQzU0MVE2eWdUNjdkSGZuc1kwN2c=";
-  static const int paymobIntegrationId = 21995;
-  static const int paymobIframeId = 12198;
+      "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRBME56a3NJbTVoYldVaU9pSnBibWwwYVdGc0luMC5BUDQycUdTYVZpanJYUGp1d2JtOFM3R3JxRWlOaFJtWlhPRWVaTUprRFBsR2lab0xqMHVKMVo3c0l6VDRaZkRZNkJzel91VFRab3VSZWRZMll5c2djdw==";
+  static const int paymobIntegrationId = 22011;
+  static const int paymobIframeId = 10638;
 }
