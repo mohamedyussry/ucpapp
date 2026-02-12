@@ -188,7 +188,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
         style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
-        maxLength: 1,
+        // Important: Remove maxLength or set it higher to catch the full autofill code
         decoration: InputDecoration(
           counterText: "",
           contentPadding: const EdgeInsets.symmetric(vertical: 15),
@@ -205,20 +205,39 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         ),
         autofillHints: const [AutofillHints.oneTimeCode],
         onChanged: (value) {
-          if (value.isNotEmpty) {
-            // Move to next field
-            if (index < 3) {
-              FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
-            } else {
-              // Reached the end, maybe auto-submit?
-              FocusScope.of(context).unfocus();
-              _verifyOtp();
-            }
-          } else {
-            // Move to previous field on delete (optional, simpler logic here)
+          if (value.isEmpty) {
             if (index > 0) {
               FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
             }
+            return;
+          }
+
+          // Handle if more than one digit is entered (Common for iOS Autofill)
+          if (value.length > 1) {
+            String digits = value.replaceAll(RegExp(r'\D'), ''); // Only digits
+            if (digits.length > 4) digits = digits.substring(0, 4);
+
+            for (int i = 0; i < digits.length; i++) {
+              if (i < 4) {
+                _controllers[i].text = digits[i];
+              }
+            }
+
+            if (digits.length == 4) {
+              FocusScope.of(context).unfocus();
+              _verifyOtp();
+            } else {
+              FocusScope.of(context).requestFocus(_focusNodes[digits.length]);
+            }
+            return;
+          }
+
+          // Normal single digit behavior
+          if (index < 3) {
+            FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+          } else {
+            FocusScope.of(context).unfocus();
+            _verifyOtp();
           }
         },
       ),
@@ -271,11 +290,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
               const SizedBox(height: 50),
 
               // 4 Digit Boxes
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  4,
-                  (index) => _buildOtpDigitField(index: index),
+              AutofillGroup(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(
+                    4,
+                    (index) => _buildOtpDigitField(index: index),
+                  ),
                 ),
               ),
 

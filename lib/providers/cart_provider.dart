@@ -1,8 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:myapp/models/coupon_model.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'dart:developer' as developer;
 
 class CartItem {
   final WooProduct product;
@@ -22,6 +24,17 @@ class CartItem {
     final price = product.price ?? 0.0;
     return price * quantity;
   }
+
+  Map<String, dynamic> toJson() {
+    return {'product': product.toJson(), 'quantity': quantity};
+  }
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      product: WooProduct.fromJson(json['product']),
+      quantity: json['quantity'],
+    );
+  }
 }
 
 class CartProvider with ChangeNotifier {
@@ -33,10 +46,51 @@ class CartProvider with ChangeNotifier {
   bool _isApplyingCoupon = false;
   String? _couponErrorMessage;
 
+  CartProvider() {
+    _loadCart();
+  }
+
+  // Persistence logic
+  Future<void> _saveCart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cartData = _items.map(
+        (key, value) => MapEntry(key.toString(), value.toJson()),
+      );
+      await prefs.setString('shopping_cart', json.encode(cartData));
+      developer.log('Cart saved to local storage.');
+    } catch (e) {
+      developer.log('Error saving cart: $e');
+    }
+  }
+
+  Future<void> _loadCart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cartString = prefs.getString('shopping_cart');
+      if (cartString != null) {
+        final Map<String, dynamic> decodedData = json.decode(cartString);
+        decodedData.forEach((key, value) {
+          final productId = int.parse(key);
+          _items[productId] = CartItem.fromJson(value);
+        });
+        _recaculateDiscountOnCartChange();
+        notifyListeners();
+        developer.log(
+          'Cart loaded from local storage: ${_items.length} items.',
+        );
+      }
+    } catch (e) {
+      developer.log('Error loading cart: $e');
+    }
+  }
+
   // Getters
   Map<int, CartItem> get items => {..._items};
-  int get itemCount => _items.values.fold(0, (sum, item) => sum + item.quantity);
-  double get subtotal => _items.values.fold(0.0, (sum, item) => sum + item.subTotal);
+  int get itemCount =>
+      _items.values.fold(0, (sum, item) => sum + item.quantity);
+  double get subtotal =>
+      _items.values.fold(0.0, (sum, item) => sum + item.subTotal);
   double get discountAmount => _discountAmount;
   Coupon? get appliedCoupon => _appliedCoupon;
   bool get isApplyingCoupon => _isApplyingCoupon;
@@ -122,7 +176,8 @@ class CartProvider with ChangeNotifier {
 
     if (_appliedCoupon!.discountType == 'percent') {
       _discountAmount = subtotal * (couponAmount / 100);
-    } else { // Assumes 'fixed_cart' or other fixed types
+    } else {
+      // Assumes 'fixed_cart' or other fixed types
       _discountAmount = couponAmount;
     }
 
@@ -155,6 +210,7 @@ class CartProvider with ChangeNotifier {
       _items.putIfAbsent(product.id, () => CartItem(product: product));
     }
     _recaculateDiscountOnCartChange();
+    _saveCart();
     notifyListeners();
   }
 
@@ -167,18 +223,21 @@ class CartProvider with ChangeNotifier {
       _items.remove(productId);
     }
     _recaculateDiscountOnCartChange();
+    _saveCart();
     notifyListeners();
   }
 
   void removeItem(int productId) {
     _items.remove(productId);
     _recaculateDiscountOnCartChange();
+    _saveCart();
     notifyListeners();
   }
 
   void clear() {
     _items.clear();
     removeCoupon(); // Also clears the coupon when the cart is cleared
+    _saveCart();
     notifyListeners();
   }
 }

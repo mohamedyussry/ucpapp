@@ -133,106 +133,130 @@ class _MyPointsScreenState extends State<MyPointsScreen> {
   Widget _buildLoyaltyCard(LoyaltyData? loyaltyData) {
     final NumberFormat formatter = NumberFormat('#,###');
     final points = loyaltyData?.pointsBalance ?? 0;
-    final tier = loyaltyData?.tierName ?? 'Bronze';
+    String tierName = loyaltyData?.tierName ?? 'Basic';
+    if (tierName.toLowerCase() == 'none') tierName = 'Basic';
     final l10n = AppLocalizations.of(context)!;
+
+    // Define colors based on tier name to match Home Screen
+    List<Color> tierColors;
+    if (tierName.toLowerCase().contains('plus')) {
+      tierColors = [const Color(0xFF8E8E8E), const Color(0xFFE4A143)];
+    } else if (tierName.toLowerCase().contains('premium')) {
+      tierColors = [const Color(0xFFE4A143), const Color(0xFFFFCC99)];
+    } else if (tierName.toLowerCase().contains('elite')) {
+      tierColors = [const Color(0xFFD487CC), const Color(0xFFE19FE0)];
+    } else {
+      // Default: Basic
+      tierColors = [Colors.grey.shade600, Colors.grey.shade400];
+    }
 
     return Container(
       width: double.infinity,
-      height: 200,
+      height: 220,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF8E8E8E),
-            Color(0xFFE4A143),
-          ], // Closer to image colors
+        gradient: LinearGradient(
+          colors: tierColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.3),
+            color: tierColors.first.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 10),
           ),
         ],
       ),
       padding: const EdgeInsets.all(25),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Opacity(
+            opacity: 0.1,
+            child: Align(
+              alignment: Alignment.center,
+              child: const Icon(Icons.stars, size: 150, color: Colors.white),
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.loyalty_card_label,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          FontAwesomeIcons.medal,
+                          color: Color(0xFFFFD700),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          tierName,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
               Text(
-                l10n.loyalty_card_label,
+                l10n.current_points,
                 style: GoogleFonts.poppins(
                   color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 18,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      FontAwesomeIcons.medal,
-                      color: Color(0xFFFFD700),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 5),
-                    Text(
-                      tier,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            l10n.current_points,
-            style: GoogleFonts.poppins(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 16,
-            ),
-          ),
-          Text(
-            formatter.format(points),
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 42,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.ucp_loyalty_program,
-                style: GoogleFonts.poppins(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 14,
+                  fontSize: 16,
                 ),
               ),
               Text(
-                l10n.active_account,
+                formatter.format(points),
                 style: GoogleFonts.poppins(
-                  color: Colors.white.withValues(alpha: 0.6),
-                  fontSize: 12,
+                  color: Colors.white,
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  height: 1.1,
                 ),
+              ),
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.ucp_loyalty_program,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    l10n.active_account,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

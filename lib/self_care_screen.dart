@@ -89,6 +89,7 @@ class _SelfCareScreenState extends State<SelfCareScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.orange,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,

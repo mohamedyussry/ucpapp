@@ -12,10 +12,16 @@ class LoyaltyData {
   });
 
   factory LoyaltyData.fromJson(Map<String, dynamic> json) {
+    String rawTier = json['tier_name']?.toString() ?? 'Basic';
+    // If API returns 'none' or is empty, fallback to 'Basic'
+    if (rawTier.isEmpty || rawTier.toLowerCase() == 'none') {
+      rawTier = 'Basic';
+    }
+
     return LoyaltyData(
       pointsBalance: json['points_balance'] ?? 0,
       currentTierId: json['current_tier_id'] ?? 0,
-      tierName: json['tier_name'] ?? 'Bronze',
+      tierName: rawTier,
       spendingLast12Months: (json['spending_last_12_months'] ?? 0).toDouble(),
     );
   }
