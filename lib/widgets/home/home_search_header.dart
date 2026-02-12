@@ -9,7 +9,8 @@ import 'package:myapp/product_detail_screen.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 class HomeSearchHeader extends StatefulWidget {
-  const HomeSearchHeader({super.key});
+  final bool showTopBar;
+  const HomeSearchHeader({super.key, this.showTopBar = true});
 
   @override
   State<HomeSearchHeader> createState() => _HomeSearchHeaderState();
@@ -161,13 +162,30 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    subtitle: Text(
-                      '${product.price?.toStringAsFixed(2) ?? "0.00"} ${l10n.currency_sar}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    subtitle: Row(
+                      children: [
+                        if (product.salePrice != null &&
+                            product.regularPrice != null &&
+                            product.salePrice! < product.regularPrice!) ...[
+                          Text(
+                            '${product.regularPrice!.toStringAsFixed(2)} ${l10n.currency_sar}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
+                        Text(
+                          '${product.price?.toStringAsFixed(2) ?? "0.00"} ${l10n.currency_sar}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                     onTap: () {
                       _hideOverlay();
@@ -261,36 +279,38 @@ class _HomeSearchHeaderState extends State<HomeSearchHeader> {
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.person_outline, color: Colors.white),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfileScreen(),
+          if (widget.showTopBar) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.person_outline, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+                Image.asset(
+                  'assets/icon-logo.png',
+                  height: 40,
+                  errorBuilder: (context, error, stackTrace) => Text(
+                    l10n.app_title,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
-                  );
-                },
-              ),
-              Image.asset(
-                'assets/icon-logo.png',
-                height: 40,
-                errorBuilder: (context, error, stackTrace) => Text(
-                  l10n.app_title,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
                   ),
                 ),
-              ),
-              const CartBadge(),
-            ],
-          ),
-          const SizedBox(height: 12),
+                const CartBadge(),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           CompositedTransformTarget(
             link: _layerLink,
             child: Container(

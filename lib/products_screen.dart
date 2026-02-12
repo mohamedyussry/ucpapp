@@ -7,6 +7,7 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
+import 'package:myapp/widgets/home/home_search_header.dart';
 import 'package:shimmer/shimmer.dart';
 import 'l10n/generated/app_localizations.dart';
 
@@ -167,6 +168,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
         widget.category?.toUpperCase() ??
         l10n.products;
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           title,
@@ -182,42 +184,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: const [CartBadge()],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: l10n.search_products,
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                          },
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.filter_list),
-                          onPressed: () {
-                            // Handle filter button press
-                          },
-                        ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                ),
-              ),
+      body: Column(
+        children: [
+          const HomeSearchHeader(showTopBar: false),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _buildProductGrid(),
             ),
-            Expanded(child: _buildProductGrid()),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );

@@ -5,6 +5,7 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/products_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:myapp/widgets/home/home_search_header.dart';
 import '../l10n/generated/app_localizations.dart';
 
 class BrandsScreen extends StatefulWidget {
@@ -60,7 +61,12 @@ class _BrandsScreenState extends State<BrandsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: _isLoading ? _buildShimmer() : _buildBrandsGrid(),
+      body: Column(
+        children: [
+          const HomeSearchHeader(showTopBar: false),
+          Expanded(child: _isLoading ? _buildShimmer() : _buildBrandsGrid()),
+        ],
+      ),
     );
   }
 

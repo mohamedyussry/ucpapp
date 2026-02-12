@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:glass_kit/glass_kit.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:myapp/widgets/cart_badge.dart';
+import 'package:myapp/widgets/home/home_search_header.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class SelfCareScreen extends StatefulWidget {
@@ -99,7 +100,17 @@ class _SelfCareScreenState extends State<SelfCareScreen>
           ? _buildLoadingState()
           : _allCategories.isEmpty
           ? _buildEmptyState()
-          : FadeTransition(opacity: _fadeController, child: _buildMainLayout()),
+          : Column(
+              children: [
+                const HomeSearchHeader(showTopBar: false),
+                Expanded(
+                  child: FadeTransition(
+                    opacity: _fadeController,
+                    child: _buildMainLayout(),
+                  ),
+                ),
+              ],
+            ),
       bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 1),
     );
   }
