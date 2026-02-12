@@ -53,7 +53,17 @@ class AuthProvider with ChangeNotifier {
 
       // Reverting to the required template by the provider
       final signature = await SmsAutoFill().getAppSignature;
-      final message = 'OTP Code : $otp\nحياك الله فى عائلة UCP\n$signature';
+      developer.log('Fetched Signature: "$signature"');
+
+      // Construct the message carefully to match the approved template.
+      // On iOS, signature is usually empty. If we add \n$signature, we get a trailing newline.
+      String message = 'OTP Code : $otp\nحياك الله فى عائلة UCP';
+
+      if (signature.isNotEmpty) {
+        message += '\n$signature';
+      }
+
+      developer.log('Sending message: "$message"');
 
       // sendSms now returns a Map {success, message}
       final result = await _authService.sendSms(phoneNumber, message);

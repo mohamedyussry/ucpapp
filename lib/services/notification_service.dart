@@ -156,7 +156,34 @@ class NotificationService {
   }
 
   Future<String?> getToken() async {
-    return await _fcm.getToken();
+    try {
+      if (Theme.of(MyApp.navigatorKey.currentContext!).platform ==
+          TargetPlatform.iOS) {
+        // Wait for APNs token to be available (vital for iOS FCM registration)
+        String? apnsToken = await _fcm.getAPNSToken();
+        int retryCount = 0;
+        while (apnsToken == null && retryCount < 5) {
+          developer.log(
+            'NotificationService: Waiting for APNs token... (Attempt ${retryCount + 1})',
+          );
+          await Future.delayed(const Duration(seconds: 2));
+          apnsToken = await _fcm.getAPNSToken();
+          retryCount++;
+        }
+
+        if (apnsToken == null) {
+          developer.log(
+            'NotificationService: APNs token NOT found after retries. iOS Push might fail.',
+          );
+        } else {
+          developer.log('NotificationService: APNs token ready.');
+        }
+      }
+      return await _fcm.getToken();
+    } catch (e) {
+      developer.log('NotificationService: Error getting token: $e');
+      return null;
+    }
   }
 
   Future<void> updateTokenOnServer(int customerId) async {

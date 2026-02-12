@@ -203,6 +203,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           fillColor: Colors.white,
           filled: true,
         ),
+        autofillHints: const [AutofillHints.oneTimeCode],
         onChanged: (value) {
           if (value.isNotEmpty) {
             // Move to next field
