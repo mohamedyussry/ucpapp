@@ -14,7 +14,9 @@ import 'l10n/generated/app_localizations.dart';
 class ProductsScreen extends StatefulWidget {
   final String? category;
   final int? categoryId; // إضافة دعم ID الفئة مباشرة
+  final String? categorySlug;
   final int? brandId;
+  final int? tagId;
   final String? brandName;
   final bool? featured;
   final String? orderby;
@@ -25,7 +27,9 @@ class ProductsScreen extends StatefulWidget {
     super.key,
     this.category,
     this.categoryId,
+    this.categorySlug,
     this.brandId,
+    this.tagId,
     this.brandName,
     this.featured,
     this.orderby,
@@ -108,7 +112,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       final List<WooProduct> networkProducts = await _wooCommerceService
           .getProducts(
             categoryId: targetCategoryId,
+            categorySlug: widget.categorySlug,
             brandId: widget.brandId,
+            tagId: widget.tagId,
             orderby: widget.orderby,
             order: widget.order,
             featured: widget.featured,
@@ -140,7 +146,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   String _getCacheKey() {
-    return 'products_${widget.categoryId}_${widget.brandId}_${widget.featured}_${widget.orderby}_${widget.order}';
+    return 'products_${widget.categoryId}_${widget.categorySlug}_${widget.brandId}_${widget.tagId}_${widget.featured}_${widget.orderby}_${widget.order}';
   }
 
   void _onSearchChanged() {

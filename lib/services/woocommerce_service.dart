@@ -491,7 +491,9 @@ class WooCommerceService {
 
   Future<List<WooProduct>> getProducts({
     int? categoryId,
+    String? categorySlug,
     int? brandId,
+    int? tagId,
     bool? featured,
     String? orderby,
     String? order,
@@ -511,8 +513,27 @@ class WooCommerceService {
       if (categoryId != null) {
         queryParameters['category'] = categoryId.toString();
       }
+      if (categorySlug != null) {
+        // Resolve slug to ID using the categories list (which is usually cached)
+        final categories = await getCategories();
+        final match = categories.firstWhere(
+          (c) =>
+              c.slug.toLowerCase() == categorySlug.toLowerCase() ||
+              c.name.toLowerCase() == categorySlug.toLowerCase(),
+          orElse: () => WooProductCategory(id: -1, name: '', slug: ''),
+        );
+        if (match.id != -1) {
+          queryParameters['category'] = match.id.toString();
+        } else {
+          // Fallback: some configurations might support slug directly
+          queryParameters['category_name'] = categorySlug;
+        }
+      }
       if (brandId != null) {
         queryParameters['brand'] = brandId.toString();
+      }
+      if (tagId != null) {
+        queryParameters['tags'] = tagId.toString();
       }
       if (featured == true) {
         queryParameters['featured'] = true;

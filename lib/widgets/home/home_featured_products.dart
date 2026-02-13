@@ -11,10 +11,16 @@ import '../../l10n/generated/app_localizations.dart';
 class HomeFeaturedProducts extends StatefulWidget {
   final String title;
   final bool isFeatured;
+  final int? categoryId;
+  final String? categorySlug;
+  final int? tagId;
   const HomeFeaturedProducts({
     super.key,
     required this.title,
     this.isFeatured = false,
+    this.categoryId,
+    this.categorySlug,
+    this.tagId,
   });
 
   @override
@@ -35,7 +41,24 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
   Future<void> _fetchProducts() async {
     try {
       List<WooProduct> products;
-      if (widget.isFeatured) {
+      if (widget.categorySlug != null) {
+        // جلب المنتجات عن طريق الـ Slug للفئة
+        products = await _wooService.getProducts(
+          categorySlug: widget.categorySlug,
+          orderby: 'date',
+          order: 'desc',
+          perPage: 10,
+        );
+      } else if (widget.tagId != null) {
+        // جلب المنتجات عن طريق الوسم (Tag)
+        // جلب المنتجات من فئة محددة
+        products = await _wooService.getProducts(
+          categoryId: widget.categoryId,
+          orderby: 'date',
+          order: 'desc',
+          perPage: 10,
+        );
+      } else if (widget.isFeatured) {
         // جلب المنتجات المميزة (المحددة بنجمة في ووردبريس)
         products = await _wooService.getProducts(featured: true, perPage: 10);
 
@@ -99,8 +122,21 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ProductsScreen(
-                        featured: widget.isFeatured,
-                        orderby: widget.isFeatured ? 'popularity' : 'date',
+                        featured:
+                            (widget.categoryId == null &&
+                                widget.categorySlug == null &&
+                                widget.tagId == null)
+                            ? widget.isFeatured
+                            : null,
+                        categoryId: widget.categoryId,
+                        categorySlug: widget.categorySlug,
+                        tagId: widget.tagId,
+                        orderby:
+                            (widget.categoryId != null ||
+                                widget.categorySlug != null ||
+                                widget.tagId != null)
+                            ? 'date'
+                            : (widget.isFeatured ? 'popularity' : 'date'),
                         order: 'desc',
                         customTitle: widget.title,
                       ),

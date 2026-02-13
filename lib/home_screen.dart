@@ -60,7 +60,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 24),
                       const HomeLoyaltySection(),
                       const SizedBox(height: 16),
-                      HomeFeaturedProducts(title: l10n.new_arrivals),
+                      HomeFeaturedProducts(
+                        title: l10n.new_arrivals,
+                        categorySlug: 'new-arrival',
+                      ),
                       const SizedBox(height: 24),
                     ],
                   ),

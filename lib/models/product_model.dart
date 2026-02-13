@@ -110,6 +110,7 @@ class WooProductImage {
 class WooProductCategory {
   final int id;
   final String name;
+  final String slug;
   final int parent;
   final WooProductImage? image;
   final WooSliderData? sliderData;
@@ -117,6 +118,7 @@ class WooProductCategory {
   WooProductCategory({
     required this.id,
     required this.name,
+    required this.slug,
     this.parent = 0,
     this.image,
     this.sliderData,
@@ -126,6 +128,7 @@ class WooProductCategory {
     return WooProductCategory(
       id: json['id'],
       name: json['name'] ?? '',
+      slug: json['slug'] ?? '',
       parent: json['parent'] ?? 0,
       image: json['image'] != null && json['image'] is Map<String, dynamic>
           ? WooProductImage.fromJson(json['image'])
@@ -140,6 +143,7 @@ class WooProductCategory {
     return {
       'id': id,
       'name': name,
+      'slug': slug,
       'parent': parent,
       'image': image?.toJson(),
       'slider_data': sliderData?.toJson(),
