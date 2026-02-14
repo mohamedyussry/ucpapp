@@ -490,7 +490,7 @@ class WooCommerceService {
   }
 
   Future<List<WooProduct>> getProducts({
-    int? categoryId,
+    dynamic categoryId,
     String? categorySlug,
     int? brandId,
     int? tagId,
@@ -499,7 +499,8 @@ class WooCommerceService {
     String? order,
     List<int>? include,
     String? search,
-    int perPage = 100,
+    int perPage = 20,
+    int page = 1,
     bool useCache = true,
   }) async {
     try {
@@ -507,6 +508,7 @@ class WooCommerceService {
         'consumer_key': Config.consumerKey,
         'consumer_secret': Config.consumerSecret,
         'per_page': perPage,
+        'page': page,
         'status': 'publish',
       };
 

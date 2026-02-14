@@ -46,7 +46,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
   final _billingFirstNameController = TextEditingController();
   final _billingLastNameController = TextEditingController();
   final _billingAddress1Controller = TextEditingController();
-  final _billingEmailController = TextEditingController();
   final _billingPhoneController = TextEditingController();
   final _orderNotesController = TextEditingController();
 
@@ -96,7 +95,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     _billingFirstNameController.dispose();
     _billingLastNameController.dispose();
     _billingAddress1Controller.dispose();
-    _billingEmailController.dispose();
     _billingPhoneController.dispose();
     _orderNotesController.dispose();
     _fadeController.dispose();
@@ -120,7 +118,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           prefs.getString('billing_first_name') ?? '';
       _billingLastNameController.text =
           prefs.getString('billing_last_name') ?? '';
-      _billingEmailController.text = prefs.getString('billing_email') ?? '';
       _billingPhoneController.text = prefs.getString('billing_phone') ?? '';
       _billingAddress1Controller.text =
           prefs.getString('billing_address') ?? '';
@@ -143,7 +140,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       'billing_last_name',
       _billingLastNameController.text.trim(),
     );
-    await prefs.setString('billing_email', _billingEmailController.text.trim());
     await prefs.setString('billing_phone', _billingPhoneController.text.trim());
     await prefs.setString(
       'billing_address',
@@ -194,7 +190,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     final billingData = {
       'firstName': _billingFirstNameController.text.trim(),
       'lastName': _billingLastNameController.text.trim(),
-      'email': _billingEmailController.text.trim(),
+      'email': 'customer@ucpapp.com',
       'phone': _billingPhoneController.text.trim(),
       'address': _billingAddress1Controller.text.trim(),
       'city': checkoutProvider.selectedStateCode ?? 'Riyadh',
@@ -263,7 +259,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     orderData.billingCity = checkoutProvider.selectedStateCode ?? '';
     orderData.billingState = checkoutProvider.selectedStateCode ?? '';
     orderData.billingCountry = 'SA';
-    orderData.billingEmail = _billingEmailController.text.trim();
+    orderData.billingEmail = 'customer@ucpapp.com';
     orderData.billingPhone = _billingPhoneController.text.trim();
 
     // Save billing details for future use
@@ -783,15 +779,6 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     _billingPhoneController,
                     l10n.phone_number,
                     Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildModernTextField(
-                    _billingEmailController,
-                    l10n.email,
-                    Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    isOptional: true,
                   ),
                 ],
               ),
@@ -1046,7 +1033,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                         checkoutProvider.orderData.billingPhone =
                             _billingPhoneController.text;
                         checkoutProvider.orderData.billingEmail =
-                            _billingEmailController.text;
+                            'customer@ucpapp.com';
 
                         // Save details automatically when moving to next step
                         _saveBillingDetails(
@@ -1191,11 +1178,11 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         if (!isOptional && (value == null || value.isEmpty)) {
           return l10n.err_please_enter(label);
         }
-        if (label == l10n.email &&
-            !isOptional &&
-            value != null &&
-            !RegExp(r"^\S+@\S+\.\S+$").hasMatch(value)) {
-          return l10n.err_invalid_email;
+        // If not empty, and it's an email field, validate format
+        if (value != null && value.isNotEmpty && label == l10n.email) {
+          if (!RegExp(r"^\S+@\S+\.\S+$").hasMatch(value)) {
+            return l10n.err_invalid_email;
+          }
         }
         return null;
       },
