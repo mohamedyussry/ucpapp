@@ -98,8 +98,7 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
         ),
       ),
       bottomNavigationBar: Container(
-        height: 100,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -111,17 +110,13 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
           ],
         ),
         child: SafeArea(
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: _buildTrackOrderButton(context, orderData, l10n)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildContinueShoppingButton(
-                  context,
-                  navigateToHome,
-                  l10n,
-                ),
-              ),
+              _buildTrackOrderButton(context, orderData, l10n),
+              const SizedBox(height: 12),
+              _buildContinueShoppingButton(context, navigateToHome, l10n),
             ],
           ),
         ),

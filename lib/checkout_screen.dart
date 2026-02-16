@@ -47,6 +47,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
   final _billingLastNameController = TextEditingController();
   final _billingAddress1Controller = TextEditingController();
   final _billingPhoneController = TextEditingController();
+  final _billingEmailController = TextEditingController();
   final _orderNotesController = TextEditingController();
 
   late AnimationController _fadeController;
@@ -96,6 +97,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     _billingLastNameController.dispose();
     _billingAddress1Controller.dispose();
     _billingPhoneController.dispose();
+    _billingEmailController.dispose();
     _orderNotesController.dispose();
     _fadeController.dispose();
     super.dispose();
@@ -119,6 +121,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       _billingLastNameController.text =
           prefs.getString('billing_last_name') ?? '';
       _billingPhoneController.text = prefs.getString('billing_phone') ?? '';
+      _billingEmailController.text = prefs.getString('billing_email') ?? '';
       _billingAddress1Controller.text =
           prefs.getString('billing_address') ?? '';
 
@@ -141,6 +144,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       _billingLastNameController.text.trim(),
     );
     await prefs.setString('billing_phone', _billingPhoneController.text.trim());
+    await prefs.setString('billing_email', _billingEmailController.text.trim());
     await prefs.setString(
       'billing_address',
       _billingAddress1Controller.text.trim(),
@@ -190,7 +194,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     final billingData = {
       'firstName': _billingFirstNameController.text.trim(),
       'lastName': _billingLastNameController.text.trim(),
-      'email': 'customer@ucpapp.com',
+      'email': _billingEmailController.text.trim().isNotEmpty
+          ? _billingEmailController.text.trim()
+          : 'customer@ucpapp.com',
       'phone': _billingPhoneController.text.trim(),
       'address': _billingAddress1Controller.text.trim(),
       'city': checkoutProvider.selectedStateCode ?? 'Riyadh',
@@ -259,7 +265,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     orderData.billingCity = checkoutProvider.selectedStateCode ?? '';
     orderData.billingState = checkoutProvider.selectedStateCode ?? '';
     orderData.billingCountry = 'SA';
-    orderData.billingEmail = 'customer@ucpapp.com';
+    orderData.billingEmail = _billingEmailController.text.trim().isNotEmpty
+        ? _billingEmailController.text.trim()
+        : 'customer@ucpapp.com';
     orderData.billingPhone = _billingPhoneController.text.trim();
 
     // Save billing details for future use
@@ -779,6 +787,14 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     _billingPhoneController,
                     l10n.phone_number,
                     Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildModernTextField(
+                    _billingEmailController,
+                    l10n.email,
+                    Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
                   ),
                 ],
               ),
@@ -1033,7 +1049,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                         checkoutProvider.orderData.billingPhone =
                             _billingPhoneController.text;
                         checkoutProvider.orderData.billingEmail =
-                            'customer@ucpapp.com';
+                            _billingEmailController.text;
 
                         // Save details automatically when moving to next step
                         _saveBillingDetails(
