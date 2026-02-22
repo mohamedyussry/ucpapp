@@ -91,7 +91,7 @@ class PaymobService {
     }
   }
 
-  /// Full Flow to get Payment Token
+  /// Full Flow to get Payment Token (for Credit Card / iFrame)
   Future<String?> getPaymentToken({
     required double amount,
     required String currency,
@@ -115,5 +115,104 @@ class PaymobService {
       billingData: billingData,
     );
     return paymentKey;
+  }
+
+  /// Payment Key for Apple Pay (uses Apple Pay Integration ID)
+  Future<String?> getApplePayPaymentKey({
+    required String authToken,
+    required int orderId,
+    required double amount,
+    required String currency,
+    required Map<String, String> billingData,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/acceptance/payment_keys',
+        data: {
+          'auth_token': authToken,
+          'amount_cents': (amount * 100).toInt().toString(),
+          'expiration': 3600,
+          'order_id': orderId.toString(),
+          'billing_data': {
+            'apartment': 'NA',
+            'email': billingData['email'] ?? 'NA',
+            'floor': 'NA',
+            'first_name': billingData['firstName'] ?? 'NA',
+            'street': billingData['address'] ?? 'NA',
+            'building': 'NA',
+            'phone_number': billingData['phone'] ?? 'NA',
+            'shipping_method': 'PKG',
+            'postal_code': 'NA',
+            'city': billingData['city'] ?? 'NA',
+            'country': 'SA',
+            'last_name': billingData['lastName'] ?? 'NA',
+            'state': billingData['state'] ?? 'NA',
+          },
+          'currency': currency,
+          'integration_id': Config.paymobApplePayIntegrationId, // Apple Pay ID
+        },
+      );
+      return response.data['token'];
+    } catch (e) {
+      developer.log('PAYMOB: Apple Pay Payment Key Error', error: e);
+      return null;
+    }
+  }
+
+  /// Flash Flow: Process Apple Pay Payment
+  /// يُستدعى بعد الحصول على Apple Pay Token من الجهاز
+  Future<Map<String, dynamic>?> processApplePayPayment({
+    required String paymentKey,
+    required Map<String, dynamic> applePayToken,
+  }) async {
+    try {
+      final response = await _dio.post(
+        '/acceptance/post_pay',
+        data: {
+          'source': {
+            'identifier': 'APPLE_PAY',
+            'subtype': 'APPLE_PAY',
+            'data': {'response': applePayToken},
+          },
+          'payment_token': paymentKey,
+        },
+      );
+      return response.data;
+    } catch (e) {
+      developer.log('PAYMOB: Apple Pay Process Error', error: e);
+      return null;
+    }
+  }
+
+  /// Full Apple Pay Flow
+  Future<Map<String, dynamic>?> initiateApplePayPayment({
+    required double amount,
+    required String currency,
+    required Map<String, String> billingData,
+    required Map<String, dynamic> applePayToken, // يأتي من Apple Pay Native
+  }) async {
+    final authToken = await getAuthToken();
+    if (authToken == null) return null;
+
+    final orderId = await createOrder(
+      authToken: authToken,
+      amount: amount,
+      currency: currency,
+    );
+    if (orderId == null) return null;
+
+    final paymentKey = await getApplePayPaymentKey(
+      authToken: authToken,
+      orderId: orderId,
+      amount: amount,
+      currency: currency,
+      billingData: billingData,
+    );
+    if (paymentKey == null) return null;
+
+    return await processApplePayPayment(
+      paymentKey: paymentKey,
+      applePayToken: applePayToken,
+    );
   }
 }

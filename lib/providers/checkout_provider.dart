@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:myapp/models/payment_method_model.dart';
 import 'package:myapp/models/shipping_method_model.dart';
@@ -136,6 +137,14 @@ class CheckoutProvider with ChangeNotifier {
         description: 'Split in 4. No interest. No fees.',
         enabled: true,
       ),
+      // Apple Pay - iOS only
+      if (Platform.isIOS)
+        PaymentMethod(
+          id: 'apple_pay',
+          title: 'Apple Pay',
+          description: 'Pay securely with Apple Pay.',
+          enabled: true,
+        ),
     ];
     _selectedPaymentMethod = _paymentMethods.first;
     validatePaymentMethods();

@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/line_item_model.dart';
 import 'package:myapp/models/state_model.dart';
@@ -177,6 +179,11 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       return;
     }
 
+    if (checkoutProvider.selectedPaymentMethod?.id == 'apple_pay') {
+      _handleApplePayPayment();
+      return;
+    }
+
     if (checkoutProvider.selectedPaymentMethod?.id == 'tamara') {
       _handleTamaraPayment();
       return;
@@ -266,6 +273,103 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       await wooCommerceService.updateOrder(wcOrderId, {
         'status': 'processing',
         'set_paid': true,
+      });
+      _finalizeOrderCompletion(orderResponse);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_failed)));
+    }
+  }
+
+  Future<void> _handleApplePayPayment() async {
+    if (!Platform.isIOS) return;
+    final l10n = AppLocalizations.of(context)!;
+    final checkoutProvider = Provider.of<CheckoutProvider>(
+      context,
+      listen: false,
+    );
+    final paymobService = PaymobService();
+
+    setState(() => _isPlacingOrder = true);
+
+    // Step 1: إنشاء الطلب في WooCommerce (حالة pending)
+    final orderResponse = await _createPlaceholderOrder(status: 'pending');
+    if (orderResponse == null) {
+      setState(() => _isPlacingOrder = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.order_failed)));
+      return;
+    }
+
+    final int wcOrderId = orderResponse['id'];
+    final billingData = {
+      'firstName': _billingFirstNameController.text.trim(),
+      'lastName': _billingLastNameController.text.trim(),
+      'email': _billingEmailController.text.trim().isNotEmpty
+          ? _billingEmailController.text.trim()
+          : 'customer@ucpapp.com',
+      'phone': _billingPhoneController.text.trim(),
+      'address': _billingAddress1Controller.text.trim(),
+      'city': checkoutProvider.selectedStateCode ?? 'Riyadh',
+      'state': checkoutProvider.selectedStateCode ?? 'Riyadh',
+    };
+
+    // Step 2: استدعاء Apple Pay Native عبر MethodChannel
+    Map<String, dynamic>? applePayToken;
+    try {
+      const channel = MethodChannel('com.ucpksa/apple_pay');
+      final result = await channel.invokeMethod<Map>('startApplePay', {
+        'amount': checkoutProvider.total.toStringAsFixed(2),
+        'currency': 'SAR',
+        'merchantId': 'merchant.khp.ucpksa.com',
+        'countryCode': 'SA',
+        'label': 'UCP Pharmacy',
+      });
+      applePayToken = result?.cast<String, dynamic>();
+    } catch (e) {
+      developer.log('APPLE_PAY: Native call error', error: e);
+      setState(() => _isPlacingOrder = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Apple Pay is not available on this device'),
+        ),
+      );
+      return;
+    }
+
+    if (applePayToken == null) {
+      setState(() => _isPlacingOrder = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_failed)));
+      return;
+    }
+
+    // Step 3: إرسال Apple Pay Token إلى Paymob (Flash Flow)
+    final result = await paymobService.initiateApplePayPayment(
+      amount: checkoutProvider.total,
+      currency: 'SAR',
+      billingData: billingData,
+      applePayToken: applePayToken,
+    );
+
+    setState(() => _isPlacingOrder = false);
+
+    final bool success = result != null && result['success'] == true;
+
+    if (success) {
+      if (!mounted) return;
+      final wooCommerceService = WooCommerceService();
+      await wooCommerceService.updateOrder(wcOrderId, {
+        'status': 'processing',
+        'set_paid': true,
+        'transaction_id': result['transaction_id']?.toString() ?? '',
       });
       _finalizeOrderCompletion(orderResponse);
     } else {

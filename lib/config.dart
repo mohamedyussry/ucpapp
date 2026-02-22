@@ -11,6 +11,7 @@ class Config {
       "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRBME56a3NJbTVoYldVaU9pSnBibWwwYVdGc0luMC5BUDQycUdTYVZpanJYUGp1d2JtOFM3R3JxRWlOaFJtWlhPRWVaTUprRFBsR2lab0xqMHVKMVo3c0l6VDRaZkRZNkJzel91VFRab3VSZWRZMll5c2djdw==";
   static const int paymobIntegrationId = 22011;
   static const int paymobIframeId = 10638;
+  static const int paymobApplePayIntegrationId = 22010; // Apple Pay Live ID
 
   // Tamara Settings
   static const String tamaraMerchantToken =
