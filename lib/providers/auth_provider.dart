@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'dart:math';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/customer_model.dart';
@@ -325,6 +326,7 @@ class AuthProvider with ChangeNotifier {
     String? state,
     String? phone,
     String? email,
+    File? imageFile,
   }) async {
     if (_customer == null) return false;
 
@@ -332,23 +334,65 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final Map<String, dynamic> updateData = {
-        if (firstName != null) 'first_name': firstName,
-        if (lastName != null) 'last_name': lastName,
-        'billing': {
-          if (firstName != null) 'first_name': firstName,
-          if (lastName != null) 'last_name': lastName,
-          if (company != null) 'company': company,
-          if (address1 != null) 'address_1': address1,
-          if (address2 != null) 'address_2': address2,
-          if (city != null) 'city': city,
-          if (postcode != null) 'postcode': postcode,
-          if (country != null) 'country': country,
-          if (state != null) 'state': state,
-          if (phone != null) 'phone': phone,
-          if (email != null) 'email': email,
-        },
-      };
+      final Map<String, dynamic> updateData = {};
+
+      // Top-level fields
+      if (firstName != null) updateData['first_name'] = firstName;
+      if (lastName != null) updateData['last_name'] = lastName;
+      if (email != null) updateData['email'] = email;
+
+      // Billing fields
+      final Map<String, dynamic> billingData = {};
+      if (firstName != null) billingData['first_name'] = firstName;
+      if (lastName != null) billingData['last_name'] = lastName;
+      if (company != null) billingData['company'] = company;
+      if (address1 != null) billingData['address_1'] = address1;
+      if (address2 != null) billingData['address_2'] = address2;
+      if (city != null) billingData['city'] = city;
+      if (postcode != null) billingData['postcode'] = postcode;
+      if (country != null) billingData['country'] = country;
+      if (state != null) billingData['state'] = state;
+      if (phone != null) billingData['phone'] = phone;
+      if (email != null) billingData['email'] = email;
+
+      if (billingData.isNotEmpty) {
+        updateData['billing'] = billingData;
+      }
+
+      // Handle Image Upload
+      if (imageFile != null) {
+        developer.log('Uploading profile image...');
+        final Map<String, dynamic>? imageResponse = await _wooCommerceService
+            .uploadImage(imageFile);
+
+        if (imageResponse != null) {
+          final String imageUrl = imageResponse['source_url'];
+          final int imageId = imageResponse['id'];
+
+          developer.log('Image uploaded. ID: $imageId, URL: $imageUrl');
+
+          // Try multiple ways to save the avatar for maximum compatibility
+          updateData['meta_data'] = [
+            // Simple Local Avatars (often uses array with full path and media_id)
+            {
+              'key': 'simple_local_avatar',
+              'value': {'full': imageUrl, 'media_id': imageId},
+            },
+            // Basic User Avatars (often uses meta key 'basic_user_avatar' with array or just ID in some forks)
+            {
+              'key': 'basic_user_avatar',
+              'value': {'full': imageUrl},
+            },
+            // WP User Avatar / ProfilePress (often uses 'wp_user_avatar' with media ID)
+            {'key': 'wp_user_avatar', 'value': imageId},
+          ];
+
+          // Also try sending avatar_url at root, just in case custom endpoint supports it
+          updateData['avatar_url'] = imageUrl;
+        } else {
+          developer.log('Profile image upload failed.');
+        }
+      }
 
       final updatedCustomer = await _wooCommerceService.updateCustomer(
         _customer!.id,
@@ -357,6 +401,13 @@ class AuthProvider with ChangeNotifier {
 
       if (updatedCustomer != null) {
         _customer = updatedCustomer;
+
+        // If image was uploaded but server didn't return it in avatar_url (read-only),
+        // manually set it locally so the UI updates immediately.
+        if (imageFile != null && updateData.containsKey('avatar_url')) {
+          _customer!.avatarUrl = updateData['avatar_url'];
+        }
+
         _isUpdatingCustomer = false;
         notifyListeners();
         developer.log(

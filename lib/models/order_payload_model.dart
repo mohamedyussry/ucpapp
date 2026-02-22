@@ -1,4 +1,3 @@
-
 import 'line_item_model.dart';
 
 class OrderPayload {
@@ -12,7 +11,7 @@ class OrderPayload {
   final String? customerNote;
   final String? transactionId;
   final int? customerId;
-  final String? status; // Add this line
+  final String? status;
 
   OrderPayload({
     required this.paymentMethod,
@@ -25,22 +24,35 @@ class OrderPayload {
     this.customerNote,
     this.transactionId,
     this.customerId,
-    this.status, // Add this line
+    this.status,
   });
 
-  Map<String, dynamic> toJson() => {
-        'payment_method': paymentMethod,
-        'payment_method_title': paymentMethodTitle,
-        'set_paid': setPaid,
-        'billing': billing.toJson(),
-        'shipping': shipping.toJson(),
-        'line_items': lineItems.map((item) => item.toJson()).toList(),
-        'shipping_lines': shippingLines.map((line) => line.toJson()).toList(),
-        if (customerNote != null && customerNote!.isNotEmpty) 'customer_note': customerNote,
-        if (transactionId != null) 'transaction_id': transactionId,
-        if (customerId != null) 'customer_id': customerId,
-        if (status != null) 'status': status, // Add this line
-      };
+  Map<String, dynamic> toJson() {
+    // Build the full customer note: always mention the app source.
+    const String appSourceNote = '📱 تم إنشاء هذا الطلب من تطبيق الجوال';
+    final String fullNote = (customerNote != null && customerNote!.isNotEmpty)
+        ? '$appSourceNote\n${customerNote!}'
+        : appSourceNote;
+
+    return {
+      'payment_method': paymentMethod,
+      'payment_method_title': paymentMethodTitle,
+      'set_paid': setPaid,
+      'billing': billing.toJson(),
+      'shipping': shipping.toJson(),
+      'line_items': lineItems.map((item) => item.toJson()).toList(),
+      'shipping_lines': shippingLines.map((line) => line.toJson()).toList(),
+      'customer_note': fullNote,
+      // Store as order meta so it appears in WC admin Order Details panel
+      'meta_data': [
+        {'key': '_order_source', 'value': 'mobile_app'},
+        {'key': '_order_source_label', 'value': 'تطبيق الجوال'},
+      ],
+      if (transactionId != null) 'transaction_id': transactionId,
+      if (customerId != null) 'customer_id': customerId,
+      if (status != null) 'status': status,
+    };
+  }
 }
 
 class BillingInfo {
@@ -67,16 +79,16 @@ class BillingInfo {
   });
 
   Map<String, dynamic> toJson() => {
-        'first_name': firstName,
-        'last_name': lastName,
-        'address_1': address1,
-        'city': city,
-        'state': state,
-        'postcode': postcode,
-        'country': country,
-        'email': email,
-        'phone': phone,
-      };
+    'first_name': firstName,
+    'last_name': lastName,
+    'address_1': address1,
+    'city': city,
+    'state': state,
+    'postcode': postcode,
+    'country': country,
+    'email': email,
+    'phone': phone,
+  };
 }
 
 class ShippingInfo {
@@ -112,14 +124,14 @@ class ShippingInfo {
   }
 
   Map<String, dynamic> toJson() => {
-        'first_name': firstName,
-        'last_name': lastName,
-        'address_1': address1,
-        'city': city,
-        'state': state,
-        'postcode': postcode,
-        'country': country,
-      };
+    'first_name': firstName,
+    'last_name': lastName,
+    'address_1': address1,
+    'city': city,
+    'state': state,
+    'postcode': postcode,
+    'country': country,
+  };
 }
 
 class ShippingLine {

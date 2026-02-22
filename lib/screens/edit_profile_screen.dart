@@ -98,6 +98,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       state: _stateController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
+      imageFile: _imageFile,
     );
 
     if (mounted) {

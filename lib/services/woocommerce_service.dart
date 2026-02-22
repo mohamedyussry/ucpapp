@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:myapp/models/coupon_model.dart';
 import 'package:myapp/models/customer_model.dart';
@@ -394,6 +396,38 @@ class WooCommerceService {
       return null;
     } catch (e, s) {
       developer.log('Unexpected error creating order', error: e, stackTrace: s);
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateOrder(
+    int orderId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final response = await _dio.put(
+        '/orders/$orderId',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+        },
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        developer.log('Order $orderId updated successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        developer.log(
+          'Error updating order $orderId: Status ${response.statusCode}, Body: ${response.data}',
+        );
+        return null;
+      }
+    } on DioException catch (e, s) {
+      _handleDioError(e, s, 'updating order');
+      return null;
+    } catch (e, s) {
+      developer.log('Unexpected error updating order', error: e, stackTrace: s);
       return null;
     }
   }
@@ -1007,6 +1041,63 @@ class WooCommerceService {
         stackTrace: s,
       );
       developer.log('Dio message: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>?> uploadImage(File imageFile) async {
+    try {
+      String fileName = imageFile.path.split('/').last;
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: fileName,
+        ),
+      });
+
+      // Navigate out of /wc/v3 to /wp/v2/media
+      // Using full URL to be safe
+      final String uploadUrl = '${Config.wooCommerceUrl}/wp-json/wp/v2/media';
+
+      // Construct Basic Auth using CK and CS.
+      // This is often required for WP endpoints that are not public.
+      final String basicAuth =
+          'Basic ${base64Encode(utf8.encode('${Config.consumerKey}:${Config.consumerSecret}'))}';
+
+      final response = await _dio.post(
+        uploadUrl,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          headers: {
+            'Authorization': basicAuth,
+            'Content-Disposition': 'attachment; filename=$fileName',
+          },
+          validateStatus: (status) => true,
+        ),
+      );
+
+      if (response.statusCode == 201) {
+        developer.log('Image uploaded successfully: ${response.data}');
+        return {
+          'id': response.data['id'],
+          'source_url': response.data['source_url'],
+        };
+      } else {
+        developer.log(
+          'Failed to upload image: Status ${response.statusCode}, Body: ${response.data}',
+        );
+        return null;
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        developer.log('Error uploading image: ${e.response?.data}', error: e);
+      } else {
+        developer.log('Error uploading image: ${e.message}', error: e);
+      }
+      return null;
+    } catch (e) {
+      developer.log('Unexpected error uploading image', error: e);
+      return null;
     }
   }
 }

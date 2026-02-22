@@ -17,6 +17,10 @@ import 'package:myapp/screens/location_picker_screen.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'package:myapp/screens/tamara_checkout_screen.dart';
+import 'package:myapp/services/tamara_service.dart';
+import 'package:myapp/screens/tabby_checkout_screen.dart';
+import 'package:myapp/services/tabby_service.dart';
 
 class CheckoutScreen extends StatelessWidget {
   final String categoryName;
@@ -173,6 +177,16 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       return;
     }
 
+    if (checkoutProvider.selectedPaymentMethod?.id == 'tamara') {
+      _handleTamaraPayment();
+      return;
+    }
+
+    if (checkoutProvider.selectedPaymentMethod?.id == 'tabby') {
+      _handleTabbyPayment();
+      return;
+    }
+
     final status = checkoutProvider.selectedPaymentMethod!.id == 'cod'
         ? 'processing'
         : 'pending';
@@ -190,6 +204,21 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     setState(() {
       _isPlacingOrder = true;
     });
+
+    // Step 1: Create Initial Order in WooCommerce (Pending)
+    final orderResponse = await _createPlaceholderOrder(status: 'pending');
+    if (orderResponse == null) {
+      setState(() {
+        _isPlacingOrder = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.order_failed)));
+      return;
+    }
+
+    final int wcOrderId = orderResponse['id'];
 
     final billingData = {
       'firstName': _billingFirstNameController.text.trim(),
@@ -232,7 +261,378 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
     if (result == true) {
       if (!mounted) return;
-      _createWooCommerceOrder(status: 'processing', isPaid: true);
+      // Step 3: Update existing order status to processing
+      final wooCommerceService = WooCommerceService();
+      await wooCommerceService.updateOrder(wcOrderId, {
+        'status': 'processing',
+        'set_paid': true,
+      });
+      _finalizeOrderCompletion(orderResponse);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_failed)));
+    }
+  }
+
+  Future<void> _handleTabbyPayment() async {
+    final l10n = AppLocalizations.of(context)!;
+    final checkoutProvider = Provider.of<CheckoutProvider>(
+      context,
+      listen: false,
+    );
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final tabbyService = TabbyService();
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    // Step 1: Create Initial Order in WooCommerce (Pending)
+    final orderResponse = await _createPlaceholderOrder(status: 'pending');
+    if (orderResponse == null) {
+      setState(() {
+        _isPlacingOrder = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.order_failed)));
+      return;
+    }
+
+    final int wcOrderId = orderResponse['id'];
+
+    final billingData = {
+      'firstName': _billingFirstNameController.text.trim(),
+      'lastName': _billingLastNameController.text.trim(),
+      'email': _billingEmailController.text.trim().isNotEmpty
+          ? _billingEmailController.text.trim()
+          : 'customer@ucpapp.com',
+      'phone': _billingPhoneController.text.trim(),
+      'address': _billingAddress1Controller.text.trim(),
+      'city': checkoutProvider.selectedStateCode ?? 'Riyadh',
+    };
+
+    final items = cartProvider.items.values
+        .map(
+          (item) => {
+            'product_id': item.product.id,
+            'name': item.product.name,
+            'quantity': item.quantity,
+            'price': item.product.price,
+            'sku': item.product.id.toString(),
+          },
+        )
+        .toList();
+
+    final checkoutResponse = await tabbyService.createCheckout(
+      amount: checkoutProvider.total,
+      currency: 'SAR',
+      billingData: billingData,
+      items: items,
+      shippingAmount: checkoutProvider.shippingCost,
+      taxAmount: checkoutProvider.tax,
+      discountAmount:
+          checkoutProvider.loyaltyDiscount +
+          (Provider.of<CartProvider>(context, listen: false).discountAmount),
+    );
+
+    setState(() {
+      _isPlacingOrder = false;
+    });
+
+    if (checkoutResponse == null ||
+        checkoutResponse['configuration'] == null ||
+        checkoutResponse['configuration']['available_products'] == null ||
+        (checkoutResponse['configuration']['available_products'] as Map)
+            .isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_init_failed)));
+      return;
+    }
+
+    // Tabby usually provides a web_url inside the response or inside a specific product
+    String? checkoutUrl;
+    final products =
+        checkoutResponse['configuration']['available_products'] as Map;
+    if (products.containsKey('installments')) {
+      checkoutUrl = products['installments'][0]['web_url'];
+    } else {
+      // Fallback or handle other types
+      checkoutUrl = products.values.first[0]['web_url'];
+    }
+
+    if (checkoutUrl == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_init_failed)));
+      return;
+    }
+
+    if (!mounted) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TabbyCheckoutScreen(checkoutUrl: checkoutUrl!),
+      ),
+    );
+
+    if (result == true) {
+      if (!mounted) return;
+      // Step 3: Update existing order status to processing
+      final wooCommerceService = WooCommerceService();
+      await wooCommerceService.updateOrder(wcOrderId, {
+        'status': 'processing',
+        'set_paid': true,
+        'transaction_id': checkoutResponse['id'],
+      });
+      _finalizeOrderCompletion(orderResponse);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_failed)));
+    }
+  }
+
+  Future<Map<String, dynamic>?> _createPlaceholderOrder({
+    String status = 'pending',
+  }) async {
+    final checkoutProvider = Provider.of<CheckoutProvider>(
+      context,
+      listen: false,
+    );
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final wooCommerceService = WooCommerceService();
+
+    final orderData = checkoutProvider.orderData;
+    orderData.billingFirstName = _billingFirstNameController.text.trim();
+    orderData.billingLastName = _billingLastNameController.text.trim();
+    orderData.billingAddress1 = _billingAddress1Controller.text.trim();
+    orderData.billingCity = checkoutProvider.selectedStateCode ?? '';
+    orderData.billingState = checkoutProvider.selectedStateCode ?? '';
+    orderData.billingCountry = 'SA';
+    orderData.billingEmail = _billingEmailController.text.trim().isNotEmpty
+        ? _billingEmailController.text.trim()
+        : 'customer@ucpapp.com';
+    orderData.billingPhone = _billingPhoneController.text.trim();
+
+    await _saveBillingDetails(stateCode: checkoutProvider.selectedStateCode);
+
+    final billingInfo = BillingInfo(
+      firstName: orderData.billingFirstName ?? '',
+      lastName: orderData.billingLastName ?? '.',
+      address1: orderData.billingAddress1 ?? '',
+      city: orderData.billingCity ?? '',
+      state: orderData.billingState ?? '',
+      postcode: '',
+      country: orderData.billingCountry ?? 'SA',
+      email: orderData.billingEmail ?? '',
+      phone: orderData.billingPhone ?? '',
+    );
+
+    final shippingInfo = ShippingInfo.fromBilling(billingInfo);
+    final selectedShipping = checkoutProvider.selectedShippingMethod;
+    final selectedPayment = checkoutProvider.selectedPaymentMethod!;
+
+    final orderPayload = OrderPayload(
+      customerId: orderData.customerId,
+      paymentMethod: selectedPayment.id,
+      paymentMethodTitle: selectedPayment.title,
+      setPaid: false,
+      billing: billingInfo,
+      shipping: shippingInfo,
+      status: status,
+      lineItems: cartProvider.items.values
+          .map(
+            (item) =>
+                LineItem(productId: item.product.id, quantity: item.quantity),
+          )
+          .toList(),
+      shippingLines: selectedShipping != null
+          ? [
+              ShippingLine(
+                methodId: selectedShipping.methodId,
+                methodTitle: selectedShipping.title,
+                total: selectedShipping.cost.toString(),
+              ),
+            ]
+          : [],
+      customerNote: _orderNotesController.text,
+    );
+
+    final orderResponse = await wooCommerceService.createOrder(orderPayload);
+
+    if (orderResponse != null &&
+        orderResponse['id'] != null &&
+        orderData.customerId == null) {
+      final orderId = orderResponse['id'] as int;
+      final box = await Hive.openBox('guest_order_ids');
+      final List<int> orderIds = (box.get('ids') as List<dynamic>? ?? [])
+          .cast<int>();
+      if (!orderIds.contains(orderId)) {
+        orderIds.add(orderId);
+        await box.put('ids', orderIds);
+      }
+    }
+
+    return orderResponse;
+  }
+
+  Future<void> _finalizeOrderCompletion(
+    Map<String, dynamic> orderResponse,
+  ) async {
+    final checkoutProvider = Provider.of<CheckoutProvider>(
+      context,
+      listen: false,
+    );
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final loyaltyProvider = Provider.of<LoyaltyProvider>(
+      context,
+      listen: false,
+    );
+    final cart = Provider.of<CartProvider>(context, listen: false);
+
+    final earnedPoints = loyaltyProvider.calculateEarnedPoints(cart.subtotal);
+    final autoPoints = loyaltyProvider.getAutomaticDiscount(cart.subtotal);
+    final pointsUsed = autoPoints['points'] as int;
+
+    if (checkoutProvider.orderData.customerId != null) {
+      if (earnedPoints > 0) {
+        await loyaltyProvider.commitPointsUpdate(
+          userId: checkoutProvider.orderData.customerId!,
+          points: earnedPoints,
+          operation: 'earn',
+          orderId: orderResponse['id'],
+        );
+      }
+      if (pointsUsed > 0) {
+        await loyaltyProvider.commitPointsUpdate(
+          userId: checkoutProvider.orderData.customerId!,
+          points: -pointsUsed,
+          operation: 'redeem',
+          orderId: orderResponse['id'],
+        );
+      }
+    }
+
+    if (!mounted) return;
+    cartProvider.clear();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentSuccessScreen(
+          orderData: orderResponse,
+          categoryName: widget.categoryName,
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
+  Future<void> _handleTamaraPayment() async {
+    final l10n = AppLocalizations.of(context)!;
+    final checkoutProvider = Provider.of<CheckoutProvider>(
+      context,
+      listen: false,
+    );
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final tamaraService = TamaraService();
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
+
+    // Step 1: Create Initial Order in WooCommerce (Pending)
+    final orderResponse = await _createPlaceholderOrder(status: 'pending');
+    if (orderResponse == null) {
+      setState(() {
+        _isPlacingOrder = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.order_failed)));
+      return;
+    }
+
+    final int wcOrderId = orderResponse['id'];
+
+    final billingData = {
+      'firstName': _billingFirstNameController.text.trim(),
+      'lastName': _billingLastNameController.text.trim(),
+      'email': _billingEmailController.text.trim().isNotEmpty
+          ? _billingEmailController.text.trim()
+          : 'customer@ucpapp.com',
+      'phone': _billingPhoneController.text.trim(),
+      'address': _billingAddress1Controller.text.trim(),
+      'city': checkoutProvider.selectedStateCode ?? 'Riyadh',
+      'state': checkoutProvider.selectedStateCode ?? 'Riyadh',
+    };
+
+    final items = cartProvider.items.values
+        .map(
+          (item) => {
+            'product_id': item.product.id,
+            'name': item.product.name,
+            'quantity': item.quantity,
+            'price': item.product.price,
+            'sku': item.product.id.toString(),
+          },
+        )
+        .toList();
+
+    final checkoutResponse = await tamaraService.createCheckout(
+      amount: checkoutProvider.total,
+      currency: 'SAR',
+      billingData: billingData,
+      items: items,
+      shippingAmount: checkoutProvider.shippingCost,
+      taxAmount: checkoutProvider.tax,
+      discountAmount:
+          checkoutProvider.loyaltyDiscount +
+          (Provider.of<CartProvider>(context, listen: false).discountAmount),
+    );
+
+    setState(() {
+      _isPlacingOrder = false;
+    });
+
+    if (checkoutResponse == null || checkoutResponse['checkout_url'] == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.payment_init_failed)));
+      return;
+    }
+
+    if (!mounted) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            TamaraCheckoutScreen(checkoutUrl: checkoutResponse['checkout_url']),
+      ),
+    );
+
+    if (result == true) {
+      if (!mounted) return;
+      // Step 3: Update existing order status to processing
+      final wooCommerceService = WooCommerceService();
+      await wooCommerceService.updateOrder(wcOrderId, {
+        'status': 'processing',
+        'set_paid': true,
+        'transaction_id':
+            checkoutResponse['checkout_id'] ?? checkoutResponse['order_id'],
+      });
+      _finalizeOrderCompletion(orderResponse);
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -1263,77 +1663,134 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     return Column(
       children: checkout.paymentMethods.map((method) {
         final isSelected = checkout.selectedPaymentMethod?.id == method.id;
-        return GestureDetector(
-          onTap: () => checkout.selectPaymentMethod(method),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: isSelected
-                  ? LinearGradient(
-                      colors: [Colors.orange.shade400, Colors.orange.shade600],
-                    )
-                  : null,
-              color: isSelected ? null : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? Colors.orange : Colors.grey.shade300,
-                width: isSelected ? 2 : 1,
-              ),
-              boxShadow: [
-                if (isSelected)
-                  BoxShadow(
-                    color: Colors.orange.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-              ],
-            ),
-            child: Row(
+        final isEnabled = method.enabled;
+
+        return Opacity(
+          opacity: isEnabled ? 1.0 : 0.5,
+          child: GestureDetector(
+            onTap: isEnabled
+                ? () => checkout.selectPaymentMethod(method)
+                : null,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white : Colors.orange.shade50,
-                    shape: BoxShape.circle,
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: [
+                              Colors.orange.shade400,
+                              Colors.orange.shade600,
+                            ],
+                          )
+                        : null,
+                    color: isSelected ? null : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? Colors.orange : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: [
+                      if (isSelected)
+                        BoxShadow(
+                          color: Colors.orange.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                    ],
                   ),
-                  child: Icon(
-                    method.id == 'cod'
-                        ? Icons.money_outlined
-                        : Icons.credit_card_outlined,
-                    color: isSelected ? Colors.orange : Colors.orange.shade700,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        method.title,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: isSelected ? Colors.white : Colors.black87,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.white
+                              : Colors.orange.shade50,
+                          shape: BoxShape.circle,
+                        ),
+                        child: method.id == 'tamara'
+                            ? Image.network(
+                                'https://cdn.tamara.co/assets/png/tamara-logo-badge-en.png',
+                                width: 24,
+                                height: 24,
+                                // Use color only if we want to tint it, but usually the logo should stay original
+                                // color: isSelected ? Colors.orange : null,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(
+                                      Icons.event_note_outlined,
+                                      color: isSelected
+                                          ? Colors.orange
+                                          : Colors.orange.shade700,
+                                    ),
+                              )
+                            : Icon(
+                                method.id == 'cod'
+                                    ? Icons.money_outlined
+                                    : Icons.credit_card_outlined,
+                                color: isSelected
+                                    ? Colors.orange
+                                    : Colors.orange.shade700,
+                                size: 24,
+                              ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              method.title,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
+                            ),
+                            if (method.description.isNotEmpty)
+                              Text(
+                                method.description,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: isSelected
+                                      ? Colors.white.withValues(alpha: 0.9)
+                                      : Colors.grey.shade600,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
-                      if (method.description.isNotEmpty)
-                        Text(
-                          method.description,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: isSelected
-                                ? Colors.white.withValues(alpha: 0.9)
-                                : Colors.grey.shade600,
-                          ),
+                      if (isSelected)
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 28,
                         ),
                     ],
                   ),
                 ),
-                if (isSelected)
-                  const Icon(Icons.check_circle, color: Colors.white, size: 28),
+                if (!isEnabled &&
+                    (method.id == 'tamara' || method.id == 'tabby'))
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 12),
+                    child: Text(
+                      method.id == 'tamara'
+                          ? 'متاح للطلبات بين 99 و 3000 ريال'
+                          : 'متاح للطلبات بين 10 و 5000 ريال',
+                      style: GoogleFonts.notoSansArabic(
+                        color: Colors.red.shade700,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 12),
               ],
             ),
           ),
