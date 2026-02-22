@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'providers/cart_provider.dart';
 import 'checkout_screen.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
+import 'widgets/tamara_promotion_widget.dart';
+import 'widgets/tabby_promotion_widget.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class CartScreen extends StatefulWidget {
@@ -280,6 +282,10 @@ class _CartScreenState extends State<CartScreen> {
       child: Column(
         children: [
           _buildDiscountCodeSection(cart),
+          if (cart.totalAmount > 0)
+            TamaraPromotionWidget(price: cart.totalAmount),
+          if (cart.totalAmount > 0)
+            TabbyPromotionWidget(price: cart.totalAmount),
           const SizedBox(height: 20),
           _buildPriceSummaryRow(
             '${l10n.subtotal} :',

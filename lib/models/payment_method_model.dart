@@ -1,9 +1,8 @@
-
 class PaymentMethod {
   final String id;
   final String title;
   final String description;
-  final bool enabled;
+  bool enabled;
 
   PaymentMethod({
     required this.id,

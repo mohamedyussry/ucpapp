@@ -11,6 +11,8 @@ import 'package:provider/provider.dart';
 import 'package:myapp/providers/cart_provider.dart';
 import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/widgets/custom_cart_notification.dart';
+import 'package:myapp/widgets/tamara_promotion_widget.dart';
+import 'package:myapp/widgets/tabby_promotion_widget.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -193,6 +195,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         if (widget.product.ratingCount > 0) _buildRatingInfo(l10n),
         const SizedBox(height: 12),
         _buildPrice(),
+        if ((_selectedVariation?.price ?? widget.product.price) != null)
+          TamaraPromotionWidget(
+            price: _selectedVariation?.price ?? widget.product.price ?? 0,
+          ),
+        if ((_selectedVariation?.price ?? widget.product.price) != null)
+          TabbyPromotionWidget(
+            price: _selectedVariation?.price ?? widget.product.price ?? 0,
+          ),
       ],
     );
   }

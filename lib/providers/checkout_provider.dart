@@ -5,6 +5,7 @@ import 'package:myapp/models/shipping_method_model.dart';
 import 'package:myapp/models/state_model.dart';
 import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/services/woocommerce_service.dart';
+import 'package:myapp/config.dart';
 
 // A simple data class for the order
 class OrderData {
@@ -123,19 +124,54 @@ class CheckoutProvider with ChangeNotifier {
         description: 'Pay securely using your card.',
         enabled: true,
       ),
+      PaymentMethod(
+        id: 'tamara',
+        title: 'Tamara',
+        description: 'Pay in installments with Tamara.',
+        enabled: true,
+      ),
+      PaymentMethod(
+        id: 'tabby',
+        title: 'Tabby',
+        description: 'Split in 4. No interest. No fees.',
+        enabled: true,
+      ),
     ];
     _selectedPaymentMethod = _paymentMethods.first;
+    validatePaymentMethods();
     notifyListeners();
   }
 
   void updateSubtotal(double cartTotal) {
     _subtotal = cartTotal;
+    validatePaymentMethods();
     notifyListeners();
   }
 
   void updateLoyaltyDiscount(double discount) {
     _loyaltyDiscount = discount;
+    validatePaymentMethods();
     notifyListeners();
+  }
+
+  void validatePaymentMethods() {
+    bool tamaraEligible =
+        total >= Config.tamaraMinLimit && total <= Config.tamaraMaxLimit;
+    bool tabbyEligible =
+        total >= Config.tabbyMinLimit && total <= Config.tabbyMaxLimit;
+
+    for (var method in _paymentMethods) {
+      if (method.id == 'tamara') {
+        method.enabled = tamaraEligible;
+      } else if (method.id == 'tabby') {
+        method.enabled = tabbyEligible;
+      }
+    }
+
+    // If selected method is now disabled, pick another one
+    if (_selectedPaymentMethod != null && !_selectedPaymentMethod!.enabled) {
+      _selectedPaymentMethod = _paymentMethods.firstWhere((m) => m.enabled);
+    }
   }
 
   Future<void> initializeCheckout(String country, String postcode) async {
@@ -213,6 +249,7 @@ class CheckoutProvider with ChangeNotifier {
   void selectShippingMethod(ShippingMethod method) {
     _selectedShippingMethod = method;
     _shippingCost = method.cost;
+    validatePaymentMethods();
     notifyListeners();
   }
 

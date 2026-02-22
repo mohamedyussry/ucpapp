@@ -43,3 +43,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# WordPress Plugin (not part of Flutter app)
+juleb-woocommerce-sync/
+juleb-woocommerce-sync*/
+
+# Apple Pay certs
+apple_pay_certs/
+
+# Zip files
+*.zip
+
+# Log files
+sync.log.txt
+
+# Misc
+lib_files.txt
+push_changes.bat
+push_to_git.bat
