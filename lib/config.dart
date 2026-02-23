@@ -10,8 +10,7 @@ class Config {
   static const String paymobApiKey =
       "ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRBME56a3NJbTVoYldVaU9pSnBibWwwYVdGc0luMC5BUDQycUdTYVZpanJYUGp1d2JtOFM3R3JxRWlOaFJtWlhPRWVaTUprRFBsR2lab0xqMHVKMVo3c0l6VDRaZkRZNkJzel91VFRab3VSZWRZMll5c2djdw==";
   static const String paymobSecretKey =
-      "sau_sk_live_" +
-      "1e981f96cf19c3a44eca2365262aaed999deab5c08649ad82cd2be789a20b27f";
+      "sau_sk_live_1e981f96cf19c3a44eca2365262aaed999deab5c08649ad82cd2be789a20b27f";
   static const String paymobPublicKey =
       "sau_pk_live_59DINI3GYFGK8uHuHqYK590DgSR2SGKO";
   static const int paymobIntegrationId = 22011;
