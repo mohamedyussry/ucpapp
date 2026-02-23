@@ -74,12 +74,14 @@ import PassKit
             let paymentDataJson = try JSONSerialization.jsonObject(with: paymentData, options: [])
             
             let response: [String: Any] = [
-                "paymentData": paymentDataJson,
-                "transactionIdentifier": token.transactionIdentifier,
-                "paymentMethod": [
-                    "displayName": token.paymentMethod.displayName ?? "",
-                    "network": token.paymentMethod.network?.rawValue ?? "",
-                    "type": token.paymentMethod.type.rawValue
+                "token": [
+                    "paymentData": paymentDataJson,
+                    "paymentMethod": [
+                        "displayName": token.paymentMethod.displayName ?? "",
+                        "network": token.paymentMethod.network?.rawValue ?? "",
+                        "type": token.paymentMethod.type.rawValue
+                    ],
+                    "transactionIdentifier": token.transactionIdentifier
                 ]
             ]
             

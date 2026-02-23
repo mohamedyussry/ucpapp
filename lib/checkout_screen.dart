@@ -184,12 +184,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       return;
     }
 
-    if (checkoutProvider.selectedPaymentMethod?.id == 'tamara') {
+    if (checkoutProvider.selectedPaymentMethod?.id == 'tamara-gateway') {
       _handleTamaraPayment();
       return;
     }
 
-    if (checkoutProvider.selectedPaymentMethod?.id == 'tabby') {
+    if (checkoutProvider.selectedPaymentMethod?.id == 'tabby_installments') {
       _handleTabbyPayment();
       return;
     }

@@ -82,6 +82,9 @@ class PaymobService {
           },
           'currency': currency,
           'integration_id': Config.paymobIntegrationId,
+          'lock_order_when_paid': 'false',
+          'redirection_url':
+              'https://ucpksa.com/payment-success', // الرابط الذي سيبحث عنه التطبيق
         },
       );
       return response.data['token'];
@@ -172,7 +175,7 @@ class PaymobService {
           'source': {
             'identifier': 'APPLE_PAY',
             'subtype': 'APPLE_PAY',
-            'data': {'response': applePayToken},
+            'data': applePayToken['token'],
           },
           'payment_token': paymentKey,
         },

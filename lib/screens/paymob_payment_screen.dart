@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:developer' as developer;
 import 'package:myapp/config.dart' as app_config;
 import 'package:webview_flutter/webview_flutter.dart';
 import '../l10n/generated/app_localizations.dart';
@@ -27,6 +28,20 @@ class _PaymobPaymentScreenState extends State<PaymobPaymentScreen> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) {
+            final String url = request.url;
+            developer.log('WebView navigating to: $url');
+
+            if (url.contains('success=true') ||
+                url.contains('payment-success')) {
+              Navigator.pop(context, true);
+              return NavigationDecision.prevent;
+            } else if (url.contains('success=false')) {
+              Navigator.pop(context, false);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (String url) {
             setState(() {
               _isLoading = true;
@@ -36,15 +51,6 @@ class _PaymobPaymentScreenState extends State<PaymobPaymentScreen> {
             setState(() {
               _isLoading = false;
             });
-            // Handle success/failure based on URL params from Paymob return URL
-            if (url.contains('success=true')) {
-              Navigator.pop(context, true);
-            } else if (url.contains('success=false')) {
-              Navigator.pop(context, false);
-            }
-          },
-          onWebResourceError: (WebResourceError error) {
-            debugPrint('Webview error: ${error.description}');
           },
         ),
       )

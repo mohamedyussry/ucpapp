@@ -126,13 +126,13 @@ class CheckoutProvider with ChangeNotifier {
         enabled: true,
       ),
       PaymentMethod(
-        id: 'tamara',
+        id: 'tamara-gateway',
         title: 'Tamara',
         description: 'Pay in installments with Tamara.',
         enabled: true,
       ),
       PaymentMethod(
-        id: 'tabby',
+        id: 'tabby_installments',
         title: 'Tabby',
         description: 'Split in 4. No interest. No fees.',
         enabled: true,
@@ -170,9 +170,9 @@ class CheckoutProvider with ChangeNotifier {
         total >= Config.tabbyMinLimit && total <= Config.tabbyMaxLimit;
 
     for (var method in _paymentMethods) {
-      if (method.id == 'tamara') {
+      if (method.id == 'tamara-gateway') {
         method.enabled = tamaraEligible;
-      } else if (method.id == 'tabby') {
+      } else if (method.id == 'tabby_installments') {
         method.enabled = tabbyEligible;
       }
     }
