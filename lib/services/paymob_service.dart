@@ -5,179 +5,100 @@ import 'dart:developer' as developer;
 class PaymobService {
   final Dio _dio = Dio(
     BaseOptions(
-      baseUrl: 'https://ksa.paymob.com/api',
-      headers: {'Content-Type': 'application/json'},
+      baseUrl: 'https://ksa.paymob.com',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token ${Config.paymobSecretKey}',
+      },
     ),
   );
 
-  /// Step 1: Authentication Request
-  Future<String?> getAuthToken() async {
-    try {
-      final response = await _dio.post(
-        '/auth/tokens',
-        data: {'api_key': Config.paymobApiKey},
-      );
-      return response.data['token'];
-    } catch (e) {
-      developer.log('PAYMOB: Auth Token Error', error: e);
-      return null;
-    }
-  }
+  /// --- New Intention API ---
 
-  /// Step 2: Order Registration
-  Future<int?> createOrder({
-    required String authToken,
+  /// Step 1: Create Intention
+  /// هذا الطلب يحل محل Auth + Order + Payment Key في النظام القديم
+  Future<Map<String, dynamic>?> createIntention({
     required double amount,
     required String currency,
+    required Map<String, String> billingData,
+    List<int> paymentMethods = const [], // Integration IDs
     List<Map<String, dynamic>> items = const [],
   }) async {
     try {
-      final response = await _dio.post(
-        '/ecommerce/orders',
-        data: {
-          'auth_token': authToken,
-          'delivery_needed': 'false',
-          'amount_cents': (amount * 100).toInt().toString(),
-          'currency': currency,
-          'items': items,
+      // Ensure there is at least one item as required by Paymob Intention API
+      final List<Map<String, dynamic>> finalItems = items.isNotEmpty
+          ? items
+          : [
+              {
+                'name': 'Order Payment',
+                'amount': (amount * 100).toInt(),
+                'description': 'Purchase from UCP App',
+                'quantity': 1,
+              },
+            ];
+
+      final requestData = {
+        'amount': (amount * 100).toInt(),
+        'currency': currency,
+        'payment_methods': paymentMethods.isNotEmpty
+            ? paymentMethods
+            : [Config.paymobIntegrationId, Config.paymobApplePayIntegrationId],
+        'items': finalItems,
+        'billing_data': {
+          'first_name': billingData['firstName'] ?? 'NA',
+          'last_name': billingData['lastName'] ?? 'NA',
+          'phone_number': billingData['phone'] ?? 'NA',
+          'email': billingData['email'] ?? 'customer@ucpapp.com',
+          'country': 'SA',
+          'state': billingData['state'] ?? 'NA',
+          'city': billingData['city'] ?? 'Riyadh',
+          'street': billingData['address'] ?? 'Street',
+          'building': 'NA',
+          'apartment': 'NA',
+          'floor': 'NA',
         },
-      );
-      return response.data['id'];
+        'customer': {
+          'first_name': billingData['firstName'] ?? 'Customer',
+          'last_name': billingData['lastName'] ?? 'NA',
+          'email': billingData['email'] ?? 'customer@ucpapp.com',
+        },
+        'redirection_url': 'https://ucpksa.com/payment-success',
+      };
+
+      developer.log('PAYMOB: Requesting Intention with: $requestData');
+
+      final response = await _dio.post('/v1/intention/', data: requestData);
+
+      developer.log('PAYMOB: Intention Response: ${response.data}');
+      return response.data;
     } catch (e) {
-      developer.log('PAYMOB: Order Registration Error', error: e);
+      if (e is DioException) {
+        developer.log(
+          'PAYMOB INTENTION ERROR: ${e.response?.statusCode} - ${e.response?.data}',
+        );
+      }
+      developer.log('PAYMOB: Create Intention Error', error: e);
       return null;
     }
   }
 
-  /// Step 3: Payment Key Request
-  Future<String?> getPaymentKey({
-    required String authToken,
-    required int orderId,
-    required double amount,
-    required String currency,
-    required Map<String, String> billingData,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/acceptance/payment_keys',
-        data: {
-          'auth_token': authToken,
-          'amount_cents': (amount * 100).toInt().toString(),
-          'expiration': 3600,
-          'order_id': orderId.toString(),
-          'billing_data': {
-            'apartment': 'NA',
-            'email': billingData['email'] ?? 'NA',
-            'floor': 'NA',
-            'first_name': billingData['firstName'] ?? 'NA',
-            'street': billingData['address'] ?? 'NA',
-            'building': 'NA',
-            'phone_number': billingData['phone'] ?? 'NA',
-            'shipping_method': 'PKG',
-            'postal_code': 'NA',
-            'city': billingData['city'] ?? 'NA',
-            'country': 'SA',
-            'last_name': billingData['lastName'] ?? 'NA',
-            'state': billingData['state'] ?? 'NA',
-          },
-          'currency': currency,
-          'integration_id': Config.paymobIntegrationId,
-          'lock_order_when_paid': 'false',
-          'redirection_url':
-              'https://ucpksa.com/payment-success', // الرابط الذي سيبحث عنه التطبيق
-        },
-      );
-      return response.data['token'];
-    } catch (e) {
-      developer.log('PAYMOB: Payment Key Error', error: e);
-      return null;
-    }
-  }
+  /// --- Apple Pay Flash Flow (Post Pay) ---
 
-  /// Full Flow to get Payment Token (for Credit Card / iFrame)
-  Future<String?> getPaymentToken({
-    required double amount,
-    required String currency,
-    required Map<String, String> billingData,
-  }) async {
-    final authToken = await getAuthToken();
-    if (authToken == null) return null;
-
-    final orderId = await createOrder(
-      authToken: authToken,
-      amount: amount,
-      currency: currency,
-    );
-    if (orderId == null) return null;
-
-    final paymentKey = await getPaymentKey(
-      authToken: authToken,
-      orderId: orderId,
-      amount: amount,
-      currency: currency,
-      billingData: billingData,
-    );
-    return paymentKey;
-  }
-
-  /// Payment Key for Apple Pay (uses Apple Pay Integration ID)
-  Future<String?> getApplePayPaymentKey({
-    required String authToken,
-    required int orderId,
-    required double amount,
-    required String currency,
-    required Map<String, String> billingData,
-  }) async {
-    try {
-      final response = await _dio.post(
-        '/acceptance/payment_keys',
-        data: {
-          'auth_token': authToken,
-          'amount_cents': (amount * 100).toInt().toString(),
-          'expiration': 3600,
-          'order_id': orderId.toString(),
-          'billing_data': {
-            'apartment': 'NA',
-            'email': billingData['email'] ?? 'NA',
-            'floor': 'NA',
-            'first_name': billingData['firstName'] ?? 'NA',
-            'street': billingData['address'] ?? 'NA',
-            'building': 'NA',
-            'phone_number': billingData['phone'] ?? 'NA',
-            'shipping_method': 'PKG',
-            'postal_code': 'NA',
-            'city': billingData['city'] ?? 'NA',
-            'country': 'SA',
-            'last_name': billingData['lastName'] ?? 'NA',
-            'state': billingData['state'] ?? 'NA',
-          },
-          'currency': currency,
-          'integration_id': Config.paymobApplePayIntegrationId, // Apple Pay ID
-        },
-      );
-      return response.data['token'];
-    } catch (e) {
-      developer.log('PAYMOB: Apple Pay Payment Key Error', error: e);
-      return null;
-    }
-  }
-
-  /// Flash Flow: Process Apple Pay Payment
-  /// يُستدعى بعد الحصول على Apple Pay Token من الجهاز
+  /// Flash Flow: Process Apple Pay Payment using Intention ID
   Future<Map<String, dynamic>?> processApplePayPayment({
-    required String paymentKey,
+    required String intentionId,
     required Map<String, dynamic> applePayToken,
   }) async {
     try {
       final response = await _dio.post(
-        '/acceptance/post_pay',
+        '/api/acceptance/post_pay',
         data: {
           'source': {
             'identifier': 'APPLE_PAY',
             'subtype': 'APPLE_PAY',
             'data': applePayToken['token'],
           },
-          'payment_token': paymentKey,
+          'payment_token': intentionId,
         },
       );
       return response.data;
@@ -187,35 +108,59 @@ class PaymobService {
     }
   }
 
-  /// Full Apple Pay Flow
+  /// Full Apple Pay Flow with Intention API
   Future<Map<String, dynamic>?> initiateApplePayPayment({
     required double amount,
     required String currency,
     required Map<String, String> billingData,
-    required Map<String, dynamic> applePayToken, // يأتي من Apple Pay Native
+    required Map<String, dynamic> applePayToken,
   }) async {
-    final authToken = await getAuthToken();
-    if (authToken == null) return null;
-
-    final orderId = await createOrder(
-      authToken: authToken,
-      amount: amount,
-      currency: currency,
-    );
-    if (orderId == null) return null;
-
-    final paymentKey = await getApplePayPaymentKey(
-      authToken: authToken,
-      orderId: orderId,
+    // 1. إنشاء Intention مخصص لـ Apple Pay
+    final intention = await createIntention(
       amount: amount,
       currency: currency,
       billingData: billingData,
+      paymentMethods: [Config.paymobApplePayIntegrationId],
     );
-    if (paymentKey == null) return null;
 
+    if (intention == null ||
+        intention['payment_keys'] == null ||
+        (intention['payment_keys'] as List).isEmpty) {
+      developer.log('PAYMOB: Apple Pay Intention failed or no payment_keys');
+      return null;
+    }
+
+    // 2. الحصول على الـ Token الخاص بـ Apple Pay من الاستجابة
+    final paymentToken = intention['payment_keys'][0]['token'];
+
+    // 3. إكمال الدفع عبر Flash Flow
     return await processApplePayPayment(
-      paymentKey: paymentKey,
+      intentionId: paymentToken,
       applePayToken: applePayToken,
     );
+  }
+
+  /// --- Unified Checkout Support ---
+
+  /// الحصول على client_secret للتعامل مع Unified Checkout
+  Future<String?> getPaymentToken({
+    required double amount,
+    required String currency,
+    required Map<String, String> billingData,
+  }) async {
+    final intention = await createIntention(
+      amount: amount,
+      currency: currency,
+      billingData: billingData,
+      paymentMethods: [Config.paymobIntegrationId],
+    );
+
+    if (intention == null || intention['client_secret'] == null) {
+      developer.log('PAYMOB: Failed to get client_secret from intention');
+      return null;
+    }
+
+    // نرجع الـ client_secret لاستخدامه في الـ Unified Checkout URL
+    return intention['client_secret'];
   }
 }

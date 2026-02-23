@@ -22,7 +22,7 @@ class _PaymobPaymentScreenState extends State<PaymobPaymentScreen> {
   void initState() {
     super.initState();
     final String url =
-        'https://ksa.paymob.com/api/acceptance/iframes/${app_config.Config.paymobIframeId}?payment_token=${widget.paymentToken}';
+        'https://ksa.paymob.com/unifiedcheckout/?publicKey=${app_config.Config.paymobPublicKey}&clientSecret=${widget.paymentToken}';
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
