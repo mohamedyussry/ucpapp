@@ -124,20 +124,40 @@ class AuthProvider with ChangeNotifier {
       // Since 'search' parameter searches multiple fields, let's pick the first one.
 
       if (customers.isNotEmpty) {
-        // Log them in
-        _customer = customers.first;
-        _status = AuthStatus.authenticated;
+        final existingCustomer = customers.first;
+        final String cleanPhone = _phoneForVerification!.replaceAll(
+          RegExp(r'\D'),
+          '',
+        );
+        final String expectedPass = 'Pass$cleanPhone!';
 
-        // Save session (Simulated login since we don't have JWT)
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setInt('user_id', _customer!.id);
-        // We can't save JWT here, so some features requiring strict auth might fail
-        // unless we use a "Social Login" plugin mechanism on backend.
+        developer.log(
+          'LOYALTY: User found. Attempting background JWT login for points...',
+        );
 
-        developer.log('OTP Login successful for user: ${_customer!.email}');
-        _registerFcmToken();
-        notifyListeners();
-        return 1;
+        // Try JWT login with their email and the expected phone password
+        bool jwtSuccess = await login(existingCustomer.email, expectedPass);
+
+        if (jwtSuccess) {
+          developer.log(
+            'LOYALTY: Background JWT login successful. Points enabled.',
+          );
+          return 1;
+        } else {
+          developer.log(
+            'LOYALTY: Background JWT login failed. Proceeding without token.',
+          );
+          // Fallback to session-only login (Points won't work, but user isn't blocked)
+          _customer = existingCustomer;
+          _status = AuthStatus.authenticated;
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('user_id', _customer!.id);
+
+          _registerFcmToken();
+          notifyListeners();
+          return 1;
+        }
       } else {
         // User not found, attempt AUTO REGISTRATION
         developer.log(
