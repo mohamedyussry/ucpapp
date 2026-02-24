@@ -1,5 +1,4 @@
 import 'dart:developer' as developer;
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:myapp/models/payment_method_model.dart';
 import 'package:myapp/models/shipping_method_model.dart';
@@ -115,14 +114,14 @@ class CheckoutProvider with ChangeNotifier {
     _paymentMethods = [
       PaymentMethod(
         id: 'cod',
-        title: 'Cash on Delivery',
-        description: 'Pay with cash upon delivery.',
+        title: 'Cash/Card on Delivery',
+        description: 'Pay with cash or card upon delivery.',
         enabled: true,
       ),
       PaymentMethod(
         id: 'paymob',
-        title: 'Online Payment (Paymob)',
-        description: 'Pay securely using your card.',
+        title: 'Pay Online',
+        description: 'Apple Pay\n(Visa • Mastercard • Mada)',
         enabled: true,
       ),
       PaymentMethod(
@@ -137,14 +136,6 @@ class CheckoutProvider with ChangeNotifier {
         description: 'Split in 4. No interest. No fees.',
         enabled: true,
       ),
-      // Apple Pay - iOS only
-      if (Platform.isIOS)
-        PaymentMethod(
-          id: 'apple_pay',
-          title: 'Apple Pay',
-          description: 'Pay securely with Apple Pay.',
-          enabled: true,
-        ),
     ];
     _selectedPaymentMethod = _paymentMethods.first;
     validatePaymentMethods();
