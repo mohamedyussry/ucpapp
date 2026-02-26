@@ -740,4 +740,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get delete_btn => 'حذف';
+
+  @override
+  String get tab_all => 'الكل';
+
+  @override
+  String get no_orders => 'لا توجد طلبات.';
 }

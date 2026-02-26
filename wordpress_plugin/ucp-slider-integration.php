@@ -317,6 +317,7 @@ function ucp_fcm_settings_page_html() {
 
 function ucp_register_fcm_settings() {
     register_setting('ucp_fcm_settings_group', 'ucp_fcm_service_account_json');
+    register_setting('ucp_fcm_settings_group', 'ucp_fcm_status_labels');
     
     add_settings_section(
         'ucp_fcm_main_section',
@@ -332,6 +333,52 @@ function ucp_register_fcm_settings() {
         'ucp-fcm-settings',
         'ucp_fcm_main_section'
     );
+
+    add_settings_section(
+        'ucp_fcm_status_section',
+        'تخصيص مسميات حالات الطلب في الإشعارات',
+        null,
+        'ucp-fcm-settings'
+    );
+
+    // جلب كل الحالات المسجلة فعلياً في نظام ووردبريس/ووكومرس
+    $wc_statuses = function_exists('wc_get_order_statuses') ? wc_get_order_statuses() : [];
+    
+    // مسميات افتراضية للإشعارات (إذا لم يتم التعديل)
+    $default_notif_labels = [
+        'wc-pending'          => 'قيد الانتظار',
+        'wc-processing'       => 'تم التنفيذ',
+        'wc-on-hold'          => 'قيد التوقف المؤقت',
+        'wc-completed'        => 'تم التوصيل',
+        'wc-cancelled'        => 'ملغي',
+        'wc-refunded'         => 'مسترجع',
+        'wc-failed'           => 'فشل',
+        'wc-prepared'         => 'جاري التجهيز',
+        'wc-out-for-delivery' => 'جاري التوصيل',
+    ];
+
+    foreach ($wc_statuses as $status_key => $official_label) {
+        // ووكومرس يرجع الحالة ببادئة wc-، نحتاج لإزالتها أحياناً للمقارنة أو الإرسال
+        $clean_id = str_replace('wc-', '', $status_key);
+        
+        add_settings_field(
+            'ucp_fcm_status_label_' . $clean_id,
+            'نص الإشعار لـ (' . $official_label . ')',
+            function() use ($clean_id, $status_key, $official_label, $default_notif_labels) {
+                $labels = get_option('ucp_fcm_status_labels', []);
+                
+                // تحديد القيمة الافتراضية المقترحة
+                $placeholder = isset($default_notif_labels[$status_key]) ? $default_notif_labels[$status_key] : $official_label;
+                
+                $val = isset($labels[$clean_id]) ? $labels[$clean_id] : $placeholder;
+                
+                echo '<input type="text" name="ucp_fcm_status_labels[' . $clean_id . ']" value="' . esc_attr($val) . '" class="regular-text" placeholder="' . esc_attr($placeholder) . '">';
+                echo '<p class="description">المسمى الحالي في الموقع: <b>' . esc_html($official_label) . '</b></p>';
+            },
+            'ucp-fcm-settings',
+            'ucp_fcm_status_section'
+        );
+    }
 }
 add_action('admin_init', 'ucp_register_fcm_settings');
 
@@ -456,16 +503,22 @@ function ucp_send_order_status_notification($order_id, $from_status, $to_status,
         return;
     }
 
-    $status_names = [
-        'pending'    => 'قيد الانتظار',
-        'processing' => 'قيد التنفيذ',
-        'on-hold'    => 'قيد التوقف المؤقت',
-        'completed'  => 'مكتمل',
-        'cancelled'  => 'ملغي',
-        'refunded'   => 'مسترجع',
-        'failed'     => 'فشل',
+    // جلب المسميات المخصصة من الإعدادات
+    $custom_labels = get_option('ucp_fcm_status_labels', []);
+    
+    $default_status_names = [
+        'pending'             => 'قيد الانتظار',
+        'processing'          => 'تم التنفيذ',
+        'on-hold'             => 'قيد التوقف المؤقت',
+        'completed'           => 'تم التوصيل',
+        'cancelled'           => 'ملغي',
+        'refunded'            => 'مسترجع',
+        'failed'              => 'فشل',
+        'wc-prepared'         => 'جاري التجهز',
+        'wc-out-for-delivery' => 'جاري التوصيل',
     ];
 
+    $status_names = array_merge($default_status_names, $custom_labels);
     $new_status_name = isset($status_names[$to_status]) ? $status_names[$to_status] : $to_status;
     
     $title = "تحديث حالة الطلب";

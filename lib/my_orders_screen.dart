@@ -1,3 +1,4 @@
+// Trigger re-analysis
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -28,6 +29,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
   bool _isLoading = true;
   String? _errorMessage;
 
+  List<Order> _allOrders = [];
   List<Order> _ongoingOrders = [];
   List<Order> _completedOrders = [];
   List<Order> _cancelledOrders = [];
@@ -35,7 +37,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
 
     // Add listener to rebuild the UI when tab changes to update button styles
     _tabController.addListener(() {
@@ -53,6 +55,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
       _isLoading = true;
       _errorMessage = null;
       // Clear previous lists to ensure fresh data
+      _allOrders = [];
       _ongoingOrders = [];
       _completedOrders = [];
       _cancelledOrders = [];
@@ -94,6 +97,8 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
             .toList();
 
         setState(() {
+          _allOrders = allOrders;
+
           _ongoingOrders = allOrders.where((o) {
             final status = o.status.toLowerCase();
             return status == 'processing' ||
@@ -114,7 +119,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
           }).toList();
 
           developer.log(
-            'Orders sorted. Ongoing: ${_ongoingOrders.length}, Completed: ${_completedOrders.length}, Cancelled: ${_cancelledOrders.length}',
+            'Orders sorted. Total: ${_allOrders.length}, Ongoing: ${_ongoingOrders.length}, Completed: ${_completedOrders.length}, Cancelled: ${_cancelledOrders.length}',
           );
         });
       } else {
@@ -290,6 +295,11 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
                       controller: _tabController,
                       children: [
                         _buildOrdersTab(
+                          _allOrders,
+                          _buildAnyOrderCard,
+                          l10n.no_orders,
+                        ),
+                        _buildOrdersTab(
                           _ongoingOrders,
                           _buildOngoingOrderCard,
                           l10n.no_ongoing_orders,
@@ -316,14 +326,39 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
   // -- NEW: Widget for the custom tab buttons --
   Widget _buildCustomTabBar() {
     final l10n = AppLocalizations.of(context)!;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Column(
       children: [
-        _buildTabButton(0, l10n.tab_ongoing),
-        _buildTabButton(1, l10n.tab_completed),
-        _buildTabButton(2, l10n.tab_cancelled),
+        // Row for 'All' tab spanning full width
+        Row(children: [_buildTabButton(0, l10n.tab_all)]),
+        const SizedBox(height: 10),
+        // Row for other status tabs
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildTabButton(1, l10n.tab_ongoing),
+            _buildTabButton(2, l10n.tab_completed),
+            _buildTabButton(3, l10n.tab_cancelled),
+          ],
+        ),
       ],
     );
+  }
+
+  Widget _buildAnyOrderCard(Order order) {
+    final status = order.status.toLowerCase();
+    if (status == 'processing' ||
+        status == 'pending' ||
+        status == 'on-hold' ||
+        status == 'prepared') {
+      return _buildOngoingOrderCard(order);
+    } else if (status == 'completed') {
+      return _buildCompletedOrderCard(order);
+    } else if (status == 'cancelled' ||
+        status == 'failed' ||
+        status == 'refunded') {
+      return _buildCancelledOrderCard(order);
+    }
+    return _buildOngoingOrderCard(order);
   }
 
   // -- NEW: Widget for individual tab button --

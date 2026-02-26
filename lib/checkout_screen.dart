@@ -87,10 +87,10 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
       loyalty.initialize().then((_) {
         if (!mounted) return;
-        final cart = Provider.of<CartProvider>(context, listen: false);
-        final autoPoints = loyalty.getAutomaticDiscount(cart.subtotal);
-        checkoutProvider.updateLoyaltyDiscount(
-          autoPoints['discount'] as double,
+        _updateLoyaltyDiscount(
+          checkoutProvider,
+          loyalty,
+          Provider.of<CartProvider>(context, listen: false),
         );
       });
     });
@@ -106,6 +106,19 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     _orderNotesController.dispose();
     _fadeController.dispose();
     super.dispose();
+  }
+
+  void _updateLoyaltyDiscount(
+    CheckoutProvider checkout,
+    LoyaltyProvider loyalty,
+    CartProvider cart,
+  ) {
+    if (loyalty.usePoints) {
+      final autoPoints = loyalty.getAutomaticDiscount(cart.subtotal);
+      checkout.updateLoyaltyDiscount(autoPoints['discount'] as double);
+    } else {
+      checkout.updateLoyaltyDiscount(0.0);
+    }
   }
 
   void _initializeCheckoutData(CheckoutProvider checkoutProvider) {
@@ -502,7 +515,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
     final earnedPoints = loyaltyProvider.calculateEarnedPoints(cart.subtotal);
     final autoPoints = loyaltyProvider.getAutomaticDiscount(cart.subtotal);
-    final pointsUsed = autoPoints['points'] as int;
+    final pointsUsed = loyaltyProvider.usePoints
+        ? (autoPoints['points'] as int)
+        : 0;
 
     if (checkoutProvider.orderData.customerId != null) {
       if (earnedPoints > 0) {
@@ -747,7 +762,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
       final earnedPoints = loyaltyProvider.calculateEarnedPoints(cart.subtotal);
       final autoPoints = loyaltyProvider.getAutomaticDiscount(cart.subtotal);
-      final pointsUsed = autoPoints['points'] as int;
+      final pointsUsed = loyaltyProvider.usePoints
+          ? (autoPoints['points'] as int)
+          : 0;
 
       developer.log(
         'LOYALTY: Order Success. ID: ${orderResponse['id']}, CustomerID: ${orderData.customerId}',
@@ -1292,6 +1309,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             icon: Icons.location_on,
           ),
           const SizedBox(height: 24),
+          _buildLoyaltyToggleCard(checkout),
+          const SizedBox(height: 24),
           _buildModernSectionTitle(l10n.payment_method, Icons.payment_outlined),
           const SizedBox(height: 16),
           _buildModernPaymentMethods(checkout),
@@ -1602,6 +1621,137 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           }
         }
         return null;
+      },
+    );
+  }
+
+  Widget _buildLoyaltyToggleCard(CheckoutProvider checkout) {
+    return Consumer<LoyaltyProvider>(
+      builder: (context, loyalty, child) {
+        if (loyalty.loyaltyData == null ||
+            loyalty.loyaltyData!.pointsBalance <= 0) {
+          return const SizedBox.shrink();
+        }
+
+        final l10n = AppLocalizations.of(context)!;
+        final cart = Provider.of<CartProvider>(context, listen: false);
+        final currency = Provider.of<CurrencyProvider>(context, listen: false);
+        final autoDiscount = loyalty.getAutomaticDiscount(cart.subtotal);
+        final discountValue = autoDiscount['discount'] as double;
+        final pointsToUse = autoDiscount['points'] as int;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: loyalty.usePoints
+                    ? Colors.orange.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+            border: Border.all(
+              color: loyalty.usePoints
+                  ? Colors.orange.shade300
+                  : Colors.grey.shade200,
+              width: loyalty.usePoints ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: loyalty.usePoints
+                            ? Colors.orange.shade100
+                            : Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        loyalty.usePoints ? Icons.stars : Icons.stars_outlined,
+                        color: Colors.orange.shade700,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.my_points,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'برصيد ${loyalty.loyaltyData!.pointsBalance} نقطة',
+                            style: GoogleFonts.notoSansArabic(
+                              color: Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: loyalty.usePoints,
+                      activeColor: Colors.orange,
+                      onChanged: (value) {
+                        loyalty.toggleUsePoints(value);
+                        _updateLoyaltyDiscount(checkout, loyalty, cart);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              if (loyalty.usePoints && discountValue > 0)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: const BorderRadius.vertical(
+                      bottom: Radius.circular(18),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.orange.shade700,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'سيتم خصم $pointsToUse نقطة وتوفير ${currency.currencySymbol}${discountValue.toStringAsFixed(2)}',
+                          style: GoogleFonts.notoSansArabic(
+                            color: Colors.orange.shade800,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
       },
     );
   }
@@ -2002,102 +2152,81 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
     if (loyalty.loyaltyData == null) return const SizedBox.shrink();
 
+    // Hide the box entirely if using points as per user request for review page
+    if (loyalty.usePoints) return const SizedBox.shrink();
+
     final earned = loyalty.calculateEarnedPoints(cart.subtotal);
-    final autoPoints = loyalty.getAutomaticDiscount(cart.subtotal);
-    final pointsToUse = autoPoints['points'] as int;
+    if (earned <= 0) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.shade200),
+        color: Colors.orange.shade50.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200, width: 1.5),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (earned > 0)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.stars, color: Colors.orange.shade600, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Points to Earn',
-                      style: GoogleFonts.poppins(
-                        color: Colors.orange.shade700,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  shape: BoxShape.circle,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '+$earned Pts',
-                    style: GoogleFonts.poppins(
-                      color: Colors.orange.shade700,
+                child: Icon(
+                  Icons.stars_rounded,
+                  color: Colors.orange.shade700,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ستكسب نقاطاً!',
+                    style: GoogleFonts.notoSansArabic(
+                      color: Colors.orange.shade900,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),
-                ),
-              ],
-            ),
-          if (pointsToUse > 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.remove_circle,
-                        color: Colors.red.shade600,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Points Used',
-                        style: GoogleFonts.poppins(
-                          color: Colors.red.shade700,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '-$pointsToUse Pts',
-                      style: GoogleFonts.poppins(
-                        color: Colors.red.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                  Text(
+                    'بعد إتمام عملية الشراء',
+                    style: GoogleFonts.notoSansArabic(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
+            child: Text(
+              '+$earned Pts',
+              style: GoogleFonts.poppins(
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
         ],
       ),
     );

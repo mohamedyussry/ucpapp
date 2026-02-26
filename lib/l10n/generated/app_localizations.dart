@@ -1507,6 +1507,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete_btn;
+
+  /// No description provided for @tab_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get tab_all;
+
+  /// No description provided for @no_orders.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders found.'**
+  String get no_orders;
 }
 
 class _AppLocalizationsDelegate

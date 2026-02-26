@@ -10,11 +10,13 @@ class LoyaltyProvider with ChangeNotifier {
   List<LoyaltyTier> _tiers = [];
   Map<String, dynamic>? _settings;
   bool _isLoading = false;
+  bool _usePoints = false;
 
   LoyaltyData? get loyaltyData => _loyaltyData;
   List<LoyaltyTier> get tiers => _tiers;
   Map<String, dynamic>? get settings => _settings;
   bool get isLoading => _isLoading;
+  bool get usePoints => _usePoints;
 
   Future<void> initialize() async {
     _isLoading = true;
@@ -34,6 +36,11 @@ class LoyaltyProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void toggleUsePoints(bool value) {
+    _usePoints = value;
+    notifyListeners();
   }
 
   /// Calculates points to be earned for a given subtotal based on the user's tier.

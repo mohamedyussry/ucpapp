@@ -746,4 +746,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get delete_btn => 'Delete';
+
+  @override
+  String get tab_all => 'All';
+
+  @override
+  String get no_orders => 'No orders found.';
 }
