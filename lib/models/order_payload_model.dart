@@ -8,6 +8,7 @@ class OrderPayload {
   final ShippingInfo shipping;
   final List<LineItem> lineItems;
   final List<ShippingLine> shippingLines;
+  final List<CouponLine> couponLines;
   final String? customerNote;
   final String? transactionId;
   final int? customerId;
@@ -21,6 +22,7 @@ class OrderPayload {
     required this.shipping,
     required this.lineItems,
     this.shippingLines = const [],
+    this.couponLines = const [],
     this.customerNote,
     this.transactionId,
     this.customerId,
@@ -42,6 +44,7 @@ class OrderPayload {
       'shipping': shipping.toJson(),
       'line_items': lineItems.map((item) => item.toJson()).toList(),
       'shipping_lines': shippingLines.map((line) => line.toJson()).toList(),
+      'coupon_lines': couponLines.map((line) => line.toJson()).toList(),
       'customer_note': fullNote,
       // Store as order meta so it appears in WC admin Order Details panel
       'meta_data': [
@@ -53,6 +56,14 @@ class OrderPayload {
       if (status != null) 'status': status,
     };
   }
+}
+
+class CouponLine {
+  final String code;
+
+  CouponLine({required this.code});
+
+  Map<String, dynamic> toJson() => {'code': code};
 }
 
 class BillingInfo {

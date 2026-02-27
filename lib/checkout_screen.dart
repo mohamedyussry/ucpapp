@@ -479,6 +479,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             ]
           : [],
       customerNote: _orderNotesController.text,
+      couponLines: cartProvider.appliedCoupon != null
+          ? [CouponLine(code: cartProvider.appliedCoupon!.code)]
+          : [],
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);
@@ -730,6 +733,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             ]
           : [],
       customerNote: _orderNotesController.text,
+      couponLines: cartProvider.appliedCoupon != null
+          ? [CouponLine(code: cartProvider.appliedCoupon!.code)]
+          : [],
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);

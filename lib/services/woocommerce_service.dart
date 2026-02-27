@@ -373,24 +373,68 @@ class WooCommerceService {
 
   Future<Map<String, dynamic>?> createOrder(OrderPayload payload) async {
     try {
+      final payloadJson = payload.toJson();
+      developer.log('Creating order with payload: $payloadJson');
+
       final response = await _dio.post(
         '/orders',
         queryParameters: {
           'consumer_key': Config.consumerKey,
           'consumer_secret': Config.consumerSecret,
         },
-        data: payload.toJson(),
+        data: payloadJson,
+        options: Options(validateStatus: (status) => true),
+      );
+
+      developer.log(
+        'createOrder response: status=${response.statusCode}, body=${response.data}',
       );
 
       if (response.statusCode == 201) {
-        developer.log('Order created successfully: ${response.data}');
+        developer.log('Order created successfully: ${response.data['id']}');
         return response.data as Map<String, dynamic>;
-      } else {
+      }
+
+      // If WooCommerce rejected due to an invalid/re-used coupon,
+      // retry WITHOUT the coupon so the order still goes through.
+      final body = response.data;
+      final errorCode = body is Map ? (body['code'] ?? '') : '';
+      final isCouponError =
+          errorCode == 'woocommerce_rest_invalid_coupon' ||
+          errorCode == 'woocommerce_coupon_error' ||
+          errorCode.toString().contains('coupon') ||
+          (body is Map &&
+              body['message'].toString().toLowerCase().contains('coupon'));
+
+      if (isCouponError && payloadJson['coupon_lines'] != null) {
         developer.log(
-          'Error creating order: Status ${response.statusCode}, Body: ${response.data}',
+          'Coupon rejected by WooCommerce ($errorCode). Retrying without coupon…',
+        );
+        final fallbackPayload = Map<String, dynamic>.from(payloadJson);
+        fallbackPayload['coupon_lines'] = <dynamic>[];
+        final retry = await _dio.post(
+          '/orders',
+          queryParameters: {
+            'consumer_key': Config.consumerKey,
+            'consumer_secret': Config.consumerSecret,
+          },
+          data: fallbackPayload,
+          options: Options(validateStatus: (status) => true),
+        );
+        if (retry.statusCode == 201) {
+          developer.log('Order created (without coupon): ${retry.data['id']}');
+          return retry.data as Map<String, dynamic>;
+        }
+        developer.log(
+          'Retry also failed: status=${retry.statusCode}, body=${retry.data}',
         );
         return null;
       }
+
+      developer.log(
+        'Error creating order: Status ${response.statusCode}, Body: ${response.data}',
+      );
+      return null;
     } on DioException catch (e, s) {
       _handleDioError(e, s, 'creating order');
       return null;

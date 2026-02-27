@@ -102,7 +102,7 @@ class CartProvider with ChangeNotifier {
   }
 
   // Coupon Logic
-  Future<void> applyCoupon(String code) async {
+  Future<void> applyCoupon(String code, {String? userIdOrEmail}) async {
     _isApplyingCoupon = true;
     _couponErrorMessage = null;
     notifyListeners();
@@ -113,7 +113,10 @@ class CartProvider with ChangeNotifier {
       _couponErrorMessage = 'Invalid coupon code.';
     } else {
       // Validate coupon restrictions
-      final validationError = _validateCouponRestrictions(coupon);
+      final validationError = _validateCouponRestrictions(
+        coupon,
+        userIdOrEmail: userIdOrEmail,
+      );
       if (validationError != null) {
         _couponErrorMessage = validationError;
       } else {
@@ -132,17 +135,16 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  String? _validateCouponRestrictions(Coupon coupon) {
+  String? _validateCouponRestrictions(Coupon coupon, {String? userIdOrEmail}) {
     // 1. Check expiry date
     if (coupon.dateExpires != null && coupon.dateExpires!.isNotEmpty) {
       try {
-        // WooCommerce date format is like "2024-08-15T23:59:59"
         final expiryDate = DateTime.parse(coupon.dateExpires!);
         if (expiryDate.isBefore(DateTime.now())) {
           return 'This coupon has expired.';
         }
       } catch (e) {
-        // Could not parse the date, better to log this and maybe allow it.
+        // Parse error
       }
     }
 
@@ -158,8 +160,71 @@ class CartProvider with ChangeNotifier {
       return 'Your subtotal must be no more than $maxSpend to use this coupon.';
     }
 
-    // All checks passed
+    // 4. Check usage limit per user
+    if (coupon.usageLimitPerUser != null && coupon.usageLimitPerUser! > 0) {
+      if (userIdOrEmail == null) {
+        return 'Please log in to use this coupon.';
+      }
+      final userUsageCount = coupon.usedBy
+          .where((id) => id == userIdOrEmail)
+          .length;
+      if (userUsageCount >= coupon.usageLimitPerUser!) {
+        return 'You have reached the usage limit for this coupon.';
+      }
+    }
+
+    // 5. Check product and category eligibility
+    bool atLeastOneEligible = false;
+    for (var item in _items.values) {
+      if (_isItemEligible(item, coupon)) {
+        atLeastOneEligible = true;
+        break;
+      }
+    }
+
+    if (!atLeastOneEligible) {
+      return 'This coupon is not applicable to the items in your cart.';
+    }
+
     return null;
+  }
+
+  bool _isItemEligible(CartItem item, Coupon coupon) {
+    final productId = item.product.id;
+    final categoryIds = item.product.categories.map((c) => c.id).toList();
+
+    // 1. Check excluded products
+    if (coupon.excludedProductIds.contains(productId)) {
+      return false;
+    }
+
+    // 2. Check excluded categories
+    for (int catId in categoryIds) {
+      if (coupon.excludedProductCategories.contains(catId)) {
+        return false;
+      }
+    }
+
+    // 3. Check if specific products or categories are required
+    bool hasProductRestriction = coupon.productIds.isNotEmpty;
+    bool hasCategoryRestriction = coupon.productCategories.isNotEmpty;
+
+    if (hasProductRestriction || hasCategoryRestriction) {
+      bool productMatches = coupon.productIds.contains(productId);
+      bool categoryMatches = false;
+      for (int catId in categoryIds) {
+        if (coupon.productCategories.contains(catId)) {
+          categoryMatches = true;
+          break;
+        }
+      }
+
+      // If both are set, the product must match either list
+      return productMatches || categoryMatches;
+    }
+
+    // No specific restrictions, so it's eligible
+    return true;
   }
 
   void removeCoupon() {
@@ -173,11 +238,28 @@ class CartProvider with ChangeNotifier {
     if (_appliedCoupon == null) return;
 
     final couponAmount = double.tryParse(_appliedCoupon!.amount) ?? 0.0;
+    double eligibleSubtotal = 0.0;
+
+    // Calculate subtotal for eligible items only
+    for (var item in _items.values) {
+      if (_isItemEligible(item, _appliedCoupon!)) {
+        eligibleSubtotal += item.subTotal;
+      }
+    }
 
     if (_appliedCoupon!.discountType == 'percent') {
-      _discountAmount = subtotal * (couponAmount / 100);
+      _discountAmount = eligibleSubtotal * (couponAmount / 100);
+    } else if (_appliedCoupon!.discountType == 'fixed_product') {
+      // For fixed product, the discount applies to EACH eligible product
+      double totalFixedDiscount = 0.0;
+      for (var item in _items.values) {
+        if (_isItemEligible(item, _appliedCoupon!)) {
+          totalFixedDiscount += couponAmount * item.quantity;
+        }
+      }
+      _discountAmount = totalFixedDiscount;
     } else {
-      // Assumes 'fixed_cart' or other fixed types
+      // Handles 'fixed_cart'
       _discountAmount = couponAmount;
     }
 

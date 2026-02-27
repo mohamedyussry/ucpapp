@@ -9,6 +9,8 @@ import 'widgets/custom_bottom_nav_bar.dart';
 import 'widgets/tamara_promotion_widget.dart';
 import 'widgets/tabby_promotion_widget.dart';
 import 'l10n/generated/app_localizations.dart';
+import 'providers/auth_provider.dart';
+import 'providers/loyalty_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -19,6 +21,19 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final _couponController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize loyalty data so we can show earned points
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
+      // Only initialize if data not yet loaded (avoid duplicate requests)
+      if (loyalty.tiers.isEmpty) {
+        loyalty.initialize();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -281,6 +296,7 @@ class _CartScreenState extends State<CartScreen> {
       ),
       child: Column(
         children: [
+          _buildEarnedPointsBanner(cart),
           _buildDiscountCodeSection(cart),
           if (cart.totalAmount > 0)
             TamaraPromotionWidget(price: cart.totalAmount),
@@ -314,6 +330,99 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 20),
           _buildCheckoutButton(context, cart),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEarnedPointsBanner(CartProvider cart) {
+    if (cart.subtotal <= 0) return const SizedBox.shrink();
+
+    final loyalty = Provider.of<LoyaltyProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
+    final bool isLoggedIn =
+        auth.status == AuthStatus.authenticated && auth.customer != null;
+
+    final earnedPoints = loyalty.calculateEarnedPoints(cart.subtotal);
+
+    final String titleText = isLoggedIn
+        ? 'ستكسب نقاطاً!'
+        : 'سجل الدخول لتكسب نقاطاً!';
+    final String subtitleText = isLoggedIn
+        ? 'بعد إتمام عملية الشراء'
+        : 'عند إتمام عملية الشراء';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.shade200, width: 1.5),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.stars_rounded,
+                  color: Colors.orange.shade700,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titleText,
+                    style: GoogleFonts.notoSansArabic(
+                      color: Colors.orange.shade900,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    subtitleText,
+                    style: GoogleFonts.notoSansArabic(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          if (earnedPoints > 0)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                '+$earnedPoints Pts',
+                style: GoogleFonts.poppins(
+                  color: Colors.orange.shade800,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -375,7 +484,18 @@ class _CartScreenState extends State<CartScreen> {
                   : TextButton(
                       onPressed: () {
                         if (_couponController.text.isNotEmpty) {
-                          cart.applyCoupon(_couponController.text.trim());
+                          final auth = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          String? identifier;
+                          if (auth.customer != null) {
+                            identifier = auth.customer!.id.toString();
+                          }
+                          cart.applyCoupon(
+                            _couponController.text.trim(),
+                            userIdOrEmail: identifier,
+                          );
                         }
                       },
                       child: Text(

@@ -45,16 +45,22 @@ class LoyaltyProvider with ChangeNotifier {
 
   /// Calculates points to be earned for a given subtotal based on the user's tier.
   int calculateEarnedPoints(double amount) {
-    if (_loyaltyData == null || _tiers.isEmpty) return 0;
+    if (_tiers.isEmpty) return 0;
 
-    // Find the current tier by ID first, then fallback to name
-    final currentTier = _tiers.firstWhere(
-      (t) => t.id == _loyaltyData!.currentTierId.toString(),
-      orElse: () => _tiers.firstWhere(
-        (t) => t.name == _loyaltyData!.tierName,
-        orElse: () => _tiers.first,
-      ),
-    );
+    LoyaltyTier currentTier;
+    if (_loyaltyData != null) {
+      // Find the current tier by ID first, then fallback to name
+      currentTier = _tiers.firstWhere(
+        (t) => t.id == _loyaltyData!.currentTierId.toString(),
+        orElse: () => _tiers.firstWhere(
+          (t) => t.name == _loyaltyData!.tierName,
+          orElse: () => _tiers.first,
+        ),
+      );
+    } else {
+      // For guests or when data isn't fully loaded, use the first tier as default
+      currentTier = _tiers.first;
+    }
 
     double pointsPer100 = double.tryParse(currentTier.pointsPer100) ?? 0;
     developer.log(
