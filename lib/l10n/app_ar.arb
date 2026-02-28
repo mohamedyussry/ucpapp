@@ -89,8 +89,6 @@
   "cat_for_baby": "للأطفال",
   "cat_for_her": "لها",
   "cat_for_him": "له",
-  "cat_for_her": "لها",
-  "cat_for_him": "له",
   "cat_medicine": "أدوية",
   "my_cart": "سلة التسوق",
   "cart_empty": "سلة التسوق فارغة",
@@ -248,5 +246,24 @@
   "earn_points_banner_title": "ستكسب نقاطاً!",
   "earn_points_banner_subtitle": "بعد إتمام عملية الشراء",
   "login_to_earn_points_title": "سجل الدخول لتكسب نقاطاً!",
-  "login_to_earn_points_subtitle": "عند إتمام عملية الشراء"
+  "login_to_earn_points_subtitle": "عند إتمام عملية الشراء",
+  "use_points_for_discount": "استخدام النقاط للمكافآت",
+  "points_balance_summary": "برصيد {points} {unit}",
+  "@points_balance_summary": {
+    "placeholders": {
+      "points": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "points_redeem_summary": "سيتم خصم {points} {unit} وتوفير {currency}{amount}",
+  "@points_redeem_summary": {
+    "placeholders": {
+      "points": { "type": "int" },
+      "unit": { "type": "String" },
+      "currency": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "tax": "الضريبة",
+  "points_discount": "خصم النقاط"
 }

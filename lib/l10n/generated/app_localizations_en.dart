@@ -568,7 +568,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get active_account => 'Active Account';
 
   @override
-  String get pts_suffix => 'Pts';
+  String get pts_suffix => 'Points';
 
   @override
   String get choose_language => 'Choose Language';
@@ -764,4 +764,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get login_to_earn_points_subtitle => 'Upon completing the purchase';
+
+  @override
+  String get use_points_for_discount => 'Use points for rewards';
+
+  @override
+  String points_balance_summary(int points, String unit) {
+    return 'Balance: $points $unit';
+  }
+
+  @override
+  String points_redeem_summary(
+    int points,
+    String unit,
+    String currency,
+    String amount,
+  ) {
+    return 'Will redeem $points $unit and save $currency$amount';
+  }
+
+  @override
+  String get tax => 'Tax';
+
+  @override
+  String get points_discount => 'Points Discount';
 }

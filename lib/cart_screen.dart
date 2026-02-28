@@ -416,7 +416,7 @@ class _CartScreenState extends State<CartScreen> {
                 ],
               ),
               child: Text(
-                '+$earnedPoints',
+                '+$earnedPoints ${l10n.pts_suffix}',
                 style: GoogleFonts.poppins(
                   color: Colors.orange.shade800,
                   fontWeight: FontWeight.bold,

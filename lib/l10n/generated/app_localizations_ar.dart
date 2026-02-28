@@ -758,4 +758,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get login_to_earn_points_subtitle => 'عند إتمام عملية الشراء';
+
+  @override
+  String get use_points_for_discount => 'استخدام النقاط للمكافآت';
+
+  @override
+  String points_balance_summary(int points, String unit) {
+    return 'برصيد $points $unit';
+  }
+
+  @override
+  String points_redeem_summary(
+    int points,
+    String unit,
+    String currency,
+    String amount,
+  ) {
+    return 'سيتم خصم $points $unit وتوفير $currency$amount';
+  }
+
+  @override
+  String get tax => 'الضريبة';
+
+  @override
+  String get points_discount => 'خصم النقاط';
 }

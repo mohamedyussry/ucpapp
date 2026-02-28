@@ -96,8 +96,6 @@
   "cat_for_baby": "For Baby",
   "cat_for_her": "For Her",
   "cat_for_him": "For Him",
-  "cat_for_her": "For Her",
-  "cat_for_him": "For Him",
   "cat_medicine": "Medicine",
   "my_cart": "My Cart",
   "cart_empty": "Your cart is empty",
@@ -255,7 +253,7 @@
   "current_points": "Current Points",
   "ucp_loyalty_program": "UCP Loyalty Program",
   "active_account": "Active Account",
-  "pts_suffix": "Pts",
+  "pts_suffix": "Points",
   "choose_language": "Choose Language",
   "continue_btn": "Continue",
   "welcome_back": "Welcome Back",
@@ -328,5 +326,24 @@
   "earn_points_banner_title": "You will earn points!",
   "earn_points_banner_subtitle": "After completing the purchase",
   "login_to_earn_points_title": "Login to earn points!",
-  "login_to_earn_points_subtitle": "Upon completing the purchase"
+  "login_to_earn_points_subtitle": "Upon completing the purchase",
+  "use_points_for_discount": "Use points for rewards",
+  "points_balance_summary": "Balance: {points} {unit}",
+  "@points_balance_summary": {
+    "placeholders": {
+      "points": { "type": "int" },
+      "unit": { "type": "String" }
+    }
+  },
+  "points_redeem_summary": "Will redeem {points} {unit} and save {currency}{amount}",
+  "@points_redeem_summary": {
+    "placeholders": {
+      "points": { "type": "int" },
+      "unit": { "type": "String" },
+      "currency": { "type": "String" },
+      "amount": { "type": "String" }
+    }
+  },
+  "tax": "Tax",
+  "points_discount": "Points Discount"
 }

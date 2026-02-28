@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/line_item_model.dart';
 import 'package:myapp/models/state_model.dart';
@@ -83,6 +82,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
       // Load saved billing details from local storage
       await _loadSavedBillingDetails(checkoutProvider);
+
+      if (!mounted) return;
 
       final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
       loyalty.initialize().then((_) {
@@ -349,8 +350,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       shippingAmount: checkoutProvider.shippingCost,
       taxAmount: checkoutProvider.tax,
       discountAmount:
-          checkoutProvider.loyaltyDiscount +
-          (Provider.of<CartProvider>(context, listen: false).discountAmount),
+          checkoutProvider.loyaltyDiscount + cartProvider.discountAmount,
     );
 
     setState(() {
@@ -615,8 +615,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       shippingAmount: checkoutProvider.shippingCost,
       taxAmount: checkoutProvider.tax,
       discountAmount:
-          checkoutProvider.loyaltyDiscount +
-          (Provider.of<CartProvider>(context, listen: false).discountAmount),
+          checkoutProvider.loyaltyDiscount + cartProvider.discountAmount,
     );
 
     setState(() {
@@ -1694,14 +1693,17 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            l10n.my_points,
+                            l10n.use_points_for_discount,
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                           Text(
-                            'برصيد ${loyalty.loyaltyData!.pointsBalance} نقطة',
+                            l10n.points_balance_summary(
+                              loyalty.loyaltyData!.pointsBalance,
+                              l10n.pts_suffix,
+                            ),
                             style: GoogleFonts.notoSansArabic(
                               color: Colors.grey.shade600,
                               fontSize: 13,
@@ -1712,7 +1714,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     ),
                     Switch.adaptive(
                       value: loyalty.usePoints,
-                      activeColor: Colors.orange,
+                      activeTrackColor: Colors.orange.withValues(alpha: 0.5),
+                      activeThumbColor: Colors.orange,
                       onChanged: (value) {
                         loyalty.toggleUsePoints(value);
                         _updateLoyaltyDiscount(checkout, loyalty, cart);
@@ -1744,7 +1747,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'سيتم خصم $pointsToUse نقطة وتوفير ${currency.currencySymbol}${discountValue.toStringAsFixed(2)}',
+                          l10n.points_redeem_summary(
+                            pointsToUse,
+                            l10n.pts_suffix,
+                            currency.currencySymbol,
+                            discountValue.toStringAsFixed(2),
+                          ),
                           style: GoogleFonts.notoSansArabic(
                             color: Colors.orange.shade800,
                             fontWeight: FontWeight.w600,
@@ -2023,6 +2031,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     CurrencyProvider currencyProvider,
   ) {
     final cart = Provider.of<CartProvider>(context, listen: false);
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -2085,12 +2094,16 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             );
           }),
           const Divider(height: 30, thickness: 1.5),
-          _buildModernSummaryRow('Subtotal', cart.subtotal, currencyProvider),
+          _buildModernSummaryRow(
+            l10n.subtotal,
+            cart.subtotal,
+            currencyProvider,
+          ),
           if (cart.discountAmount > 0)
             Padding(
               padding: const EdgeInsets.only(top: 10.0),
               child: _buildModernSummaryRow(
-                'Discount',
+                l10n.discount,
                 cart.discountAmount,
                 currencyProvider,
                 isDiscount: true,
@@ -2098,17 +2111,17 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             ),
           const SizedBox(height: 10),
           _buildModernSummaryRow(
-            'Shipping',
+            l10n.shipping,
             checkout.shippingCost,
             currencyProvider,
           ),
           const SizedBox(height: 10),
-          _buildModernSummaryRow('Tax', checkout.tax, currencyProvider),
+          _buildModernSummaryRow(l10n.tax, checkout.tax, currencyProvider),
           if (checkout.loyaltyDiscount > 0)
             Padding(
               padding: const EdgeInsets.only(top: 10.0),
               child: _buildModernSummaryRow(
-                'Points Discount',
+                l10n.points_discount,
                 checkout.loyaltyDiscount,
                 currencyProvider,
                 isDiscount: true,
@@ -2127,7 +2140,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total',
+                  l10n.total,
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -2155,6 +2168,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
   Widget _buildPointsInfo(BuildContext context) {
     final loyalty = Provider.of<LoyaltyProvider>(context);
     final cart = Provider.of<CartProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
 
     if (loyalty.loyaltyData == null) return const SizedBox.shrink();
 
@@ -2193,7 +2207,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ستكسب نقاطاً!',
+                    l10n.earn_points_banner_title,
                     style: GoogleFonts.notoSansArabic(
                       color: Colors.orange.shade900,
                       fontWeight: FontWeight.bold,
@@ -2201,7 +2215,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                     ),
                   ),
                   Text(
-                    'بعد إتمام عملية الشراء',
+                    l10n.earn_points_banner_subtitle,
                     style: GoogleFonts.notoSansArabic(
                       color: Colors.orange.shade700,
                       fontSize: 12,
@@ -2225,7 +2239,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
               ],
             ),
             child: Text(
-              '+$earned Pts',
+              '+$earned ${l10n.pts_suffix}',
               style: GoogleFonts.poppins(
                 color: Colors.orange.shade800,
                 fontWeight: FontWeight.bold,

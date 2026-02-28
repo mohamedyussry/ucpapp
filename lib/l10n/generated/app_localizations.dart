@@ -1163,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @pts_suffix.
   ///
   /// In en, this message translates to:
-  /// **'Pts'**
+  /// **'Points'**
   String get pts_suffix;
 
   /// No description provided for @choose_language.
@@ -1543,6 +1543,41 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upon completing the purchase'**
   String get login_to_earn_points_subtitle;
+
+  /// No description provided for @use_points_for_discount.
+  ///
+  /// In en, this message translates to:
+  /// **'Use points for rewards'**
+  String get use_points_for_discount;
+
+  /// No description provided for @points_balance_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance: {points} {unit}'**
+  String points_balance_summary(int points, String unit);
+
+  /// No description provided for @points_redeem_summary.
+  ///
+  /// In en, this message translates to:
+  /// **'Will redeem {points} {unit} and save {currency}{amount}'**
+  String points_redeem_summary(
+    int points,
+    String unit,
+    String currency,
+    String amount,
+  );
+
+  /// No description provided for @tax.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax'**
+  String get tax;
+
+  /// No description provided for @points_discount.
+  ///
+  /// In en, this message translates to:
+  /// **'Points Discount'**
+  String get points_discount;
 }
 
 class _AppLocalizationsDelegate
