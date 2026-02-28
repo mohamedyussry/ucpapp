@@ -752,4 +752,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no_orders => 'No orders found.';
+
+  @override
+  String get earn_points_banner_title => 'You will earn points!';
+
+  @override
+  String get earn_points_banner_subtitle => 'After completing the purchase';
+
+  @override
+  String get login_to_earn_points_title => 'Login to earn points!';
+
+  @override
+  String get login_to_earn_points_subtitle => 'Upon completing the purchase';
 }

@@ -345,12 +345,13 @@ class _CartScreenState extends State<CartScreen> {
 
     final earnedPoints = loyalty.calculateEarnedPoints(cart.subtotal);
 
+    final l10n = AppLocalizations.of(context)!;
     final String titleText = isLoggedIn
-        ? 'ستكسب نقاطاً!'
-        : 'سجل الدخول لتكسب نقاطاً!';
+        ? l10n.earn_points_banner_title
+        : l10n.login_to_earn_points_title;
     final String subtitleText = isLoggedIn
-        ? 'بعد إتمام عملية الشراء'
-        : 'عند إتمام عملية الشراء';
+        ? l10n.earn_points_banner_subtitle
+        : l10n.login_to_earn_points_subtitle;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -415,7 +416,7 @@ class _CartScreenState extends State<CartScreen> {
                 ],
               ),
               child: Text(
-                '+$earnedPoints Pts',
+                '+$earnedPoints',
                 style: GoogleFonts.poppins(
                   color: Colors.orange.shade800,
                   fontWeight: FontWeight.bold,

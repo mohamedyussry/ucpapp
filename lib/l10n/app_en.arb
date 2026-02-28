@@ -324,5 +324,9 @@
   "cancel_btn": "Cancel",
   "delete_btn": "Delete",
   "tab_all": "All",
-  "no_orders": "No orders found."
+  "no_orders": "No orders found.",
+  "earn_points_banner_title": "You will earn points!",
+  "earn_points_banner_subtitle": "After completing the purchase",
+  "login_to_earn_points_title": "Login to earn points!",
+  "login_to_earn_points_subtitle": "Upon completing the purchase"
 }

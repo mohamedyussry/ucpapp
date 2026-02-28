@@ -1519,6 +1519,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No orders found.'**
   String get no_orders;
+
+  /// No description provided for @earn_points_banner_title.
+  ///
+  /// In en, this message translates to:
+  /// **'You will earn points!'**
+  String get earn_points_banner_title;
+
+  /// No description provided for @earn_points_banner_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'After completing the purchase'**
+  String get earn_points_banner_subtitle;
+
+  /// No description provided for @login_to_earn_points_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Login to earn points!'**
+  String get login_to_earn_points_title;
+
+  /// No description provided for @login_to_earn_points_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upon completing the purchase'**
+  String get login_to_earn_points_subtitle;
 }
 
 class _AppLocalizationsDelegate

@@ -244,5 +244,9 @@
   "cancel_btn": "إلغاء",
   "delete_btn": "حذف",
   "tab_all": "الكل",
-  "no_orders": "لا توجد طلبات."
+  "no_orders": "لا توجد طلبات.",
+  "earn_points_banner_title": "ستكسب نقاطاً!",
+  "earn_points_banner_subtitle": "بعد إتمام عملية الشراء",
+  "login_to_earn_points_title": "سجل الدخول لتكسب نقاطاً!",
+  "login_to_earn_points_subtitle": "عند إتمام عملية الشراء"
 }
