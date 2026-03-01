@@ -482,6 +482,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       couponLines: cartProvider.appliedCoupon != null
           ? [CouponLine(code: cartProvider.appliedCoupon!.code)]
           : [],
+      discountAmount:
+          cartProvider.discountAmount + checkoutProvider.loyaltyDiscount,
+      appliedCouponCode: cartProvider.appliedCoupon?.code,
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);
@@ -735,6 +738,9 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       couponLines: cartProvider.appliedCoupon != null
           ? [CouponLine(code: cartProvider.appliedCoupon!.code)]
           : [],
+      discountAmount:
+          cartProvider.discountAmount + checkoutProvider.loyaltyDiscount,
+      appliedCouponCode: cartProvider.appliedCoupon?.code,
     );
 
     final orderResponse = await wooCommerceService.createOrder(orderPayload);

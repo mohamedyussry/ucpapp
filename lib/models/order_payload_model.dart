@@ -13,6 +13,8 @@ class OrderPayload {
   final String? transactionId;
   final int? customerId;
   final String? status;
+  final double? discountAmount;
+  final String? appliedCouponCode;
 
   OrderPayload({
     required this.paymentMethod,
@@ -27,11 +29,20 @@ class OrderPayload {
     this.transactionId,
     this.customerId,
     this.status,
+    this.discountAmount,
+    this.appliedCouponCode,
   });
 
   Map<String, dynamic> toJson() {
     // Build the full customer note: always mention the app source.
-    const String appSourceNote = '📱 تم إنشاء هذا الطلب من تطبيق الجوال';
+    String appSourceNote = '📱 تم إنشاء هذا الطلب من تطبيق الجوال';
+    if (appliedCouponCode != null) {
+      appSourceNote += '\n🎟️ الكوبون المستخدم: $appliedCouponCode';
+    }
+    if (discountAmount != null && discountAmount! > 0) {
+      appSourceNote += '\n💰 إجمالي الخصم: $discountAmount ريال';
+    }
+
     final String fullNote = (customerNote != null && customerNote!.isNotEmpty)
         ? '$appSourceNote\n${customerNote!}'
         : appSourceNote;
@@ -50,6 +61,17 @@ class OrderPayload {
       'meta_data': [
         {'key': '_order_source', 'value': 'mobile_app'},
         {'key': '_order_source_label', 'value': 'تطبيق الجوال'},
+        // Juleb specific metadata for discounts
+        if (discountAmount != null && discountAmount! > 0) ...[
+          {'key': '_juleb_discount_amount', 'value': discountAmount.toString()},
+          {'key': 'juleb_discount', 'value': discountAmount.toString()},
+          {'key': '_order_total_discount', 'value': discountAmount.toString()},
+          {'key': '_cart_discount', 'value': discountAmount.toString()},
+        ],
+        if (appliedCouponCode != null) ...[
+          {'key': '_juleb_coupon_code', 'value': appliedCouponCode},
+          {'key': 'juleb_coupon', 'value': appliedCouponCode},
+        ],
       ],
       if (transactionId != null) 'transaction_id': transactionId,
       if (customerId != null) 'customer_id': customerId,
