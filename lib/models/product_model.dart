@@ -14,6 +14,7 @@ class WooProduct {
   final int? stockQuantity;
   final double averageRating;
   final int ratingCount;
+  final WooSliderData? sliderData;
 
   WooProduct({
     required this.id,
@@ -31,6 +32,7 @@ class WooProduct {
     this.stockQuantity,
     required this.averageRating,
     required this.ratingCount,
+    this.sliderData,
   });
 
   factory WooProduct.fromJson(Map<String, dynamic> json) {
@@ -63,6 +65,9 @@ class WooProduct {
       averageRating:
           double.tryParse(json['average_rating']?.toString() ?? '0.0') ?? 0.0,
       ratingCount: json['rating_count'] ?? 0,
+      sliderData: json['slider_data'] != null
+          ? WooSliderData.fromJson(json['slider_data'])
+          : null,
     );
   }
 
@@ -83,6 +88,7 @@ class WooProduct {
       'stock_quantity': stockQuantity,
       'average_rating': averageRating.toString(),
       'rating_count': ratingCount,
+      'slider_data': sliderData?.toJson(),
     };
   }
 }
@@ -296,4 +302,20 @@ class WooBrand {
       'slider_data': sliderData?.toJson(),
     };
   }
+}
+
+class SliderItem {
+  final String imageUrl;
+  final String type; // 'category', 'brand', 'product'
+  final int id;
+  final String name;
+  final WooProduct? product;
+
+  SliderItem({
+    required this.imageUrl,
+    required this.type,
+    required this.id,
+    required this.name,
+    this.product,
+  });
 }

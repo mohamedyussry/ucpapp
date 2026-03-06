@@ -139,7 +139,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'فشل تحميل المنتجات. يرجى المحاولة مرة أخرى لاحقًا.';
 
   @override
-  String get no_products_matching => 'لم بتم العثور على منتجات مطابقة لبحثك.';
+  String get no_products_matching => 'لم بتم العور على منتجات مطابقة لبحثك.';
 
   @override
   String get shop_now => 'تسوق الآن';
@@ -337,7 +337,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get first_name => 'الاسم الأول';
 
   @override
-  String get last_name => 'الاسم الأخير';
+  String get last_name => 'اسم العائلة';
 
   @override
   String get address => 'العنوان';
@@ -782,4 +782,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get points_discount => 'خصم النقاط';
+
+  @override
+  String get recent_searches => 'السجلات الأخيرة';
+
+  @override
+  String get clear_all => 'مسح الكل';
+
+  @override
+  String get on_sale => 'عروض';
+
+  @override
+  String get sort_by => 'ترتيب حسب';
+
+  @override
+  String get price_low_high => 'السعر: من الأقل للأعلى';
+
+  @override
+  String get price_high_low => 'السعر: من الأعلى للأقل';
+
+  @override
+  String get newest => 'الأحدث';
 }

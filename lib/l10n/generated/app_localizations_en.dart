@@ -105,7 +105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviews => 'Reviews';
 
   @override
-  String get in_stock => 'In stock';
+  String get in_stock => 'In Stock';
 
   @override
   String get out_of_stock => 'Out of stock';
@@ -788,4 +788,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get points_discount => 'Points Discount';
+
+  @override
+  String get recent_searches => 'Recent Searches';
+
+  @override
+  String get clear_all => 'Clear All';
+
+  @override
+  String get on_sale => 'On Sale';
+
+  @override
+  String get sort_by => 'Sort by';
+
+  @override
+  String get price_low_high => 'Price: Low to High';
+
+  @override
+  String get price_high_low => 'Price: High to Low';
+
+  @override
+  String get newest => 'Newest';
 }

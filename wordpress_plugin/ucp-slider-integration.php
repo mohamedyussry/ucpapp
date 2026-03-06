@@ -165,7 +165,7 @@ add_action( 'edited_product_brand', 'ucp_save_brand_custom_fields', 10 );
  */
 function ucp_admin_assets( $hook ) {
     $screen = get_current_screen();
-    if ( !in_array($screen->id, ['edit-product_cat', 'edit-product_brand', 'term-product_brand']) ) {
+    if ( !in_array($screen->id, ['edit-product_cat', 'edit-product_brand', 'term-product_brand', 'product']) ) {
         return;
     }
 	wp_enqueue_media();
@@ -177,7 +177,7 @@ add_action( 'admin_enqueue_scripts', 'ucp_admin_assets' );
  */
 function ucp_admin_footer_scripts() {
     $screen = get_current_screen();
-    if ( !in_array($screen->id, ['edit-product_cat', 'edit-product_brand', 'term-product_brand']) ) {
+    if ( !in_array($screen->id, ['edit-product_cat', 'edit-product_brand', 'term-product_brand', 'product']) ) {
         return;
     }
 	?>
@@ -236,6 +236,32 @@ function ucp_admin_footer_scripts() {
 			$('#ucp_brand_slider_image_preview').empty();
 			$(this).hide();
 		});
+
+        // رفع صورة السلايدر للمنتجات
+		$(document).on('click', '.ucp_upload_product_image_button', function(e){
+			e.preventDefault();
+			if ( frame ) { frame.open(); return; }
+			frame = wp.media({
+				title: '<?php echo esc_js( __("اختر صورة السلايدر للمنتج", "ucp-slider") ); ?>',
+				button: { text: '<?php echo esc_js( __("استخدام هذه الصورة", "ucp-slider") ); ?>' },
+				multiple: false
+			});
+			frame.on('select', function() {
+				var attachment = frame.state().get('selection').first().toJSON();
+				$('#ucp_product_slider_image_id').val(attachment.id);
+				$('#ucp_product_slider_image_preview').html('<img src="'+attachment.url+'" style="max-width:100%; display:block; border-radius:6px; margin-bottom:6px;">');
+				$('.ucp_remove_product_image_button').show();
+			});
+			frame.open();
+		});
+		
+		// إزالة صورة السلايدر للمنتجات
+		$(document).on('click', '.ucp_remove_product_image_button', function(e){
+			e.preventDefault();
+			$('#ucp_product_slider_image_id').val('');
+			$('#ucp_product_slider_image_preview').empty();
+			$(this).hide();
+		});
 	});
 	</script>
 	<?php
@@ -243,7 +269,7 @@ function ucp_admin_footer_scripts() {
 add_action( 'admin_print_footer_scripts', 'ucp_admin_footer_scripts' );
 
 /**
- * إضافة البيانات للـ REST API (الفئات والماركات)
+ * إضافة البيانات للـ REST API (الفئات والماركات والمنتجات)
  */
 function ucp_register_atrest_fields() {
     // حقول الفئات
@@ -283,8 +309,170 @@ function ucp_register_atrest_fields() {
 			);
 		}
 	));
+
+    // حقول المنتجات - بيانات السلايدر
+	register_rest_field( 'product', 'slider_data', array(
+		'get_callback' => function( $post ) {
+			$show_in_slider = get_post_meta( $post['id'], 'ucp_show_product_in_slider', true ) === '1';
+			$image_id       = get_post_meta( $post['id'], 'ucp_product_slider_image_id', true );
+			$image_url      = $image_id ? wp_get_attachment_url( $image_id ) : null;
+			
+			return array(
+				'is_featured'  => $show_in_slider,
+				'slider_image' => $image_url,
+			);
+		}
+	));
+
+    // رابط المحتوى الموحد للسلايدر
+    register_rest_route('ucp/v1', '/slider-items', [
+        'methods'             => 'GET',
+        'callback'            => 'ucp_get_all_slider_items',
+        'permission_callback' => '__return_true',
+    ]);
 }
 add_action( 'rest_api_init', 'ucp_register_atrest_fields' );
+
+/**
+ * دالة جمع كل عناصر السلايدر في مصفوفة واحدة
+ */
+function ucp_get_all_slider_items() {
+    $items = [];
+
+    // 1. الفئات
+    $categories = get_terms([
+        'taxonomy'   => 'product_cat',
+        'hide_empty' => false,
+        'meta_query' => [[
+            'key'     => 'ucp_show_in_slider',
+            'value'   => '1',
+            'compare' => '='
+        ]]
+    ]);
+    foreach ($categories as $cat) {
+        $image_id = get_term_meta($cat->term_id, 'ucp_slider_image_id', true);
+        $items[] = [
+            'type'  => 'category',
+            'id'    => $cat->term_id,
+            'name'  => $cat->name,
+            'image' => $image_id ? wp_get_attachment_url($image_id) : ''
+        ];
+    }
+
+    // 2. الماركات
+    $brands = get_terms([
+        'taxonomy'   => 'product_brand',
+        'hide_empty' => false,
+        'meta_query' => [[
+            'key'     => 'ucp_show_brand_in_slider',
+            'value'   => '1',
+            'compare' => '='
+        ]]
+    ]);
+    foreach ($brands as $brand) {
+        $image_id = get_term_meta($brand->term_id, 'ucp_brand_slider_image_id', true);
+        $items[] = [
+            'type'  => 'brand',
+            'id'    => $brand->term_id,
+            'name'  => $brand->name,
+            'image' => $image_id ? wp_get_attachment_url($image_id) : ''
+        ];
+    }
+
+    // 3. المنتجات
+    $products = get_posts([
+        'post_type'      => 'product',
+        'posts_per_page' => -1,
+        'meta_query'     => [[
+            'key'     => 'ucp_show_product_in_slider',
+            'value'   => '1',
+            'compare' => '='
+        ]]
+    ]);
+    foreach ($products as $p) {
+        $image_id = get_post_meta($p->ID, 'ucp_product_slider_image_id', true);
+        $items[] = [
+            'type'  => 'product',
+            'id'    => $p->ID,
+            'name'  => $p->post_title,
+            'image' => $image_id ? wp_get_attachment_url($image_id) : ''
+        ];
+    }
+
+    return $items;
+}
+
+// =============================================================================
+// سلايدر المنتجات — Meta Box
+// =============================================================================
+
+/**
+ * تسجيل Meta Box في صفحة تعديل المنتج
+ */
+function ucp_register_product_slider_metabox() {
+	add_meta_box(
+		'ucp_product_slider_metabox',
+		__( 'إعدادات سلايدر التطبيق', 'ucp-slider' ),
+		'ucp_product_slider_metabox_html',
+		'product',
+		'side',
+		'high'
+	);
+}
+add_action( 'add_meta_boxes', 'ucp_register_product_slider_metabox' );
+
+/**
+ * محتوى Meta Box للمنتج
+ */
+function ucp_product_slider_metabox_html( $post ) {
+	wp_nonce_field( 'ucp_product_slider_save', 'ucp_product_slider_nonce' );
+
+	$show_in_slider = get_post_meta( $post->ID, 'ucp_show_product_in_slider', true );
+	$image_id       = get_post_meta( $post->ID, 'ucp_product_slider_image_id', true );
+	$image_url      = $image_id ? wp_get_attachment_url( $image_id ) : '';
+	?>
+	<div style="padding:6px 0;">
+		<p style="margin:0 0 10px;">
+			<label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+				<input type="checkbox" name="ucp_show_product_in_slider" id="ucp_show_product_in_slider" value="1" <?php checked( $show_in_slider, '1' ); ?>>
+				<?php _e( '🎠 إظهار في السلايدر العلوي للتطبيق', 'ucp-slider' ); ?>
+			</label>
+			<span style="display:block;color:#888;font-size:11px;margin-top:4px;"><?php _e( 'يجب رفع صورة مخصصة (أبعاد 16:9) أدناه.', 'ucp-slider' ); ?></span>
+		</p>
+
+		<div style="margin-top:10px;">
+			<strong style="display:block;margin-bottom:6px;"><?php _e( 'صورة السلايدر (أبعاد 16:9)', 'ucp-slider' ); ?></strong>
+			<input type="hidden" id="ucp_product_slider_image_id" name="ucp_product_slider_image_id" value="<?php echo esc_attr( $image_id ); ?>">
+			<div id="ucp_product_slider_image_preview">
+				<?php if ( $image_url ) : ?>
+					<img src="<?php echo esc_url( $image_url ); ?>" style="max-width:100%; display:block; border-radius:6px; margin-bottom:6px;">
+				<?php endif; ?>
+			</div>
+			<button type="button" class="button button-primary ucp_upload_product_image_button" style="margin-top:4px;"><?php _e( '📂 رفع/اختيار صورة', 'ucp-slider' ); ?></button>
+			<button type="button" class="button ucp_remove_product_image_button" style="margin-top:4px;<?php echo $image_url ? '' : 'display:none;'; ?>"><?php _e( '🗑️ إزالة الصورة', 'ucp-slider' ); ?></button>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * حفظ بيانات سلايدر المنتج عند الحفظ
+ */
+function ucp_save_product_slider_meta( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+	if ( (isset($_POST['post_type']) && 'product' === $_POST['post_type']) || (isset($_GET['post_type']) && 'product' === $_GET['post_type']) ) {
+        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
+    }
+
+	$show_in_slider = isset( $_POST['ucp_show_product_in_slider'] ) ? '1' : '0';
+	update_post_meta( $post_id, 'ucp_show_product_in_slider', $show_in_slider );
+
+	if ( array_key_exists( 'ucp_product_slider_image_id', $_POST ) ) {
+		update_post_meta( $post_id, 'ucp_product_slider_image_id', sanitize_text_field( $_POST['ucp_product_slider_image_id'] ) );
+	}
+}
+add_action( 'woocommerce_process_product_meta', 'ucp_save_product_slider_meta', 10, 1 );
+add_action( 'save_post_product', 'ucp_save_product_slider_meta', 10, 1 );
 /**
  * إضافة إعدادات FCM للوحة التحكم
  */

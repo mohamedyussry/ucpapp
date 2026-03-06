@@ -293,7 +293,7 @@ abstract class AppLocalizations {
   /// No description provided for @in_stock.
   ///
   /// In en, this message translates to:
-  /// **'In stock'**
+  /// **'In Stock'**
   String get in_stock;
 
   /// No description provided for @out_of_stock.
@@ -1578,6 +1578,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Points Discount'**
   String get points_discount;
+
+  /// No description provided for @recent_searches.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Searches'**
+  String get recent_searches;
+
+  /// No description provided for @clear_all.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get clear_all;
+
+  /// No description provided for @on_sale.
+  ///
+  /// In en, this message translates to:
+  /// **'On Sale'**
+  String get on_sale;
+
+  /// No description provided for @sort_by.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sort_by;
+
+  /// No description provided for @price_low_high.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: Low to High'**
+  String get price_low_high;
+
+  /// No description provided for @price_high_low.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: High to Low'**
+  String get price_high_low;
+
+  /// No description provided for @newest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get newest;
 }
 
 class _AppLocalizationsDelegate

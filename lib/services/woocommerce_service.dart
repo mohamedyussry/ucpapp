@@ -263,6 +263,53 @@ class WooCommerceService {
     }
   }
 
+  Future<List<SliderItem>> getSliderItems() async {
+    try {
+      final String fullUrl =
+          '${Config.wooCommerceUrl}/wp-json/ucp/v1/slider-items';
+      final response = await _dio.get(
+        fullUrl,
+        options: Options(validateStatus: (status) => true),
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        return (response.data as List).map((item) {
+          return SliderItem(
+            imageUrl: item['image'] ?? '',
+            type: item['type'] ?? '',
+            id: item['id'] is int
+                ? item['id']
+                : int.tryParse(item['id'].toString()) ?? 0,
+            name: item['name'] ?? '',
+          );
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      developer.log('Error fetching unified slider items: $e');
+      return [];
+    }
+  }
+
+  Future<WooProduct?> getProductById(int id) async {
+    try {
+      final response = await _dio.get(
+        '/products/$id',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+        },
+      );
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return WooProduct.fromJson(response.data);
+      }
+      return null;
+    } catch (e) {
+      developer.log('Error fetching product by ID ($id): $e');
+      return null;
+    }
+  }
+
   /// New Direct Method for FCM Token
   Future<bool> updateFcmToken(int userId, String token) async {
     try {
@@ -277,28 +324,24 @@ class WooCommerceService {
         data: {'user_id': userId, 'fcm_token': token},
         options: Options(
           contentType: Headers.jsonContentType,
-          validateStatus: (status) => true, // Accept all statuses for debugging
+          validateStatus: (status) => true,
         ),
       );
 
       if (response.statusCode == 200) {
         return true;
-      } else {
-        developer.log(
-          'Direct FCM Update FAILED: Status ${response.statusCode}',
-        );
-        return false;
       }
+      return false;
     } on DioException catch (e) {
-      developer.log(
-        'Direct FCM Update DIO ERROR: ${e.message}, Body: ${e.response?.data}',
-      );
+      developer.log('Direct FCM Update DIO ERROR: ${e.message}');
       return false;
     } catch (e) {
       developer.log('Direct FCM Update EXCEPTION: $e');
       return false;
     }
   }
+
+  // ... rest of methods
 
   Future<Order?> getOrderById(int id) async {
     try {
@@ -573,6 +616,8 @@ class WooCommerceService {
     int? brandId,
     int? tagId,
     bool? featured,
+    bool? onSale,
+    String? stockStatus,
     String? orderby,
     String? order,
     List<int>? include,
@@ -589,6 +634,13 @@ class WooCommerceService {
         'page': page,
         'status': 'publish',
       };
+
+      if (onSale == true) {
+        queryParameters['on_sale'] = true;
+      }
+      if (stockStatus != null) {
+        queryParameters['stock_status'] = stockStatus;
+      }
 
       if (categoryId != null) {
         queryParameters['category'] = categoryId.toString();

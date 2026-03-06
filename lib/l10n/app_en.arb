@@ -345,5 +345,13 @@
     }
   },
   "tax": "Tax",
-  "points_discount": "Points Discount"
+  "points_discount": "Points Discount",
+  "recent_searches": "Recent Searches",
+  "clear_all": "Clear All",
+  "on_sale": "On Sale",
+  "in_stock": "In Stock",
+  "sort_by": "Sort by",
+  "price_low_high": "Price: Low to High",
+  "price_high_low": "Price: High to Low",
+  "newest": "Newest"
 }

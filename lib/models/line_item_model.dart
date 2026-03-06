@@ -3,11 +3,7 @@ class LineItem {
   final int quantity;
   final int? variationId;
 
-  LineItem({
-    required this.productId,
-    required this.quantity,
-    this.variationId,
-  });
+  LineItem({required this.productId, required this.quantity, this.variationId});
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {

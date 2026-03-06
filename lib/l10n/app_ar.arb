@@ -43,7 +43,7 @@
   "explore_collections": "استكشف جميع المجموعات",
   "products": "المنتجات",
   "failed_load_products": "فشل تحميل المنتجات. يرجى المحاولة مرة أخرى لاحقًا.",
-  "no_products_matching": "لم بتم العثور على منتجات مطابقة لبحثك.",
+  "no_products_matching": "لم بتم العور على منتجات مطابقة لبحثك.",
   "shop_now": "تسوق الآن",
   "no_products_available": "لا توجد منتجات متاحة.",
   "brands": "الماركات",
@@ -135,7 +135,6 @@
   "no_ongoing_orders": "لا توجد طلبات جارية.",
   "no_completed_orders": "لا توجد طلبات مكتملة.",
   "no_cancelled_orders": "لا توجد طلبات ملغاة.",
-  "retry": "إعادة المحاولة",
   "order_number": "طلب #{id}",
   "price_label": "السعر: {price} {currency}",
   "track_btn": "تتبع",
@@ -151,7 +150,6 @@
   "err_load_order_details": "تعذر تحميل تفاصيل الطلب",
   "go_back": "رجوع",
   "loading_order_tracking": "جاري تحميل تتبع الطلب...",
-  "unknown_error": "خطأ غير معروف",
   "wishlist_title": "قائمة الرغبات ({count})",
   "wishlist_empty": "لم تقم بإضافة أي منتجات إلى قائمة الرغبات بعد!",
   "shop_by_categories_btn": "تسوق حسب الفئات",
@@ -214,9 +212,6 @@
   "products_label": "المنتجات",
   "order_label": "الطلب",
   "create_account": "إنشاء حساب",
-  "first_name": "الاسم الأول",
-  "last_name": "الاسم الأخير",
-  "email": "البريد الإلكتروني",
   "please_enter_first_name": "الرجاء إدخال الاسم الأول",
   "please_enter_last_name": "الرجاء إدخال الاسم الأخير",
   "please_enter_email": "الرجاء إدخال البريد الإلكتروني",
@@ -249,21 +244,15 @@
   "login_to_earn_points_subtitle": "عند إتمام عملية الشراء",
   "use_points_for_discount": "استخدام النقاط للمكافآت",
   "points_balance_summary": "برصيد {points} {unit}",
-  "@points_balance_summary": {
-    "placeholders": {
-      "points": { "type": "int" },
-      "unit": { "type": "String" }
-    }
-  },
   "points_redeem_summary": "سيتم خصم {points} {unit} وتوفير {currency}{amount}",
-  "@points_redeem_summary": {
-    "placeholders": {
-      "points": { "type": "int" },
-      "unit": { "type": "String" },
-      "currency": { "type": "String" },
-      "amount": { "type": "String" }
-    }
-  },
   "tax": "الضريبة",
-  "points_discount": "خصم النقاط"
+  "points_discount": "خصم النقاط",
+  "recent_searches": "السجلات الأخيرة",
+  "clear_all": "مسح الكل",
+  "on_sale": "عروض",
+  "in_stock": "متوفر",
+  "sort_by": "ترتيب حسب",
+  "price_low_high": "السعر: من الأقل للأعلى",
+  "price_high_low": "السعر: من الأعلى للأقل",
+  "newest": "الأحدث"
 }

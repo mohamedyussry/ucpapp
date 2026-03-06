@@ -5,21 +5,7 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:myapp/products_screen.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
-// نموذج موحد لعناصر السلايدر
-class SliderItem {
-  final String imageUrl;
-  final String type; // 'category' or 'brand'
-  final int id;
-  final String name;
-
-  SliderItem({
-    required this.imageUrl,
-    required this.type,
-    required this.id,
-    required this.name,
-  });
-}
+import 'package:myapp/product_detail_screen.dart';
 
 class HomeSlider extends StatefulWidget {
   const HomeSlider({super.key});
@@ -44,54 +30,8 @@ class _HomeSliderState extends State<HomeSlider> {
 
   Future<void> _fetchSliderData() async {
     try {
-      // جلب الفئات والماركات بشكل متوازي
-      final results = await Future.wait([
-        _wooService.getCategories(),
-        _wooService.getBrands(),
-      ]);
-
-      // تأكد من نوع البيانات قبل التحويل لتجنب أخطاء الـ casting
-      final List<WooProductCategory> categories =
-          results[0] is List<WooProductCategory>
-          ? results[0] as List<WooProductCategory>
-          : [];
-      final List<WooBrand> brands = results[1] is List<WooBrand>
-          ? results[1] as List<WooBrand>
-          : [];
-
-      List<SliderItem> items = [];
-
-      // إضافة الفئات التي تظهر في السلايدر مع تحققات أمان إضافية
-      for (var cat in categories) {
-        if (cat.sliderData?.isFeatured == true &&
-            cat.sliderData?.sliderImage != null &&
-            cat.sliderData!.sliderImage!.isNotEmpty) {
-          items.add(
-            SliderItem(
-              imageUrl: cat.sliderData!.sliderImage!,
-              type: 'category',
-              id: cat.id,
-              name: cat.name,
-            ),
-          );
-        }
-      }
-
-      // إضافة الماركات التي تظهر في السلايدر مع تحققات أمان إضافية
-      for (var brand in brands) {
-        if (brand.sliderData?.isFeatured == true &&
-            brand.sliderData?.sliderImage != null &&
-            brand.sliderData!.sliderImage!.isNotEmpty) {
-          items.add(
-            SliderItem(
-              imageUrl: brand.sliderData!.sliderImage!,
-              type: 'brand',
-              id: brand.id,
-              name: brand.name,
-            ),
-          );
-        }
-      }
+      // جلب جميع عناصر السلايدر (فئات + ماركات + منتجات) بطلب واحد موحد
+      final items = await _wooService.getSliderItems();
 
       if (mounted) {
         setState(() {
@@ -104,9 +44,8 @@ class _HomeSliderState extends State<HomeSlider> {
     }
   }
 
-  void _handleSliderTap(SliderItem item) {
+  Future<void> _handleSliderTap(SliderItem item) async {
     if (item.type == 'category') {
-      // الانتقال إلى منتجات الفئة
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -115,7 +54,6 @@ class _HomeSliderState extends State<HomeSlider> {
         ),
       );
     } else if (item.type == 'brand') {
-      // الانتقال إلى منتجات الماركة
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -123,6 +61,46 @@ class _HomeSliderState extends State<HomeSlider> {
               ProductsScreen(brandId: item.id, brandName: item.name),
         ),
       );
+    } else if (item.type == 'product') {
+      // إظهار مؤشر تحميل بسيط عند جلب تفاصيل المنتج
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(color: Colors.orange),
+        ),
+      );
+
+      try {
+        // جلب تفاصيل المنتج بالكامل باستخدام الـ ID مباشرة لضمان الدقة
+        final fullProduct = await _wooService.getProductById(item.id);
+
+        if (mounted) {
+          Navigator.pop(context); // إغلاق مؤشر التحميل
+
+          if (fullProduct != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProductDetailScreen(product: fullProduct),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('المنتج غير متوفر حالياً')),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('عذراً، حدث خطأ أثناء تحميل بيانات المنتج'),
+            ),
+          );
+        }
+      }
     }
   }
 
