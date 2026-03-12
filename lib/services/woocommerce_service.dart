@@ -883,8 +883,10 @@ class WooCommerceService {
   Future<List<ShippingMethod>> getShippingMethodsForLocation(
     String country,
     String state,
-    String postcode,
-  ) async {
+    String postcode, {
+    double? cartTotal,
+  }) async {
+    developer.log('Fetching shipping methods for: country=$country, state=$state, postcode=$postcode, cartTotal=$cartTotal');
     try {
       final zonesResponse = await _dio.get(
         '/shipping/zones',
@@ -908,20 +910,29 @@ class WooCommerceService {
         final zoneId = zone['id'];
         if (zoneId != null) {
           methodFutures.add(
-            _dio
-                .get(
-                  '/shipping/zones/$zoneId/methods',
-                  queryParameters: {
-                    'consumer_key': Config.consumerKey,
-                    'consumer_secret': Config.consumerSecret,
-                  },
-                )
-                .then((response) {
-                  if (response.statusCode == 200 && response.data is List) {
-                    return {'zone': zone, 'methods': response.data};
-                  }
-                  return null;
-                }),
+            Future.wait([
+              _dio.get(
+                '/shipping/zones/$zoneId/methods',
+                queryParameters: {
+                  'consumer_key': Config.consumerKey,
+                  'consumer_secret': Config.consumerSecret,
+                },
+              ),
+              _getZoneLocations(zoneId),
+            ]).then((responses) {
+              final methodResponse = responses[0] as Response;
+              final locations = responses[1] as List<dynamic>;
+
+              if (methodResponse.statusCode == 200 &&
+                  methodResponse.data is List) {
+                return {
+                  'zone': zone,
+                  'methods': methodResponse.data,
+                  'locations': locations,
+                };
+              }
+              return null;
+            }),
           );
         }
       }
@@ -933,7 +944,10 @@ class WooCommerceService {
 
         final zone = result['zone'];
         final methods = result['methods'];
-        final zoneLocations = await _getZoneLocations(zone['id']);
+        final zoneLocations = result['locations'];
+
+        developer.log('Checking Zone: ${zone['name']} (ID: ${zone['id']})');
+        developer.log('Zone Locations: $zoneLocations');
 
         bool isMatch = _isLocationInZone(
           zoneLocations,
@@ -942,10 +956,41 @@ class WooCommerceService {
           postcode,
         );
 
+        developer.log('Is Match for $country:$state? $isMatch');
+
         if (isMatch) {
           for (var methodData in methods) {
-            if (methodData['enabled'] == true) {
-              final settings = methodData['settings'];
+            final settings = methodData['settings'];
+            final methodId = methodData['method_id'];
+            final isEnabled = methodData['enabled'];
+
+            developer.log(
+              'Processing Method: $methodId, Enabled: $isEnabled, Title: ${methodData['title']}',
+            );
+            developer.log('Method Settings: $settings');
+
+            if (isEnabled == true) {
+              // Check for Minimum Order Amount if it's Free Shipping
+              if (methodId == 'free_shipping') {
+                final requires = settings?['requires']?['value'] ?? '';
+                final minAmountValue =
+                    settings?['min_amount']?['value']?.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+                final minAmount = (minAmountValue != null && minAmountValue.isNotEmpty)
+                    ? double.tryParse(minAmountValue) ?? 0.0
+                    : 0.0;
+                
+                developer.log('Free Shipping Check for ${methodData['title']}: cartTotal=$cartTotal, minAmount=$minAmount, requires=$requires');
+
+                if (cartTotal != null && (requires == 'min_amount' ||
+                    requires == 'both' ||
+                    requires == 'either')) {
+                  if (cartTotal < minAmount) {
+                    developer.log('Free Shipping condition NOT met: $cartTotal < $minAmount');
+                    continue;
+                  }
+                }
+              }
+
               final costString = settings?['cost']?['value']?.toString();
               final cost = (costString != null && costString.isNotEmpty)
                   ? double.tryParse(costString) ?? 0.0
@@ -954,22 +999,51 @@ class WooCommerceService {
               availableMethods.add(
                 ShippingMethod(
                   instanceId: methodData['instance_id'],
-                  title: methodData['title'],
-                  methodId: methodData['method_id'],
+                  title: methodData['title'] ?? 'Shipping',
+                  methodId: methodId,
                   cost: cost,
                   zoneName: zone['name'] ?? 'N/A',
                 ),
               );
+            } else {
+              developer.log('Method $methodId is DISABLED in WooCommerce.');
             }
           }
         }
       }
 
       final restOfTheWorldMethods = await _getZoneMethods(0);
-      if (!_isCountryInAnyZone(allZones, country)) {
+      if (availableMethods.isEmpty) {
+        developer.log('No specific zone matched. Checking Rest of the World (Zone 0)...');
         for (var methodData in restOfTheWorldMethods) {
-          if (methodData['enabled'] == true) {
-            final settings = methodData['settings'];
+          final settings = methodData['settings'];
+          final methodId = methodData['method_id'];
+          final isEnabled = methodData['enabled'];
+
+          developer.log('Processing Zone 0 Method: $methodId, Enabled: $isEnabled');
+
+          if (isEnabled == true) {
+            // Check for Minimum Order Amount if it's Free Shipping
+            if (methodId == 'free_shipping') {
+              final requires = settings?['requires']?['value'] ?? '';
+              final minAmountValue =
+                  settings?['min_amount']?['value']?.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+              final minAmount = (minAmountValue != null && minAmountValue.isNotEmpty)
+                  ? double.tryParse(minAmountValue) ?? 0.0
+                  : 0.0;
+              
+              developer.log('Zone 0 Free Shipping Check: cartTotal=$cartTotal, minAmount=$minAmount, requires=$requires');
+
+              if (cartTotal != null && (requires == 'min_amount' ||
+                  requires == 'both' ||
+                  requires == 'either')) {
+                if (cartTotal < minAmount) {
+                  developer.log('Zone 0 Free Shipping NOT met.');
+                  continue;
+                }
+              }
+            }
+
             final costString = settings?['cost']?['value']?.toString();
             final cost = (costString != null && costString.isNotEmpty)
                 ? double.tryParse(costString) ?? 0.0
@@ -978,8 +1052,8 @@ class WooCommerceService {
             availableMethods.add(
               ShippingMethod(
                 instanceId: methodData['instance_id'],
-                title: methodData['title'],
-                methodId: methodData['method_id'],
+                title: methodData['title'] ?? 'Shipping',
+                methodId: methodId,
                 cost: cost,
                 zoneName: "Rest of the World",
               ),
@@ -1015,6 +1089,7 @@ class WooCommerceService {
         },
       );
 
+      developer.log('States response for $countryCode: ${response.data}');
       if (response.statusCode == 200 && response.data['states'] is List) {
         return (response.data['states'] as List)
             .map((s) => CountryState.fromJson(s))
@@ -1062,9 +1137,6 @@ class WooCommerceService {
     }
   }
 
-  bool _isCountryInAnyZone(List<dynamic> zones, String countryCode) {
-    return false;
-  }
 
   bool _isLocationInZone(
     List<dynamic> zoneLocations,
@@ -1078,12 +1150,17 @@ class WooCommerceService {
       final type = loc['type'];
       final code = loc['code'];
 
+      developer.log('Comparing $type: target=$code vs input=$country/$state');
       switch (type) {
         case 'country':
           if (code == country) return true;
           break;
         case 'state':
-          if (code.contains(':') && code == '$country:$state') return true;
+          if (code.contains(':')) {
+            if (code == '$country:$state') return true;
+          } else {
+            if (code == state) return true;
+          }
           break;
         case 'postcode':
           if (code == postcode) return true;

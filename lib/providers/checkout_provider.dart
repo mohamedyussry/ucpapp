@@ -73,6 +73,8 @@ class CheckoutProvider with ChangeNotifier {
     // Reset other checkout-specific state
     _states = [];
     _selectedStateCode = null;
+    orderData.billingState = null;
+    orderData.billingCity = null;
     _shippingMethods = [];
     _selectedShippingMethod = null;
     _shippingCost = 0.0;
@@ -184,7 +186,12 @@ class CheckoutProvider with ChangeNotifier {
     if (_errorMessage == null) {
       await Future.wait([
         if (_selectedStateCode != null)
-          fetchShippingMethods(country, _selectedStateCode!, postcode),
+          fetchShippingMethods(
+            country,
+            _selectedStateCode!,
+            postcode,
+            cartTotal: _subtotal,
+          ),
       ]);
     }
 
@@ -198,10 +205,8 @@ class CheckoutProvider with ChangeNotifier {
         countryCode,
       );
       _states = fetchedStates;
-      if (_states.isNotEmpty) {
-        _selectedStateCode = _states.first.code;
-        developer.log('States fetched. Default state: $_selectedStateCode');
-      }
+      _states = fetchedStates;
+      notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to load regions: ${e.toString()}';
       developer.log(_errorMessage!);
@@ -211,20 +216,27 @@ class CheckoutProvider with ChangeNotifier {
   Future<void> fetchShippingMethods(
     String country,
     String state,
-    String postcode,
-  ) async {
+    String postcode, {
+    double? cartTotal,
+  }) async {
     try {
       final methods = await _wooCommerceService.getShippingMethodsForLocation(
         country,
         state,
         postcode,
+        cartTotal: cartTotal,
       );
       _shippingMethods = methods;
       if (_shippingMethods.isNotEmpty) {
-        _selectedShippingMethod = _shippingMethods.first;
+        // Prioritize Free Shipping if available
+        final freeShipping = _shippingMethods.firstWhere(
+          (m) => m.methodId == 'free_shipping',
+          orElse: () => _shippingMethods.first,
+        );
+        _selectedShippingMethod = freeShipping;
         _shippingCost = _selectedShippingMethod!.cost;
         developer.log(
-          'Shipping methods fetched. Default: ${_selectedShippingMethod?.title}',
+          'Shipping methods fetched. Selected Default: ${_selectedShippingMethod?.title}',
         );
       } else {
         _shippingCost = 0.0;
@@ -235,14 +247,24 @@ class CheckoutProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Failed to load shipping options: ${e.toString()}';
       developer.log(_errorMessage!);
+    } finally {
+      notifyListeners();
     }
   }
 
   void selectState(String stateCode) {
     _selectedStateCode = stateCode;
     orderData.billingState = stateCode;
-    developer.log('State selected: $stateCode');
-    fetchShippingMethods('SA', stateCode, '');
+
+    // Find the state name to set as city
+    final state = _states.firstWhere(
+      (s) => s.code == stateCode,
+      orElse: () => CountryState(code: stateCode, name: stateCode),
+    );
+    orderData.billingCity = state.name;
+
+    developer.log('State selection updated: Code=$stateCode, Name=${state.name}');
+    fetchShippingMethods('SA', stateCode, '', cartTotal: _subtotal);
     notifyListeners();
   }
 

@@ -349,13 +349,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get select_location_map => 'حدد الموقع على الخريطة';
 
   @override
-  String get select_region => 'اختر المنطقة';
+  String get select_region => 'اختر مدينة الشحن';
 
   @override
   String get shipping_to => 'الشحن إلى';
 
   @override
   String get payment_method => 'طريقة الدفع';
+
+  @override
+  String get pay_cod => 'الدفع عند الاستلام';
+
+  @override
+  String get pay_cod_desc => 'الدفع نقداً أو بالبطاقة عند الاستلام.';
+
+  @override
+  String get pay_online => 'الدفع أونلاين';
+
+  @override
+  String get pay_online_desc => 'Apple Pay\n(مدى • ماستركارد • فيزا)';
+
+  @override
+  String get pay_tamara => 'تمارا';
+
+  @override
+  String get pay_tamara_desc => 'قسّم دفعاتك مع تمارا بدون فوائد.';
+
+  @override
+  String get pay_tabby => 'تاببي';
+
+  @override
+  String get pay_tabby_desc => 'قسّمها على 4 دفعات بدون فوائد أو رسوم.';
 
   @override
   String get order_notes => 'ملاحظات الطلب';
@@ -388,6 +412,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String err_please_enter(String field) {
     return 'يرجى إدخال $field';
   }
+
+  @override
+  String get err_select_city => 'يرجى اختيار مدينة الشحن';
 
   @override
   String get err_invalid_email => 'يرجى إدخال عنوان بريد إلكتروني صحيح';

@@ -26,6 +26,7 @@ import 'package:myapp/providers/language_provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'package:myapp/services/app_initializer.dart';
+import 'package:myapp/services/update_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -67,6 +68,9 @@ void main() async {
   NotificationService().initialize().catchError((e) {
     developer.log("Main: NotificationService initialization error: $e");
   });
+
+  // Initialize Update Service
+  await UpdateService().initialize();
 
   runApp(
     ChangeNotifierProvider(
@@ -139,13 +143,34 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _hasCheckedUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_hasCheckedUpdate) {
+        UpdateService().checkForUpdate(context);
+        _hasCheckedUpdate = true;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    return _buildBody(authProvider);
+  }
 
+  Widget _buildBody(AuthProvider authProvider) {
     switch (authProvider.status) {
       case AuthStatus.uninitialized:
         return const Scaffold(

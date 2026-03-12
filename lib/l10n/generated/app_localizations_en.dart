@@ -353,13 +353,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get select_location_map => 'Select Location on Map';
 
   @override
-  String get select_region => 'Select Region';
+  String get select_region => 'Select Shipping City';
 
   @override
   String get shipping_to => 'Shipping To';
 
   @override
   String get payment_method => 'Payment Method';
+
+  @override
+  String get pay_cod => 'Cash/Card on Delivery';
+
+  @override
+  String get pay_cod_desc => 'Pay with cash or card upon delivery.';
+
+  @override
+  String get pay_online => 'Pay Online';
+
+  @override
+  String get pay_online_desc => 'Apple Pay\n(Visa • Mastercard • Mada)';
+
+  @override
+  String get pay_tamara => 'Tamara';
+
+  @override
+  String get pay_tamara_desc => 'Pay in installments with Tamara.';
+
+  @override
+  String get pay_tabby => 'Tabby';
+
+  @override
+  String get pay_tabby_desc => 'Split in 4. No interest. No fees.';
 
   @override
   String get order_notes => 'Order Notes';
@@ -393,6 +417,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String err_please_enter(String field) {
     return 'Please enter $field';
   }
+
+  @override
+  String get err_select_city => 'Please select a shipping city';
 
   @override
   String get err_invalid_email => 'Please enter a valid email address';

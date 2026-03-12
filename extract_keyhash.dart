@@ -21,7 +21,6 @@ void main() async {
       sha1.stdin.add(releaseResult.stdout as List<int>);
       await sha1.stdin.close();
 
-      var base64 = await Process.run('openssl', ['base64']);
       var sha1Output = await sha1.stdout.toList();
       var flatSha1 = sha1Output.expand((x) => x).toList();
 

@@ -132,9 +132,17 @@
   "address": "Address",
   "email": "Email",
   "select_location_map": "Select Location on Map",
-  "select_region": "Select Region",
+  "select_region": "Select Shipping City",
   "shipping_to": "Shipping To",
   "payment_method": "Payment Method",
+  "pay_cod": "Cash/Card on Delivery",
+  "pay_cod_desc": "Pay with cash or card upon delivery.",
+  "pay_online": "Pay Online",
+  "pay_online_desc": "Apple Pay\n(Visa • Mastercard • Mada)",
+  "pay_tamara": "Tamara",
+  "pay_tamara_desc": "Pay in installments with Tamara.",
+  "pay_tabby": "Tabby",
+  "pay_tabby_desc": "Split in 4. No interest. No fees.",
   "order_notes": "Order Notes",
   "order_notes_hint": "Notes about your order...",
   "final_review": "Final Review",
@@ -145,6 +153,7 @@
   "payment_failed": "Payment failed or cancelled.",
   "order_failed": "Failed to place order. Please try again.",
   "err_please_enter": "Please enter {field}",
+  "err_select_city": "Please select a shipping city",
   "@err_please_enter": {
     "placeholders": {
       "field": {

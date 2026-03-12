@@ -1372,7 +1372,10 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           const SizedBox(height: 12),
           _buildModernReviewCard(
             title: l10n.payment_method,
-            content: checkout.selectedPaymentMethod?.title ?? '',
+            content: _getLocalizedPaymentTitle(
+              checkout.selectedPaymentMethod?.id,
+              l10n,
+            ),
             icon: Icons.payment,
           ),
           const SizedBox(height: 24),
@@ -1789,7 +1792,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     }
 
     return DropdownButtonFormField<String>(
-      initialValue: checkout.selectedStateCode,
+      value: checkout.selectedStateCode,
       hint: Text(l10n.select_region),
       isExpanded: true,
       icon: const Icon(Icons.keyboard_arrow_down, color: Colors.orange),
@@ -1821,16 +1824,55 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           checkout.selectState(newValue);
         }
       },
-      validator: (value) =>
-          value == null ? l10n.err_please_enter(l10n.select_region) : null,
+      validator: (value) => value == null ? l10n.select_region : null,
     );
+  }
+
+  String _getLocalizedPaymentTitle(String? id, AppLocalizations l10n) {
+    bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    switch (id) {
+      case 'cod':
+        return isArabic ? 'الدفع عند الاستلام' : 'Cash on Delivery';
+      case 'paymob':
+        return isArabic ? 'الدفع أونلاين' : 'Pay Online';
+      case 'tamara-gateway':
+        return isArabic ? 'تمارا' : 'Tamara';
+      case 'tabby_installments':
+        return isArabic ? 'تابي' : 'Tabby';
+      default:
+        return id ?? '';
+    }
+  }
+
+  String _getLocalizedPaymentDescription(String? id, AppLocalizations l10n) {
+    bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    switch (id) {
+      case 'cod':
+        return isArabic
+            ? 'الدفع نقداً أو بالبطاقة عند الاستلام.'
+            : 'Pay with cash or card upon delivery.';
+      case 'paymob':
+        return isArabic
+            ? 'Apple Pay\n(مدى • ماستركارد • فيزا)'
+            : 'Apple Pay\n(Visa • Mastercard • Mada)';
+      case 'tamara-gateway':
+        return isArabic
+            ? 'قسّم دفعاتك مع تمارا بدون فوائد.'
+            : 'Pay in installments with Tamara.';
+      case 'tabby_installments':
+        return isArabic
+            ? 'قسّمها على 4 دفعات بدون فوائد أو رسوم.'
+            : 'Split in 4. No interest. No fees.';
+      default:
+        return '';
+    }
   }
 
   Widget _buildModernPaymentMethods(CheckoutProvider checkout) {
     if (checkout.paymentMethods.isEmpty) {
       return const Text('No payment methods available.');
     }
-
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: checkout.paymentMethods.map((method) {
         final isSelected = checkout.selectedPaymentMethod?.id == method.id;
@@ -1914,7 +1956,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              method.title,
+                              _getLocalizedPaymentTitle(method.id, l10n),
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -1925,7 +1967,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                             ),
                             if (method.description.isNotEmpty)
                               Text(
-                                method.description,
+                                _getLocalizedPaymentDescription(method.id, l10n),
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   color: isSelected

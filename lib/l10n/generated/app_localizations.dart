@@ -767,7 +767,7 @@ abstract class AppLocalizations {
   /// No description provided for @select_region.
   ///
   /// In en, this message translates to:
-  /// **'Select Region'**
+  /// **'Select Shipping City'**
   String get select_region;
 
   /// No description provided for @shipping_to.
@@ -781,6 +781,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Payment Method'**
   String get payment_method;
+
+  /// No description provided for @pay_cod.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash/Card on Delivery'**
+  String get pay_cod;
+
+  /// No description provided for @pay_cod_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay with cash or card upon delivery.'**
+  String get pay_cod_desc;
+
+  /// No description provided for @pay_online.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Online'**
+  String get pay_online;
+
+  /// No description provided for @pay_online_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Pay\n(Visa • Mastercard • Mada)'**
+  String get pay_online_desc;
+
+  /// No description provided for @pay_tamara.
+  ///
+  /// In en, this message translates to:
+  /// **'Tamara'**
+  String get pay_tamara;
+
+  /// No description provided for @pay_tamara_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in installments with Tamara.'**
+  String get pay_tamara_desc;
+
+  /// No description provided for @pay_tabby.
+  ///
+  /// In en, this message translates to:
+  /// **'Tabby'**
+  String get pay_tabby;
+
+  /// No description provided for @pay_tabby_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Split in 4. No interest. No fees.'**
+  String get pay_tabby_desc;
 
   /// No description provided for @order_notes.
   ///
@@ -841,6 +889,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter {field}'**
   String err_please_enter(String field);
+
+  /// No description provided for @err_select_city.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a shipping city'**
+  String get err_select_city;
 
   /// No description provided for @err_invalid_email.
   ///
