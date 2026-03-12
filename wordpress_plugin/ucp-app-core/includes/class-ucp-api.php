@@ -12,6 +12,14 @@ class UCP_API {
         register_rest_route($ns, '/slider-items', [ 'methods' => 'GET', 'callback' => [ $this, 'get_slider_items' ], 'permission_callback' => '__return_true' ]);
         register_rest_route($ns, '/update-info', [ 'methods' => 'GET', 'callback' => [ $this, 'get_update_info' ], 'permission_callback' => '__return_true' ]);
         register_rest_route($ns, '/update-fcm-token', [ 'methods' => 'POST', 'callback' => [ $this, 'update_fcm_token' ], 'permission_callback' => '__return_true' ]);
+
+        // تسجيل حقول إضافية لمعرفة الماركات المسموح ظهورها في التطبيق
+        register_rest_field( 'product_brand', 'app_settings', [
+            'get_callback' => function( $term ) {
+                $show_in_app = get_term_meta( $term['id'], 'ucp_show_brand_in_app', true );
+                return [ 'show_in_app' => ($show_in_app === '1') ];
+            }
+        ]);
     }
 
     public function get_slider_items() {

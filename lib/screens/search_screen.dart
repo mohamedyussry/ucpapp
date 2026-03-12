@@ -27,6 +27,12 @@ class _SearchScreenState extends State<SearchScreen> {
   WooProductCategory? _selectedCategory;
   Timer? _debounce;
 
+  // Pagination Variables
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   // New Filter/Sort variables
   String _orderby = 'date';
   String _order = 'desc';
@@ -44,12 +50,23 @@ class _SearchScreenState extends State<SearchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNode.requestFocus();
     });
+    
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (!_isFetchingMore && _hasMore) {
+        _loadMoreProducts();
+      }
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _focusNode.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -102,16 +119,20 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {
           _searchResults = [];
           _isSearching = false;
+          _hasMore = true;
+          _currentPage = 1;
         });
       }
     });
   }
 
-  Future<void> _performSearch(String query) async {
-    if (query.trim().isEmpty) return;
+  Future<void> _loadMoreProducts() async {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) return;
 
     setState(() {
-      _isSearching = true;
+      _isFetchingMore = true;
+      _currentPage++;
     });
 
     try {
@@ -121,11 +142,48 @@ class _SearchScreenState extends State<SearchScreen> {
         orderby: _orderby,
         order: _order,
         perPage: 30,
+        page: _currentPage,
+      );
+
+      if (mounted) {
+        setState(() {
+          if (results.isEmpty || results.length < 30) {
+            _hasMore = false;
+          }
+          _searchResults.addAll(results);
+          _isFetchingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isFetchingMore = false);
+      }
+    }
+  }
+
+  Future<void> _performSearch(String query) async {
+    if (query.trim().isEmpty) return;
+
+    setState(() {
+      _isSearching = true;
+      _currentPage = 1;
+      _hasMore = true;
+    });
+
+    try {
+      final results = await _wooService.getProducts(
+        search: query,
+        categoryId: _selectedCategory?.id,
+        orderby: _orderby,
+        order: _order,
+        perPage: 30,
+        page: _currentPage,
       );
       if (mounted) {
         setState(() {
           _searchResults = results;
           _isSearching = false;
+          _hasMore = results.length == 30;
         });
         _saveSearchQuery(query);
       }
@@ -414,19 +472,31 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.7,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final product = _searchResults[index];
-        return ProductCard(product: product);
-      },
+    return Column(
+      children: [
+        Expanded(
+          child: GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.7,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemCount: _searchResults.length,
+            itemBuilder: (context, index) {
+              final product = _searchResults[index];
+              return ProductCard(product: product);
+            },
+          ),
+        ),
+        if (_isFetchingMore)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(color: Colors.orange),
+          ),
+      ],
     );
   }
 }

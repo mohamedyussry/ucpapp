@@ -774,6 +774,7 @@ class WooCommerceService {
         }
         return (response.data as List)
             .map((b) => WooBrand.fromJson(b))
+            .where((b) => b.isVisibleInApp)
             .toList();
       } else {
         developer.log(
