@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:myapp/providers/language_provider.dart';
 import 'dart:developer' as developer;
+import 'package:myapp/services/woocommerce_service.dart';
+import 'package:myapp/products_screen.dart';
+import 'package:myapp/product_detail_screen.dart';
 import '../config.dart';
 
 class UpdateService {
@@ -20,6 +23,11 @@ class UpdateService {
   ));
 
   Map<String, dynamic>? _updateInfo;
+
+  bool _hasCheckedUpdate = false;
+  bool _hasCheckedPopup = false;
+
+  Map<String, dynamic>? get updateInfo => _updateInfo;
 
   Future<void> initialize() async {
     try {
@@ -141,6 +149,86 @@ class UpdateService {
     if (url != null && url.isNotEmpty) {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    }
+  }
+
+  void showPromotionalPopup(BuildContext context) {
+    if (_hasCheckedPopup) return;
+    _hasCheckedPopup = true;
+
+    if (_updateInfo == null) return;
+
+    final isEnabled = _updateInfo!['popup_enabled'] ?? false;
+    if (!isEnabled) return;
+
+    final imageUrl = _updateInfo!['popup_image_url'];
+    if (imageUrl == null || imageUrl.isEmpty) return;
+
+    final link = _updateInfo!['popup_link'];
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(context);
+                final targetType = _updateInfo!['popup_target_type'];
+                final targetId = _updateInfo!['popup_target_id'];
+                handlePromotionTap(context, targetType, targetId);
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> handlePromotionTap(BuildContext context, String? type, String? targetId) async {
+    if (targetId == null || targetId.isEmpty) return;
+
+    if (type == 'product') {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.orange)),
+      );
+      try {
+        final product = await WooCommerceService().getProductById(int.parse(targetId));
+        if (context.mounted) Navigator.pop(context);
+        if (product != null && context.mounted) {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product)));
+        }
+      } catch (e) {
+        if (context.mounted) Navigator.pop(context);
+      }
+    } else if (type == 'category') {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ProductsScreen(categoryId: int.parse(targetId), category: 'Category')));
+    } else if (type == 'brand') {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => ProductsScreen(brandId: int.parse(targetId), brandName: 'Brand')));
+    } else if (type == 'external' || (type == null && targetId.startsWith('http'))) {
+       if (await canLaunchUrl(Uri.parse(targetId))) {
+        await launchUrl(Uri.parse(targetId), mode: LaunchMode.externalApplication);
       }
     }
   }

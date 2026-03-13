@@ -13,6 +13,8 @@ import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/widgets/custom_cart_notification.dart';
 import 'package:myapp/widgets/tamara_promotion_widget.dart';
 import 'package:myapp/widgets/tabby_promotion_widget.dart';
+import 'package:myapp/services/update_service.dart';
+import 'package:myapp/providers/language_provider.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -33,6 +35,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   WooProductVariation? _selectedVariation;
   final Map<String, String> _selectedOptions = {};
   bool _isLoadingVariations = false;
+
+  int _quantity = 1;
 
   @override
   void initState() {
@@ -103,7 +107,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: const [CartBadge()],
+        actions: [
+          Consumer<WishlistProvider>(
+            builder: (context, wishlist, child) {
+              final isFavorite = wishlist.isFavorite(widget.product.id);
+              return IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : Colors.white,
+                ),
+                onPressed: () {
+                  wishlist.toggleWishlist(widget.product);
+                },
+              );
+            },
+          ),
+          const CartBadge(),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -452,56 +472,109 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Consumer<WishlistProvider>(
-            builder: (context, wishlist, child) {
-              final isFavorite = wishlist.isFavorite(widget.product.id);
-              return Container(
+          Consumer<CartProvider>(
+            builder: (context, cart, child) {
+              final currencyProvider = Provider.of<CurrencyProvider>(context, listen: false);
+              return _buildFreeShippingText(context, cart, currencyProvider, productToAdd);
+            },
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // Quantity Selector
+              Container(
+                height: 50,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
                   border: Border.all(color: Colors.grey.shade300, width: 1.5),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: IconButton(
-                  icon: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.red : Colors.black,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildQuantityButton(
+                      icon: Icons.remove,
+                      onPressed: _quantity > 1
+                          ? () {
+                              setState(() {
+                                _quantity--;
+                              });
+                            }
+                          : () {},
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '$_quantity',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    _buildQuantityButton(
+                      icon: Icons.add,
+                      isAdd: true,
+                      onPressed: () {
+                        setState(() {
+                          _quantity++;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: isInStock
+                      ? () {
+                          for (int i = 0; i < _quantity; i++) {
+                            cart.addItem(productToAdd);
+                          }
+                          CustomCartNotification.show(context, productToAdd);
+                        }
+                      : null, // Disable button if out of stock
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isInStock
+                        ? Colors.orange
+                        : Colors.grey.shade400,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
                   ),
-                  onPressed: () {
-                    wishlist.toggleWishlist(widget.product);
-                  },
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: isInStock
-                  ? () {
-                      cart.addItem(productToAdd);
-                      CustomCartNotification.show(context, productToAdd);
-                    }
-                  : null, // Disable button if out of stock
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isInStock
-                    ? Colors.orange
-                    : Colors.grey.shade400,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                isInStock ? l10n.add_to_cart : l10n.out_of_stock,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        isInStock ? l10n.add_to_cart : l10n.out_of_stock,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      if (isInStock) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          '(${((productToAdd.salePrice ?? productToAdd.regularPrice ?? productToAdd.price ?? 0) * _quantity).toStringAsFixed(2)})',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ]
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -536,5 +609,82 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } else {
       return Text(currencySymbol, style: style);
     }
+  }
+
+  Widget _buildQuantityButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    bool isAdd = false,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 32, // slightly larger than cart screen for touch area
+        height: 32,
+        decoration: BoxDecoration(
+          color: isAdd ? Colors.orange : Colors.black87,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
+      ),
+    );
+  }
+
+  Widget _buildFreeShippingText(BuildContext context, CartProvider cart, CurrencyProvider currencyProvider, WooProduct currentProduct) {
+    var updateInfo = UpdateService().updateInfo;
+    if (updateInfo == null) return const SizedBox.shrink();
+
+    bool isEnabled = updateInfo['free_shipping_enabled'] ?? false;
+    if (!isEnabled) return const SizedBox.shrink();
+
+    double minAmount = (updateInfo['free_shipping_min_amount'] is num)
+        ? (updateInfo['free_shipping_min_amount'] as num).toDouble()
+        : double.tryParse(updateInfo['free_shipping_min_amount'].toString()) ?? 250.0;
+    
+    double productPrice = currentProduct.salePrice ?? currentProduct.price ?? 0.0;
+    double currentAmount = cart.subtotal + (productPrice * _quantity);
+
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    bool isArabic = languageProvider.appLocale.languageCode == 'ar';
+
+    String msg = '';
+    bool isSuccess = currentAmount >= minAmount;
+
+    if (isSuccess) {
+      msg = isArabic 
+          ? (updateInfo['free_shipping_success_ar'] ?? 'مبروك! لقد تأهلت للحصول على شحن مجاني! 🚀') 
+          : (updateInfo['free_shipping_success_en'] ?? 'Congratulations! You qualified for free shipping! 🚀');
+    } else {
+      double remaining = minAmount - currentAmount;
+      String rawMsg = isArabic 
+          ? (updateInfo['free_shipping_msg_ar'] ?? 'أضف منتجات بقيمة [amount] ر.س إضافية للحصول على شحن مجاني!')
+          : (updateInfo['free_shipping_msg_en'] ?? 'Add [amount] SAR more to get free shipping!');
+      
+      // Replace [amount] with the formatted remaining amount + currency
+      msg = rawMsg.replaceAll('[amount]', '${remaining.toStringAsFixed(2)} ${currencyProvider.currencySymbol}');
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          isSuccess ? Icons.local_shipping : Icons.local_shipping_outlined,
+          color: isSuccess ? Colors.green : Colors.orange,
+          size: 16,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            msg,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: isSuccess ? FontWeight.bold : FontWeight.w600,
+              color: isSuccess ? Colors.green.shade700 : Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ],
+    );
   }
 }

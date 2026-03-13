@@ -11,6 +11,8 @@ import 'widgets/tabby_promotion_widget.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'providers/auth_provider.dart';
 import 'providers/loyalty_provider.dart';
+import 'services/update_service.dart';
+import 'providers/language_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -89,7 +91,6 @@ class _CartScreenState extends State<CartScreen> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   ListView.builder(
                     shrinkWrap: true,
@@ -107,6 +108,8 @@ class _CartScreenState extends State<CartScreen> {
                       );
                     },
                   ),
+                  const SizedBox(height: 16),
+                  _buildFreeShippingProgress(cart, currencyProvider),
                   const SizedBox(height: 20),
                   _buildCheckoutForm(context, cart, currencyProvider),
                 ],
@@ -621,6 +624,103 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
           const SizedBox(width: 40), // To balance the layout
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFreeShippingProgress(CartProvider cart, CurrencyProvider currencyProvider) {
+    var updateInfo = UpdateService().updateInfo;
+    if (updateInfo == null) return const SizedBox.shrink();
+
+    bool isEnabled = updateInfo['free_shipping_enabled'] ?? false;
+    if (!isEnabled) return const SizedBox.shrink();
+
+    double minAmount = (updateInfo['free_shipping_min_amount'] is num)
+        ? (updateInfo['free_shipping_min_amount'] as num).toDouble()
+        : double.tryParse(updateInfo['free_shipping_min_amount'].toString()) ?? 250.0;
+    double currentAmount = cart.subtotal;
+
+    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
+    bool isArabic = languageProvider.appLocale.languageCode == 'ar';
+
+    String msg = '';
+    bool isSuccess = currentAmount >= minAmount;
+
+    if (isSuccess) {
+      msg = isArabic 
+          ? (updateInfo['free_shipping_success_ar'] ?? 'مبروك! لقد تأهلت للحصول على شحن مجاني! 🚀') 
+          : (updateInfo['free_shipping_success_en'] ?? 'Congratulations! You qualified for free shipping! 🚀');
+    } else {
+      double remaining = minAmount - currentAmount;
+      String rawMsg = isArabic 
+          ? (updateInfo['free_shipping_msg_ar'] ?? 'أضف منتجات بقيمة [amount] ر.س إضافية للحصول على شحن مجاني!')
+          : (updateInfo['free_shipping_msg_en'] ?? 'Add [amount] SAR more to get free shipping!');
+      
+      // Replace [amount] with the formatted remaining amount + currency
+      msg = rawMsg.replaceAll('[amount]', '${remaining.toStringAsFixed(2)} ${currencyProvider.currencySymbol}');
+    }
+
+    double progress = (currentAmount / minAmount).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isSuccess ? Icons.local_shipping : Icons.local_shipping_outlined,
+                color: isSuccess ? Colors.green : Colors.orange,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  msg,
+                  style: GoogleFonts.notoSansArabic(
+                    fontSize: 13,
+                    fontWeight: isSuccess ? FontWeight.bold : FontWeight.w600,
+                    color: isSuccess ? Colors.green.shade700 : Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              // Background track
+              Container(
+                height: 8,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              // Progress track
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 500),
+                height: 8,
+                width: MediaQuery.of(context).size.width * progress, // Approximation for width constraint
+                decoration: BoxDecoration(
+                  color: isSuccess ? Colors.green : Colors.orange,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

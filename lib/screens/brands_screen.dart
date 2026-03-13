@@ -87,7 +87,7 @@ class _BrandsScreenState extends State<BrandsScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.8,
+        childAspectRatio: 0.65, // تقريباً نفس النسبة في الصفحة الرئيسية (150/240)
       ),
       itemCount: _brands.length,
       itemBuilder: (context, index) {
@@ -105,49 +105,27 @@ class _BrandsScreenState extends State<BrandsScreen> {
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(10),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
-                    ),
-                    child: brand.image != null
-                        ? CachedNetworkImage(
-                            imageUrl: brand.image!.src,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) =>
-                                Container(color: Colors.grey[100]),
-                            errorWidget: (context, url, error) =>
-                                _buildPlaceholder(),
-                          )
-                        : _buildPlaceholder(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    brand.name,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ],
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: brand.image != null
+                  ? CachedNetworkImage(
+                      imageUrl: brand.image!.src,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          _buildPlaceholder(),
+                      errorWidget: (context, url, error) =>
+                          _buildPlaceholder(),
+                    )
+                  : _buildPlaceholder(),
             ),
           ),
         );

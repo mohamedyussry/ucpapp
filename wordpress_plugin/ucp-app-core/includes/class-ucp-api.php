@@ -31,12 +31,37 @@ class UCP_API {
 
     public function get_update_info() {
         return [
+            // Update Settings
             'required_version'   => get_option('ucp_required_version', '1.0.0'),
             'is_force_update'    => get_option('ucp_is_force_update') === '1',
             'update_url_android' => get_option('ucp_update_url_android'),
             'update_url_ios'     => get_option('ucp_update_url_ios'),
             'update_message_ar'  => get_option('ucp_update_message_ar'),
-            'update_message_en'  => get_option('ucp_update_message_en')
+            'update_message_en'  => get_option('ucp_update_message_en'),
+            
+            // Cart Offers Settings
+            'free_shipping_enabled'    => get_option('ucp_free_shipping_enabled') === '1',
+            'free_shipping_min_amount' => (float) get_option('ucp_free_shipping_min_amount', '250'),
+            'free_shipping_msg_ar'     => get_option('ucp_free_shipping_msg_ar', 'أضف منتجات بقيمة [amount] ر.س إضافية للحصول على شحن مجاني!'),
+            'free_shipping_msg_en'     => get_option('ucp_free_shipping_msg_en', 'Add [amount] SAR more to get free shipping!'),
+            'free_shipping_success_ar' => get_option('ucp_free_shipping_success_ar', 'مبروك! لقد تأهلت للحصول على شحن مجاني! 🚀'),
+            'free_shipping_success_en' => get_option('ucp_free_shipping_success_en', 'Congratulations! You qualified for free shipping! 🚀'),
+
+            // Promotion Settings (Marquee)
+            'marquee_enabled'    => get_option('ucp_marquee_enabled') === '1',
+            'marquee_text_ar'    => get_option('ucp_marquee_text_ar'),
+            'marquee_text_en'    => get_option('ucp_marquee_text_en'),
+            'marquee_bg_color'   => get_option('ucp_marquee_bg_color', '#ff9800'),
+            'marquee_text_color' => get_option('ucp_marquee_text_color', '#ffffff'),
+            'marquee_target_type' => get_option('ucp_marquee_target_type', 'external'),
+            'marquee_target_id'   => get_option('ucp_marquee_target_id'),
+
+            // Promotion Settings (Popup)
+            'popup_enabled'      => get_option('ucp_popup_enabled') === '1',
+            'popup_image_url'    => (get_option('ucp_popup_image_id')) ? wp_get_attachment_url(get_option('ucp_popup_image_id')) : '',
+            'popup_link'         => get_option('ucp_popup_link'),
+            'popup_target_type'  => get_option('ucp_popup_target_type', 'external'),
+            'popup_target_id'    => get_option('ucp_popup_target_id'),
         ];
     }
 

@@ -9,6 +9,8 @@ import 'widgets/home/home_categories.dart';
 import 'widgets/home/home_brands.dart';
 import 'widgets/home/home_loyalty_section.dart';
 import 'widgets/home/home_featured_products.dart';
+import 'widgets/home/home_marquee.dart';
+import 'services/update_service.dart';
 
 import 'l10n/generated/app_localizations.dart';
 
@@ -20,6 +22,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      UpdateService().showPromotionalPopup(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -36,10 +46,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             const HomeSearchHeader(),
+            const HomeMarquee(),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  // Add refresh logic if needed
+                  await UpdateService().initialize();
                   setState(() {});
                 },
                 color: Colors.orange,
