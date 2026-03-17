@@ -1853,8 +1853,8 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
             : 'Pay with cash or card upon delivery.';
       case 'paymob':
         return isArabic
-            ? 'Apple Pay\n(مدى • ماستركارد • فيزا)'
-            : 'Apple Pay\n(Visa • Mastercard • Mada)';
+            ? 'مدى • ماستركارد • فيزا'
+            : 'Visa • Mastercard • Mada';
       case 'tamara-gateway':
         return isArabic
             ? 'قسّم دفعاتك مع تمارا بدون فوائد.'
@@ -1918,63 +1918,92 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white
                               : Colors.orange.shade50,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: method.id == 'tamara'
-                            ? Image.network(
-                                'https://cdn.tamara.co/assets/png/tamara-logo-badge-en.png',
-                                width: 24,
-                                height: 24,
-                                // Use color only if we want to tint it, but usually the logo should stay original
-                                // color: isSelected ? Colors.orange : null,
+                        child: (method.id.contains('tamara'))
+                            ? Image.asset(
+                                'assets/images/tamara-logo.png',
+                                width: 40,
+                                fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    Icon(
-                                      Icons.event_note_outlined,
-                                      color: isSelected
-                                          ? Colors.orange
-                                          : Colors.orange.shade700,
-                                    ),
+                                    Icon(Icons.payment,
+                                        color: isSelected
+                                            ? Colors.orange
+                                            : Colors.orange.shade700),
                               )
-                            : Icon(
-                                method.id == 'cod'
-                                    ? Icons.money_outlined
-                                    : Icons.credit_card_outlined,
-                                color: isSelected
-                                    ? Colors.orange
-                                    : Colors.orange.shade700,
-                                size: 24,
-                              ),
+                            : (method.id.contains('tabby'))
+                                ? Image.asset(
+                                    'assets/images/tabby-logo.png',
+                                    width: 40,
+                                    fit: BoxFit.contain,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Icon(
+                                            Icons.payment,
+                                            color: isSelected
+                                                ? Colors.orange
+                                                : Colors.orange.shade700),
+                                  )
+                                : Icon(
+                                    method.id == 'paymob'
+                                        ? Icons.credit_card_outlined
+                                        : (method.id == 'cod'
+                                            ? Icons.payments_outlined
+                                            : Icons.credit_card_outlined),
+                                    color: isSelected
+                                        ? Colors.orange
+                                        : Colors.orange.shade700,
+                                    size: 24,
+                                  ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              _getLocalizedPaymentTitle(method.id, l10n),
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                                color: isSelected
-                                    ? Colors.white
-                                    : Colors.black87,
-                              ),
-                            ),
-                            if (method.description.isNotEmpty)
-                              Text(
-                                _getLocalizedPaymentDescription(method.id, l10n),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: isSelected
-                                      ? Colors.white.withValues(alpha: 0.9)
-                                      : Colors.grey.shade600,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _getLocalizedPaymentTitle(method.id, l10n),
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.black87,
+                                  ),
                                 ),
-                              ),
+                                if (method.id == 'paymob')
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6.0),
+                                    child: Wrap(
+                                      spacing: 4,
+                                      runSpacing: 4,
+                                      children: [
+                                        _buildSmallLogo('assets/images/Apple_Pay_logo.png', isAsset: true),
+                                        _buildSmallLogo('assets/images/Mada.png', isAsset: true),
+                                        _buildSmallLogo('assets/images/visa.png', isAsset: true),
+                                        _buildSmallLogo('assets/images/mastercard.png', isAsset: true),
+                                      ],
+                                    ),
+                                  ),
+                                if (method.id != 'paymob' && method.description.isNotEmpty)
+                                  Text(
+                                    _getLocalizedPaymentDescription(method.id, l10n),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: isSelected
+                                          ? Colors.white.withValues(alpha: 0.9)
+                                          : Colors.grey.shade600,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -1988,11 +2017,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                   ),
                 ),
                 if (!isEnabled &&
-                    (method.id == 'tamara' || method.id == 'tabby'))
+                    (method.id.contains('tamara') ||
+                        method.id.contains('tabby')))
                   Padding(
                     padding: const EdgeInsets.only(left: 8, bottom: 12),
                     child: Text(
-                      method.id == 'tamara'
+                      method.id.contains('tamara')
                           ? 'متاح للطلبات بين 99 و 3000 ريال'
                           : 'متاح للطلبات بين 10 و 5000 ريال',
                       style: GoogleFonts.notoSansArabic(
@@ -2009,6 +2039,25 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSmallLogo(String path, {bool isAsset = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 2,
+          ),
+        ],
+      ),
+      child: isAsset
+          ? Image.asset(path, width: 22, height: 14, fit: BoxFit.contain)
+          : Image.network(path, width: 22, height: 14, fit: BoxFit.contain),
     );
   }
 

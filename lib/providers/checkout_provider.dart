@@ -115,27 +115,27 @@ class CheckoutProvider with ChangeNotifier {
   void _initializePaymentMethods() {
     _paymentMethods = [
       PaymentMethod(
+        id: 'paymob',
+        title: 'Pay Online',
+        description: 'Visa • Mastercard • Mada',
+        enabled: true,
+      ),
+      PaymentMethod(
         id: 'cod',
         title: 'Cash/Card on Delivery',
         description: 'Pay with cash or card upon delivery.',
         enabled: true,
       ),
       PaymentMethod(
-        id: 'paymob',
-        title: 'Pay Online',
-        description: 'Apple Pay\n(Visa • Mastercard • Mada)',
+        id: 'tabby_installments',
+        title: 'Tabby',
+        description: 'Split in 4. No interest. No fees.',
         enabled: true,
       ),
       PaymentMethod(
         id: 'tamara-gateway',
         title: 'Tamara',
         description: 'Pay in installments with Tamara.',
-        enabled: true,
-      ),
-      PaymentMethod(
-        id: 'tabby_installments',
-        title: 'Tabby',
-        description: 'Split in 4. No interest. No fees.',
         enabled: true,
       ),
     ];

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:myapp/providers/currency_provider.dart';
@@ -87,6 +88,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _shareProduct() async {
+    try {
+      final String name = widget.product.name;
+      final String link = widget.product.permalink;
+
+      if (link.isNotEmpty) {
+        final String text = "$name\n\n$link";
+        await Share.share(
+          text,
+          subject: name, // Useful for email sharing
+        );
+      } else {
+        debugPrint('Product permalink is empty, cannot share.');
+      }
+    } catch (e) {
+      debugPrint('Error sharing product: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
@@ -108,6 +134,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: () => _shareProduct(),
+          ),
           Consumer<WishlistProvider>(
             builder: (context, wishlist, child) {
               final isFavorite = wishlist.isFavorite(widget.product.id);
