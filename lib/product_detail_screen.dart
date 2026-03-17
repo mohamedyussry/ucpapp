@@ -100,9 +100,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       if (link.isNotEmpty) {
         final String text = "$name\n\n$link";
+        
+        // Use the RenderBox to determine the position for iPad's popover
+        final RenderBox? box = context.findRenderObject() as RenderBox?;
+        
         await Share.share(
           text,
-          subject: name, // Useful for email sharing
+          subject: name,
+          sharePositionOrigin: box != null 
+              ? box.localToGlobal(Offset.zero) & box.size 
+              : null,
         );
       } else {
         debugPrint('Product permalink is empty, cannot share.');
