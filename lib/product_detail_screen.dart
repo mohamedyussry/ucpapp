@@ -142,7 +142,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.arrowUpFromBracket, color: Colors.white, size: 20),
             onPressed: () => _shareProduct(),
           ),
           Consumer<WishlistProvider>(

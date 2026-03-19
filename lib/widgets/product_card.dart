@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/providers/currency_provider.dart';
 
 import '../product_detail_screen.dart';
@@ -188,9 +189,9 @@ class ProductCard extends StatelessWidget {
                                 ),
                               ),
                               child: const Icon(
-                                Icons.shopping_cart_outlined,
+                                FontAwesomeIcons.cartPlus,
                                 color: Colors.white,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
                           ),

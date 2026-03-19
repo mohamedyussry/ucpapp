@@ -12,6 +12,7 @@ import 'package:myapp/providers/auth_provider.dart';
 import 'package:myapp/providers/cart_provider.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:provider/provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shimmer/shimmer.dart';
 import 'l10n/generated/app_localizations.dart';
 
@@ -249,7 +250,7 @@ class MyOrdersScreenState extends State<MyOrdersScreen>
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.black),
+            icon: const Icon(FontAwesomeIcons.cartShopping, color: Colors.black, size: 20),
             onPressed: () {
               Navigator.push(
                 context,

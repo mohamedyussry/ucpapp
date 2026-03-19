@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/models/product_model.dart';
 import '../l10n/generated/app_localizations.dart';
 
@@ -134,8 +135,9 @@ class _NotificationWidgetState extends State<_NotificationWidget>
                                 fit: BoxFit.cover,
                               )
                             : const Icon(
-                                Icons.shopping_bag_outlined,
+                                FontAwesomeIcons.cartShopping,
                                 color: Colors.orange,
+                                size: 18,
                               ),
                       ),
                     ),

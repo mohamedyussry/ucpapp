@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/line_item_model.dart';
 import 'package:myapp/models/state_model.dart';
@@ -1381,7 +1382,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
           const SizedBox(height: 24),
           _buildModernSectionTitle(
             l10n.order_summary,
-            Icons.shopping_cart_outlined,
+            FontAwesomeIcons.cartShopping,
           ),
           const SizedBox(height: 16),
           _buildModernOrderSummaryCard(checkout, currencyProvider),
@@ -1873,8 +1874,18 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       return const Text('No payment methods available.');
     }
     final l10n = AppLocalizations.of(context)!;
+    // Sort: paymob first, then COD, then tamara, then tabby, rest last
+    const order = ['paymob', 'cod', 'tamara-gateway', 'tabby_installments'];
+    final sorted = [...checkout.paymentMethods];
+    sorted.sort((a, b) {
+      final ai = order.indexWhere((id) => a.id.contains(id.split('-')[0]));
+      final bi = order.indexWhere((id) => b.id.contains(id.split('-')[0]));
+      final an = ai == -1 ? order.length : ai;
+      final bn = bi == -1 ? order.length : bi;
+      return an.compareTo(bn);
+    });
     return Column(
-      children: checkout.paymentMethods.map((method) {
+      children: sorted.map((method) {
         final isSelected = checkout.selectedPaymentMethod?.id == method.id;
         final isEnabled = method.enabled;
 
@@ -1980,16 +1991,22 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                                 ),
                                 if (method.id == 'paymob')
                                   Padding(
-                                    padding: const EdgeInsets.only(top: 6.0),
-                                    child: Wrap(
-                                      spacing: 4,
-                                      runSpacing: 4,
-                                      children: [
-                                        _buildSmallLogo('assets/images/Apple_Pay_logo.png', isAsset: true),
-                                        _buildSmallLogo('assets/images/Mada.png', isAsset: true),
-                                        _buildSmallLogo('assets/images/visa.png', isAsset: true),
-                                        _buildSmallLogo('assets/images/mastercard.png', isAsset: true),
-                                      ],
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: AlignmentDirectional.centerStart,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _buildSmallLogo('assets/images/Apple_Pay_logo.png', isAsset: true),
+                                          const SizedBox(width: 6),
+                                          _buildSmallLogo('assets/images/Mada.png', isAsset: true),
+                                          const SizedBox(width: 6),
+                                          _buildSmallLogo('assets/images/visa.png', isAsset: true),
+                                          const SizedBox(width: 6),
+                                          _buildSmallLogo('assets/images/mastercard.png', isAsset: true),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 if (method.id != 'paymob' && method.description.isNotEmpty)
@@ -2044,20 +2061,22 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
 
   Widget _buildSmallLogo(String path, {bool isAsset = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 2,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: isAsset
-          ? Image.asset(path, width: 22, height: 14, fit: BoxFit.contain)
-          : Image.network(path, width: 22, height: 14, fit: BoxFit.contain),
+          ? Image.asset(path, width: 44, height: 28, fit: BoxFit.contain)
+          : Image.network(path, width: 44, height: 28, fit: BoxFit.contain),
     );
   }
 

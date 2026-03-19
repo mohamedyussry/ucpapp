@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/models/order_model.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'l10n/generated/app_localizations.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
@@ -86,8 +87,9 @@ class OrderDetailsScreen extends StatelessWidget {
                 elevation: 1,
                 child: ListTile(
                   leading: const Icon(
-                    Icons.shopping_bag_outlined,
+                    FontAwesomeIcons.cartShopping,
                     color: Colors.orange,
+                    size: 18,
                   ),
                   title: Text(
                     productName,

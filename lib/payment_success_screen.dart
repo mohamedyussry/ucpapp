@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/home_screen.dart';
 import 'package:myapp/models/order_model.dart';
 import 'package:myapp/order_tracking_screen.dart';
@@ -305,7 +306,7 @@ ${billingInfo['state'] ?? ''}, ${billingInfo['country'] ?? ''}
     return _buildBaseActionButton(
       onPressed: onPressed,
       label: l10n.continue_shopping,
-      icon: Icons.shopping_bag_outlined,
+      icon: FontAwesomeIcons.cartShopping,
       isPrimary: false,
     );
   }

@@ -3,6 +3,7 @@ import 'package:myapp/providers/currency_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'providers/cart_provider.dart';
 import 'checkout_screen.dart';
 import 'widgets/custom_bottom_nav_bar.dart';
@@ -73,7 +74,7 @@ class _CartScreenState extends State<CartScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.shopping_cart_outlined,
+                    FontAwesomeIcons.cartShopping,
                     size: 80,
                     color: Colors.grey[400],
                   ),

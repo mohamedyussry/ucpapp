@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 
 class ProductListScreen extends StatelessWidget {
@@ -30,7 +31,7 @@ class ProductListScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.cartShopping, color: Colors.white, size: 20),
             onPressed: () {},
           ),
         ],
@@ -184,7 +185,7 @@ class ProductListScreen extends StatelessWidget {
             children: [
               Text(price, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
               IconButton(
-                icon: const Icon(Icons.shopping_cart),
+                icon: const Icon(FontAwesomeIcons.cartPlus, size: 20),
                 onPressed: () {},
               ),
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/cart_provider.dart';
 import '../cart_screen.dart';
 
@@ -26,8 +27,9 @@ class CartBadge extends StatelessWidget {
             ),
             child: IconButton(
               icon: const Icon(
-                Icons.shopping_bag_outlined,
+                FontAwesomeIcons.cartShopping,
                 color: Colors.white,
+                size: 20,
               ),
               onPressed: () {
                 Navigator.push(

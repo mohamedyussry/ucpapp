@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:myapp/providers/wishlist_provider.dart';
 import 'package:myapp/widgets/product_card.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/widgets/custom_bottom_nav_bar.dart';
 import 'package:myapp/cart_screen.dart'; // Import CartScreen
 import 'package:myapp/home_screen.dart'; // Import HomeScreen
@@ -36,7 +37,7 @@ class WishlistScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_cart, color: Colors.white),
+            icon: const Icon(FontAwesomeIcons.cartShopping, color: Colors.white, size: 20),
             onPressed: () {
               Navigator.push(
                 context,
