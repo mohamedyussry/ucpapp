@@ -56,6 +56,7 @@ dependencies:
   marquee: ^2.2.3
   share_plus: ^10.1.4
   ultimate_flutter_icons: ^1.4.0
+  mobile_scanner: ^6.0.4
 
   # pay_with_paymob has been removed as requested.
 

@@ -678,6 +678,11 @@ class WooCommerceService {
       }
       if (search != null && search.isNotEmpty) {
         queryParameters['search'] = search;
+        final bool isNumeric = RegExp(r'^\d+$').hasMatch(search.trim());
+        if (isNumeric) {
+          useCache = false; // Barcode search should be live to avoid stale empty results
+          queryParameters['search_fields'] = ['global_unique_id'];
+        }
       }
       if (include != null && include.isNotEmpty) {
         queryParameters['include'] = include.join(',');
@@ -698,6 +703,9 @@ class WooCommerceService {
       final response = await _dio.get(
         '/products',
         queryParameters: queryParameters,
+        options: Options(
+          listFormat: ListFormat.multiCompatible,
+        ),
       );
 
       if (response.statusCode == 200 && response.data is List) {

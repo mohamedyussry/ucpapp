@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/models/product_model.dart';
 import 'package:myapp/services/woocommerce_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:myapp/screens/barcode_scanner_screen.dart';
+import 'package:myapp/product_detail_screen.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../widgets/product_card.dart'; // Assuming there is a product card widget
 
@@ -160,6 +162,55 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     }
   }
+  
+  Future<void> _scanBarcode() async {
+    var res = await Navigator.push<String?>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const BarcodeScannerScreen(),
+        ));
+    if (res != null && res.isNotEmpty) {
+      _searchController.text = res;
+      
+      // If the result looks like a barcode (numeric), try to find exactly one product
+      final bool isNumeric = RegExp(r'^\d+$').hasMatch(res.trim());
+      if (isNumeric) {
+        setState(() => _isSearching = true);
+        try {
+          final results = await _wooService.getProducts(
+            search: res,
+            perPage: 2, // Check if there's more than one result
+          );
+          
+          if (mounted) {
+            setState(() => _isSearching = false);
+            if (results.length == 1) {
+              // Direct navigation to product details
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(product: results[0]),
+                ),
+              );
+              // Also update current search results so the item is there if user goes back
+              setState(() {
+                _searchResults = results;
+                _currentPage = 1;
+                _hasMore = false;
+              });
+              _saveSearchQuery(res);
+              return;
+            }
+          }
+        } catch (e) {
+          if (mounted) setState(() => _isSearching = false);
+        }
+      }
+      
+      // Default to showing search results list if no single match found
+      _performSearch(res);
+    }
+  }
 
   Future<void> _performSearch(String query) async {
     if (query.trim().isEmpty) return;
@@ -258,6 +309,12 @@ class _SearchScreenState extends State<SearchScreen> {
           hintText: l10n.search_placeholder,
           hintStyle: GoogleFonts.poppins(color: Colors.grey, fontSize: 13),
           prefixIcon: const Icon(Icons.search, color: Colors.orange, size: 20),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.qr_code_scanner, color: Colors.orange, size: 22),
+            onPressed: _scanBarcode,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),

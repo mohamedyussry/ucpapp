@@ -14,6 +14,7 @@ class WooProduct {
   final int? stockQuantity;
   final double averageRating;
   final int ratingCount;
+  final String? globalUniqueId;
   final WooSliderData? sliderData;
 
   WooProduct({
@@ -32,6 +33,7 @@ class WooProduct {
     this.stockQuantity,
     required this.averageRating,
     required this.ratingCount,
+    this.globalUniqueId,
     this.sliderData,
   });
 
@@ -65,6 +67,7 @@ class WooProduct {
       averageRating:
           double.tryParse(json['average_rating']?.toString() ?? '0.0') ?? 0.0,
       ratingCount: json['rating_count'] ?? 0,
+      globalUniqueId: json['global_unique_id']?.toString(),
       sliderData: json['slider_data'] != null
           ? WooSliderData.fromJson(json['slider_data'])
           : null,
@@ -88,6 +91,7 @@ class WooProduct {
       'stock_quantity': stockQuantity,
       'average_rating': averageRating.toString(),
       'rating_count': ratingCount,
+      'global_unique_id': globalUniqueId,
       'slider_data': sliderData?.toJson(),
     };
   }
