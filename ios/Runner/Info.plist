@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<key>FacebookAppID</key>
+		<string>2473620836406342</string>
+		<key>FacebookClientToken</key>
+		<string>20a15f5f7f0067b1e16f7a898d3bedd2</string>
+		<key>FacebookDisplayName</key>
+		<string>UCP Pharmacy</string>
 		<key>CFBundleAllowMixedLocalizations</key>
 		<true/>
 		<key>CFBundleDevelopmentRegion</key>
@@ -53,6 +59,8 @@
 		<array>
 			<string>valy</string>
 			<string>souhoola</string>
+			<string>fbapi</string>
+			<string>fb-messenger-share-api</string>
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs access to location to let you select your delivery address on the map.</string>

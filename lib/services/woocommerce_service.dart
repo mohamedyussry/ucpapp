@@ -310,6 +310,26 @@ class WooCommerceService {
     }
   }
 
+  Future<WooProduct?> getProductBySlug(String slug) async {
+    try {
+      final response = await _dio.get(
+        '/products',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'slug': slug,
+        },
+      );
+      if (response.statusCode == 200 && response.data is List && response.data.isNotEmpty) {
+        return WooProduct.fromJson(response.data.first);
+      }
+      return null;
+    } catch (e) {
+      developer.log('Error fetching product by slug ($slug): $e');
+      return null;
+    }
+  }
+
   /// New Direct Method for FCM Token
   Future<bool> updateFcmToken(int userId, String token) async {
     try {

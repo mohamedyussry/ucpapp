@@ -22,6 +22,7 @@ import 'package:myapp/screens/tamara_checkout_screen.dart';
 import 'package:myapp/services/tamara_service.dart';
 import 'package:myapp/screens/tabby_checkout_screen.dart';
 import 'package:myapp/services/tabby_service.dart';
+import 'package:myapp/services/meta_events_service.dart';
 
 class CheckoutScreen extends StatelessWidget {
   final String categoryName;
@@ -77,9 +78,13 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         context,
         listen: false,
       );
-      checkoutProvider.reset();
-
       _initializeCheckoutData(checkoutProvider);
+
+      final cartProvider = Provider.of<CartProvider>(context, listen: false);
+      MetaEventsService().logInitiateCheckout(
+        totalPrice: cartProvider.totalAmount,
+        numItems: cartProvider.itemCount,
+      );
 
       // Load saved billing details from local storage
       await _loadSavedBillingDetails(checkoutProvider);
@@ -525,6 +530,11 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     final pointsUsed = loyaltyProvider.usePoints
         ? (autoPoints['points'] as int)
         : 0;
+
+    MetaEventsService().logPurchase(
+      amount: orderResponse['total'] != null ? double.tryParse(orderResponse['total'].toString()) ?? 0.0 : cart.totalAmount,
+      orderId: orderResponse['id'].toString(),
+    );
 
     if (checkoutProvider.orderData.customerId != null) {
       if (earnedPoints > 0) {
@@ -1451,77 +1461,91 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
                   ],
                 ),
               ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFF9800), Color(0xFFFF6F00)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.orange.withValues(alpha: 0.4),
-                    blurRadius: 15,
-                    offset: const Offset(0, 6),
+            Opacity(
+              opacity: _isPlacingOrder ? 0.6 : 1.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFFF6F00)],
                   ),
-                ],
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (isFirstPage) {
-                      if (_formKey.currentState!.validate()) {
-                        final checkoutProvider = Provider.of<CheckoutProvider>(
-                          context,
-                          listen: false,
-                        );
-                        checkoutProvider.orderData.billingFirstName =
-                            _billingFirstNameController.text;
-                        checkoutProvider.orderData.billingLastName =
-                            _billingLastNameController.text;
-                        checkoutProvider.orderData.billingAddress1 =
-                            _billingAddress1Controller.text;
-                        checkoutProvider.orderData.billingPhone =
-                            _billingPhoneController.text;
-                        checkoutProvider.orderData.billingEmail =
-                            _billingEmailController.text;
-
-                        // Save details automatically when moving to next step
-                        _saveBillingDetails(
-                          stateCode: checkoutProvider.selectedStateCode,
-                        );
-
-                        checkoutProvider.nextPage();
-                      }
-                    } else if (isLastPage) {
-                      _placeOrder();
-                    } else {
-                      checkout.nextPage();
-                    }
-                  },
                   borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isLastPage ? l10n.place_order : l10n.continue_step,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 17,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          isLastPage
-                              ? Icons.check_circle_outline
-                              : Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.orange.withValues(alpha: 0.4),
+                      blurRadius: 15,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _isPlacingOrder ? null : () {
+                      if (isFirstPage) {
+                        if (_formKey.currentState!.validate()) {
+                          final checkoutProvider = Provider.of<CheckoutProvider>(
+                            context,
+                            listen: false,
+                          );
+                          checkoutProvider.orderData.billingFirstName =
+                              _billingFirstNameController.text;
+                          checkoutProvider.orderData.billingLastName =
+                              _billingLastNameController.text;
+                          checkoutProvider.orderData.billingAddress1 =
+                              _billingAddress1Controller.text;
+                          checkoutProvider.orderData.billingPhone =
+                              _billingPhoneController.text;
+                          checkoutProvider.orderData.billingEmail =
+                              _billingEmailController.text;
+
+                          // Save details automatically when moving to next step
+                          _saveBillingDetails(
+                            stateCode: checkoutProvider.selectedStateCode,
+                          );
+
+                          checkoutProvider.nextPage();
+                        }
+                      } else if (isLastPage) {
+                        _placeOrder();
+                      } else {
+                        checkout.nextPage();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (_isPlacingOrder)
+                            const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          else ...[
+                            Text(
+                              isLastPage ? l10n.place_order : l10n.continue_step,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 17,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              isLastPage
+                                  ? Icons.check_circle_outline
+                                  : Icons.arrow_forward_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

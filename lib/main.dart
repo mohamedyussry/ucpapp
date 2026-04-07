@@ -1,3 +1,4 @@
+import 'package:facebook_app_events/facebook_app_events.dart';
 import 'l10n/generated/app_localizations.dart';
 import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
@@ -27,6 +28,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'package:myapp/services/app_initializer.dart';
 import 'package:myapp/services/update_service.dart';
+import 'package:myapp/services/link_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -57,6 +59,14 @@ void main() async {
     developer.log("Main: Firebase initialization error: $e");
   }
 
+  try {
+    // Required for iOS 14+ to track events properly. Android ignores this.
+    final facebookAppEvents = FacebookAppEvents();
+    await facebookAppEvents.setAdvertiserTracking(enabled: true);
+  } catch (e) {
+    developer.log("Main: FacebookAppEvents initialization error: $e");
+  }
+
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   await Hive.initFlutter();
@@ -71,6 +81,9 @@ void main() async {
 
   // Initialize Update Service
   await UpdateService().initialize();
+
+  // Initialize Link Service for Deep Linking
+  LinkService().initialize();
 
   runApp(
     ChangeNotifierProvider(

@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/widgets/cart_badge.dart';
 import 'package:myapp/screens/profile_screen.dart';
 import 'package:myapp/screens/search_screen.dart';
+import 'package:myapp/screens/barcode_scanner_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/generated/app_localizations.dart';
+import 'package:myapp/services/meta_events_service.dart';
 
 class HomeSearchHeader extends StatelessWidget {
   final bool showTopBar;
@@ -26,16 +29,25 @@ class HomeSearchHeader extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.person_outline, color: Colors.white),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfileScreen(),
-                      ),
-                    );
-                  },
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.person_outline, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.headset_mic_outlined, color: Colors.white),
+                      onPressed: () => _showContactOptions(context),
+                    ),
+                  ],
                 ),
                 Image.asset(
                   'assets/icon-logo.png',
@@ -82,28 +94,28 @@ class HomeSearchHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: Center(
-                      child: Text(
-                        l10n.all_categories,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.w500,
+                  IconButton(
+                    icon: const Icon(Icons.qr_code_scanner, color: Colors.orange, size: 22),
+                    onPressed: () async {
+                      final result = await Navigator.push<String?>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BarcodeScannerScreen(),
                         ),
-                      ),
-                    ),
+                      );
+                      if (result != null && result.isNotEmpty && context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SearchScreen(initialQuery: result, isFromBarcode: true),
+                          ),
+                        );
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
+                  const SizedBox(width: 12),
                 ],
               ),
             ),
@@ -111,6 +123,88 @@ class HomeSearchHeader extends StatelessWidget {
           const SizedBox(height: 4),
         ],
       ),
+    );
+  }
+
+  void _showContactOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                'تواصل مع خدمة العملاء',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.phone, color: Colors.blue),
+                ),
+                title: Text(
+                  'مكالمة هاتفية',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text('+966 53 040 1333', style: GoogleFonts.poppins()),
+                onTap: () {
+                  MetaEventsService().logContact('phone');
+                  Navigator.pop(context);
+                  launchUrl(Uri.parse('tel:+966530401333'));
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.chat, color: Colors.green),
+                ),
+                title: Text(
+                  'محادثة واتساب',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text('+966 53 040 1333', style: GoogleFonts.poppins()),
+                onTap: () {
+                  MetaEventsService().logContact('whatsapp');
+                  Navigator.pop(context);
+                  launchUrl(
+                    Uri.parse('https://wa.me/966530401333'),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
     );
   }
 }

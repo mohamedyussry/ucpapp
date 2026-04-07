@@ -8,10 +8,12 @@ import 'package:myapp/screens/barcode_scanner_screen.dart';
 import 'package:myapp/product_detail_screen.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../widgets/product_card.dart'; // Assuming there is a product card widget
+import 'package:myapp/services/meta_events_service.dart';
 
 class SearchScreen extends StatefulWidget {
   final String? initialQuery;
-  const SearchScreen({super.key, this.initialQuery});
+  final bool isFromBarcode;
+  const SearchScreen({super.key, this.initialQuery, this.isFromBarcode = false});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -46,7 +48,11 @@ class _SearchScreenState extends State<SearchScreen> {
     _fetchCategories();
     if (widget.initialQuery != null) {
       _searchController.text = widget.initialQuery!;
-      _performSearch(widget.initialQuery!);
+      if (widget.isFromBarcode) {
+        _handleBarcodeQuery(widget.initialQuery!, pushReplacement: true);
+      } else {
+        _performSearch(widget.initialQuery!);
+      }
     }
     // Auto focus search bar
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -171,45 +177,57 @@ class _SearchScreenState extends State<SearchScreen> {
         ));
     if (res != null && res.isNotEmpty) {
       _searchController.text = res;
-      
-      // If the result looks like a barcode (numeric), try to find exactly one product
-      final bool isNumeric = RegExp(r'^\d+$').hasMatch(res.trim());
-      if (isNumeric) {
-        setState(() => _isSearching = true);
-        try {
-          final results = await _wooService.getProducts(
-            search: res,
-            perPage: 2, // Check if there's more than one result
-          );
-          
-          if (mounted) {
-            setState(() => _isSearching = false);
-            if (results.length == 1) {
-              // Direct navigation to product details
+      _handleBarcodeQuery(res, pushReplacement: false);
+    }
+  }
+
+  Future<void> _handleBarcodeQuery(String res, {required bool pushReplacement}) async {
+    final bool isNumeric = RegExp(r'^\d+$').hasMatch(res.trim());
+    if (isNumeric) {
+      setState(() => _isSearching = true);
+      try {
+        final results = await _wooService.getProducts(
+          search: res,
+          perPage: 2, // Check if there's more than one result
+        );
+        
+        if (mounted) {
+          setState(() => _isSearching = false);
+          if (results.length == 1) {
+            // Also update current search results so the item is there if user goes back
+            setState(() {
+              _searchResults = results;
+              _currentPage = 1;
+              _hasMore = false;
+            });
+            _saveSearchQuery(res);
+            
+            // Direct navigation to product details
+            if (pushReplacement) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailScreen(product: results[0]),
+                ),
+              );
+            } else {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => ProductDetailScreen(product: results[0]),
                 ),
               );
-              // Also update current search results so the item is there if user goes back
-              setState(() {
-                _searchResults = results;
-                _currentPage = 1;
-                _hasMore = false;
-              });
-              _saveSearchQuery(res);
-              return;
             }
+            return;
           }
-        } catch (e) {
-          if (mounted) setState(() => _isSearching = false);
         }
+      } catch (e) {
+        if (mounted) setState(() => _isSearching = false);
       }
-      
-      // Default to showing search results list if no single match found
-      _performSearch(res);
     }
+    
+    // Default to showing search results list if no single match found
+    _performSearch(res);
   }
 
   Future<void> _performSearch(String query) async {
@@ -237,6 +255,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _hasMore = results.length == 30;
         });
         _saveSearchQuery(query);
+        MetaEventsService().logSearch(query);
       }
     } catch (e) {
       if (mounted) {

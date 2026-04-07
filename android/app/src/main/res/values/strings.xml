@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <string name="appName">UCP Pharmacy</string>
+  <string name="facebook_app_id">2473620836406342</string>
+  <string name="facebook_client_token">20a15f5f7f0067b1e16f7a898d3bedd2</string>
 </resources>

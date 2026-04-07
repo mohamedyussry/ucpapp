@@ -5,6 +5,7 @@ import 'package:myapp/services/woocommerce_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:myapp/services/meta_events_service.dart';
 
 class CartItem {
   final WooProduct product;
@@ -290,6 +291,11 @@ class CartProvider with ChangeNotifier {
       _items.update(product.id, (existing) => existing..increment());
     } else {
       _items.putIfAbsent(product.id, () => CartItem(product: product));
+      MetaEventsService().logAddToCart(
+        contentId: product.id.toString(),
+        contentType: 'product',
+        price: product.price ?? 0.0,
+      );
     }
     _recaculateDiscountOnCartChange();
     _saveCart();
