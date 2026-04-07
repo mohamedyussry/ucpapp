@@ -44,15 +44,35 @@ class LinkService {
   void _handleLink(Uri uri) async {
     developer.log('LinkService: Handling link: $uri');
 
-    // Expected format: https://ucpksa.com/product/product-slug/
-    if (uri.pathSegments.contains('product')) {
-      final int productIndex = uri.pathSegments.indexOf('product');
-      if (uri.pathSegments.length > productIndex + 1) {
-        final String slug = uri.pathSegments[productIndex + 1];
-        if (slug.isNotEmpty) {
-          _navigateToProduct(slug);
+    // Handle Custom Scheme: ucpapp://product/slug
+    // Handle HTTPS: https://ucpksa.com/product/slug/
+    
+    String? slug;
+    
+    if (uri.scheme == 'ucpapp') {
+      if (uri.pathSegments.isNotEmpty) {
+        slug = uri.pathSegments.last;
+      } else if (uri.host.isNotEmpty) {
+        // In some cases ucpapp://slug
+        slug = uri.host;
+      }
+    } else {
+      // Standard HTTPS logic
+      if (uri.pathSegments.contains('product')) {
+        final int index = uri.pathSegments.indexOf('product');
+        if (uri.pathSegments.length > index + 1) {
+          slug = uri.pathSegments[index + 1];
+        }
+      } else if (uri.pathSegments.contains('shop')) {
+        final int index = uri.pathSegments.indexOf('shop');
+        if (uri.pathSegments.length > index + 1) {
+          slug = uri.pathSegments[index + 1];
         }
       }
+    }
+
+    if (slug != null && slug.isNotEmpty) {
+      _navigateToProduct(slug);
     }
   }
 

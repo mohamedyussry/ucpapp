@@ -3,34 +3,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class UCP_DeepLink {
     public function __construct() {
-        add_action( 'init', [ $this, 'register_rewrite_rules' ] );
-        add_filter( 'query_vars', [ $this, 'add_query_vars' ] );
-        add_action( 'template_redirect', [ $this, 'handle_deeplink_files' ] );
+        add_action( 'init', [ $this, 'handle_direct_deeplink' ] );
     }
 
-    public function register_rewrite_rules() {
-        add_rewrite_rule( '^\.well-known/assetlinks\.json$', 'index.php?ucp_deeplink=android', 'top' );
-        add_rewrite_rule( '^\.well-known/apple-app-site-association$', 'index.php?ucp_deeplink=ios', 'top' );
+    public function handle_direct_deeplink() {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
         
-        // Ensure the rules are flushed if needed (only once)
-        // flush_rewrite_rules(); 
-    }
-
-    public function add_query_vars( $vars ) {
-        $vars[] = 'ucp_deeplink';
-        return $vars;
-    }
-
-    public function handle_deeplink_files() {
-        $type = get_query_var( 'ucp_deeplink' );
-        if ( ! $type ) return;
-
-        if ( $type === 'android' ) {
+        if ( strpos( $uri, '.well-known/assetlinks.json' ) !== false ) {
             $this->serve_android_json();
-        } elseif ( $type === 'ios' ) {
-            $this->serve_ios_json();
+            exit;
         }
-        exit;
+        
+        if ( strpos( $uri, '.well-known/apple-app-site-association' ) !== false ) {
+            $this->serve_ios_json();
+            exit;
+        }
     }
 
     private function serve_android_json() {
@@ -57,7 +44,13 @@ class UCP_DeepLink {
                 "details" => [
                     [
                         "appID" => "868TM9X9TU.khp.ucpksa.com",
-                        "paths" => [ "/product/*", "/shop/*", "/product-category/*" ]
+                        "paths" => [ 
+                            "/product/*", "/shop/*", "/product-category/*", 
+                            "/en/shop/*", "/ar/shop/*", 
+                            "/en/product/*", "/ar/product/*", 
+                            "/en/product-category/*", "/ar/product-category/*",
+                            "/*/shop/*", "/*/product/*" 
+                        ]
                     ]
                 ]
             ]

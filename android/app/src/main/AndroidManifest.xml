@@ -40,7 +40,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Deep Linking / App Links configuration -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -51,6 +50,20 @@
                 <data
                     android:scheme="http"
                     android:host="ucpksa.com" />
+                <data
+                    android:scheme="https"
+                    android:host="www.ucpksa.com" />
+                <data
+                    android:scheme="http"
+                    android:host="www.ucpksa.com" />
+            </intent-filter>
+
+            <!-- Custom URL Scheme for reliable button-clicks -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ucpapp" />
             </intent-filter>
         </activity>
         <meta-data
