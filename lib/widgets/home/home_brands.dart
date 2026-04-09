@@ -88,57 +88,67 @@ class _HomeBrandsState extends State<HomeBrands> {
             ],
           ),
         ),
-        SizedBox(
-          height: 240, // زيادة الارتفاع ليتناسب مع التنسيق الطولي في الصورة
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: _brands.length,
-            itemBuilder: (context, index) {
-              final brand = _brands[index];
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductsScreen(
-                        brandId: brand.id,
-                        brandName: brand.name,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5), // هوامش جانبية 5 بيكسل
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double screenWidth = constraints.maxWidth;
+              const double spacing = 8.0; // 4px * 2 spaces
+              final double itemWidth = (screenWidth - spacing) / 3;
+
+              return SizedBox(
+                height: 180, // ارتفاع متناسق مع العرض الثلاثي
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _brands.length,
+                  itemBuilder: (context, index) {
+                    final brand = _brands[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductsScreen(
+                              brandId: brand.id,
+                              brandName: brand.name,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: itemWidth,
+                        margin: EdgeInsets.only(
+                          right: index == _brands.length - 1 ? 0 : 4,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: brand.image != null
+                              ? CachedNetworkImage(
+                                  imageUrl: brand.image!.src,
+                                  fit: BoxFit.cover,
+                                  width: itemWidth,
+                                  height: 180,
+                                  placeholder: (context, url) =>
+                                      _buildBrandPlaceholder(),
+                                  errorWidget: (context, url, error) =>
+                                      _buildBrandPlaceholder(),
+                                )
+                              : _buildBrandPlaceholder(),
+                        ),
                       ),
-                    ),
-                  );
-                },
-                child: Container(
-                  width: 150, // عرض البطاقة لتعطي التنسيق الطولي المطلوب
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: brand.image != null
-                        ? CachedNetworkImage(
-                            imageUrl: brand.image!.src,
-                            fit: BoxFit.cover,
-                            width: 150,
-                            height: 240,
-                            placeholder: (context, url) =>
-                                _buildBrandPlaceholder(),
-                            errorWidget: (context, url, error) =>
-                                _buildBrandPlaceholder(),
-                          )
-                        : _buildBrandPlaceholder(),
-                  ),
+                    );
+                  },
                 ),
               );
             },
@@ -156,22 +166,33 @@ class _HomeBrandsState extends State<HomeBrands> {
           padding: const EdgeInsets.all(16.0),
           child: Container(width: 150, height: 20, color: Colors.white),
         ),
-        SizedBox(
-          height: 240,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 3,
-            itemBuilder: (context, index) => Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Container(
-                width: 150,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5),
+          child: SizedBox(
+            height: 180,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final double screenWidth = constraints.maxWidth;
+                final double itemWidth = (screenWidth - 8.0) / 3;
+
+                return ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: 3,
+                  itemBuilder: (context, index) => Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(
+                      width: itemWidth,
+                      margin: EdgeInsets.only(right: index == 2 ? 0 : 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),

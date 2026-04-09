@@ -93,93 +93,122 @@ class _HomeCategoriesState extends State<HomeCategories> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 115,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: _categories.length,
-            itemBuilder: (context, index) {
-              final cat = _categories[index];
-              final imageUrl = cat.image?.src ?? '';
+          height: 230,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // حساب العرض الدقيق ليظهر 4 أقسام كاملة
+              // نخصم الهوامش الجانبية (16+16=32) والمسافات بين العناصر (3 مسافات × 10 = 30)
+              final double screenWidth = MediaQuery.of(context).size.width;
+              const double horizontalPadding = 32.0;
+              const double spacing = 30.0;
+              final double columnWidth = (screenWidth - horizontalPadding - spacing) / 4;
 
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProductsScreen(
-                        categoryId: cat.id,
-                        category: cat.name,
-                      ),
+              // تقسيم الأقسام إلى أزواج (كل زوج في عمود واحد لضمان صفين)
+              List<List<WooProductCategory>> pairs = [];
+              for (var i = 0; i < _categories.length; i += 2) {
+                if (i + 1 < _categories.length) {
+                  pairs.add([_categories[i], _categories[i + 1]]);
+                } else {
+                  pairs.add([_categories[i]]);
+                }
+              }
+
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: pairs.length,
+                itemBuilder: (context, index) {
+                  final pair = pairs[index];
+                  return Container(
+                    width: columnWidth,
+                    margin: EdgeInsets.only(
+                      right: index == pairs.length - 1 ? 0 : 10,
+                    ),
+                    child: Column(
+                      children: pair.map((cat) {
+                        final imageUrl = cat.image?.src ?? '';
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProductsScreen(
+                                    categoryId: cat.id,
+                                    category: cat.name,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 65,
+                                  height: 65,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: Colors.grey[200]!,
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.03),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: imageUrl.isNotEmpty
+                                        ? CachedNetworkImage(
+                                            imageUrl: imageUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) => Container(
+                                              color: Colors.grey[200],
+                                              child: const Center(
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.orange,
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget: (context, url, error) =>
+                                                const Icon(
+                                                  Icons.category_outlined,
+                                                  color: Colors.orange,
+                                                  size: 25,
+                                                ),
+                                          )
+                                        : const Icon(
+                                            Icons.category_outlined,
+                                            color: Colors.orange,
+                                            size: 25,
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  cat.name,
+                                  style: GoogleFonts.notoSansArabic(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   );
                 },
-                child: Container(
-                  width: 85,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 75,
-                        height: 75,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                            color: Colors.grey[200]!,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: imageUrl.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: imageUrl,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Colors.grey[200],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.orange,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      const Icon(
-                                        Icons.category_outlined,
-                                        color: Colors.orange,
-                                        size: 30,
-                                      ),
-                                )
-                              : const Icon(
-                                  Icons.category_outlined,
-                                  color: Colors.orange,
-                                  size: 30,
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        cat.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           ),
@@ -198,33 +227,51 @@ class _HomeCategoriesState extends State<HomeCategories> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 115,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              return Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(
-                  width: 85,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 75,
-                        height: 75,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
+          height: 230,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double screenWidth = MediaQuery.of(context).size.width;
+              final double columnWidth = (screenWidth - 32 - 30) / 4;
+
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 4,
+                itemBuilder: (context, index) {
+                  return Container(
+                    width: columnWidth,
+                    margin: EdgeInsets.only(right: index == 3 ? 0 : 10),
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.grey[300]!,
+                      highlightColor: Colors.grey[100]!,
+                      child: Column(
+                        children: List.generate(2, (i) => Expanded(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 65,
+                                height: 65,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: 40,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
                       ),
-                      const SizedBox(height: 8),
-                      Container(width: 60, height: 10, color: Colors.white),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               );
             },
           ),

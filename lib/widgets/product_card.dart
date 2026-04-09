@@ -104,7 +104,7 @@ class _ProductCardState extends State<ProductCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                flex: 5,
+                flex: 6, // زيادة مساحة الصورة
                 child: Stack(
                   children: [
                     CachedNetworkImage(
@@ -181,89 +181,98 @@ class _ProductCardState extends State<ProductCard> {
                 ),
               ),
               Expanded(
-                flex: 4,
+                flex: 4, // تقليل مساحة النصوص لتكون أكثر تماسكاً
                 child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0), // تقليل البادينج
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            productName,
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                      // Fixed height for name
+                      SizedBox(
+                        height: 32, // تقليل الارتفاع لتقليل الفراغ
+                        child: Text(
+                          productName,
+                          style: GoogleFonts.notoSansArabic(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12, // Reduced for 3-column layout
+                            color: Colors.black87,
+                            height: 1.3,
                           ),
-                          const SizedBox(height: 4),
-                          // Display old price if product is on sale
-                          if (widget.product.salePrice != null &&
-                              widget.product.regularPrice != null &&
-                              widget.product.salePrice! < widget.product.regularPrice!)
-                            Row(
-                              children: [
-                                Text(
-                                  '${widget.product.regularPrice?.toStringAsFixed(2) ?? '0.00'} ',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade500,
-                                    decoration: TextDecoration.lineThrough,
-                                    decorationColor: Colors.grey.shade500,
-                                    decorationThickness: 2,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Height-stable area for old price
+                      SizedBox(
+                        height: 18,
+                        child: (widget.product.salePrice != null &&
+                                widget.product.regularPrice != null &&
+                                widget.product.salePrice! < widget.product.regularPrice!)
+                            ? Row(
+                                children: [
+                                  Text(
+                                    '${widget.product.regularPrice?.toStringAsFixed(2) ?? '0.00'} ',
+                                    style: GoogleFonts.notoSansArabic(
+                                      fontSize: 11, // Reduced
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade500,
+                                      decoration: TextDecoration.lineThrough,
+                                      decorationColor: Colors.grey.shade500,
+                                      decorationThickness: 2,
+                                    ),
                                   ),
-                                ),
-                                _buildCurrencyDisplay(
-                                  currencyProvider,
-                                  fontSize: 13,
-                                  isGrey: true,
-                                ),
-                              ],
-                            ),
-                        ],
+                                  _buildCurrencyDisplay(
+                                    currencyProvider,
+                                    fontSize: 11,
+                                    isGrey: true,
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
                       ),
                       const Spacer(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                '${widget.product.price?.toStringAsFixed(2) ?? '0.00'} ',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      (widget.product.salePrice != null &&
-                                          widget.product.regularPrice != null &&
-                                          widget.product.salePrice! <
-                                              widget.product.regularPrice!)
-                                      ? Colors.red.shade600
-                                      : Colors.black87,
-                                ),
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '${widget.product.price?.toStringAsFixed(2) ?? '0.00'} ',
+                                    style: GoogleFonts.notoSansArabic(
+                                      fontSize: 15, // Reduced for consistency
+                                      fontWeight: FontWeight.bold,
+                                      color: (widget.product.salePrice != null &&
+                                              widget.product.regularPrice != null &&
+                                              widget.product.salePrice! <
+                                                  widget.product.regularPrice!)
+                                          ? Colors.red.shade600
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                  _buildCurrencyDisplay(
+                                    currencyProvider,
+                                    fontSize: 14,
+                                    isGrey: false,
+                                  ),
+                                ],
                               ),
-                              _buildCurrencyDisplay(
-                                currencyProvider,
-                                fontSize: 18,
-                                isGrey: false,
-                              ),
-                            ],
+                            ),
                           ),
+                          const SizedBox(width: 4),
                           GestureDetector(
                             onTap: () {
                               cart.addItem(widget.product);
                               CustomCartNotification.show(context, widget.product);
                             },
                             child: Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(6), // Slightly smaller
                               decoration: const BoxDecoration(
                                 color: Colors.black,
                                 shape: BoxShape.rectangle,
@@ -274,7 +283,7 @@ class _ProductCardState extends State<ProductCard> {
                               child: const Icon(
                                 FontAwesomeIcons.cartPlus,
                                 color: Colors.white,
-                                size: 18,
+                                size: 16, // Slightly smaller
                               ),
                             ),
                           ),

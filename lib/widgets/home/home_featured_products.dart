@@ -156,39 +156,29 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 5), // تقليل الهوامش الجانبية للحد الأدنى (5px)
           child: LayoutBuilder(
             builder: (context, constraints) {
-              double screenWidth = constraints.maxWidth;
-              double viewportFraction;
+              final double screenWidth = constraints.maxWidth;
+              const double spacing = 8.0; // مجموع المسافات بين الـ 3 منتجات (4px * 2)
+              final double itemWidth = (screenWidth - spacing) / 3;
 
-              if (screenWidth > 1200) {
-                viewportFraction = 0.2; // 5 products
-              } else if (screenWidth > 900) {
-                viewportFraction = 0.25; // 4 products
-              } else if (screenWidth > 600) {
-                viewportFraction = 0.33; // 3 products
-              } else {
-                viewportFraction = 0.5; // 2 products
-              }
-
-              return CarouselSlider(
-                options: CarouselOptions(
-                  height: 330,
-                  viewportFraction: viewportFraction,
-                  enlargeCenterPage: false,
-                  enableInfiniteScroll:
-                      _products.length > (1 / viewportFraction).ceil(),
-                  padEnds: false,
-                  disableCenter: true,
-                  scrollPhysics: const BouncingScrollPhysics(),
+              return SizedBox(
+                height: 260, // الارتفاع المتفق عليه ليكون العرض والارتفاع متناسقين
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _products.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: itemWidth,
+                      margin: EdgeInsets.only(
+                        right: index == _products.length - 1 ? 0 : 4,
+                      ),
+                      child: ProductCard(product: _products[index]),
+                    );
+                  },
                 ),
-                items: _products.map((product) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ProductCard(product: product),
-                  );
-                }).toList(),
               );
             },
           ),
@@ -207,22 +197,13 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
           child: Container(width: 150, height: 20, color: Colors.white),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 5),
           child: SizedBox(
-            height: 330,
+            height: 260,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                double screenWidth = constraints.maxWidth;
-                double width;
-                if (screenWidth > 1200) {
-                  width = screenWidth / 5;
-                } else if (screenWidth > 900) {
-                  width = screenWidth / 4;
-                } else if (screenWidth > 600) {
-                  width = screenWidth / 3;
-                } else {
-                  width = screenWidth / 2;
-                }
+                final double screenWidth = constraints.maxWidth;
+                final double itemWidth = (screenWidth - 8.0) / 3;
 
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
@@ -232,8 +213,8 @@ class _HomeFeaturedProductsState extends State<HomeFeaturedProducts> {
                     baseColor: Colors.grey[300]!,
                     highlightColor: Colors.grey[100]!,
                     child: Container(
-                      width: width - 16,
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      width: itemWidth,
+                      margin: EdgeInsets.only(right: index == 3 ? 0 : 4),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(15),
