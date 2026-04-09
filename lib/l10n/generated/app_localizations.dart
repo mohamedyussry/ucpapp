@@ -1674,6 +1674,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Newest'**
   String get newest;
+
+  /// No description provided for @contact_support_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Customer Support'**
+  String get contact_support_title;
+
+  /// No description provided for @phone_call_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Call'**
+  String get phone_call_label;
+
+  /// No description provided for @whatsapp_chat_label.
+  ///
+  /// In en, this message translates to:
+  /// **'WhatsApp Chat'**
+  String get whatsapp_chat_label;
 }
 
 class _AppLocalizationsDelegate

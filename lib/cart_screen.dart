@@ -28,14 +28,6 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize loyalty data so we can show earned points
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
-      // Only initialize if data not yet loaded (avoid duplicate requests)
-      if (loyalty.tiers.isEmpty) {
-        loyalty.initialize();
-      }
-    });
   }
 
   @override

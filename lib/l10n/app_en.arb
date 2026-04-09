@@ -362,5 +362,8 @@
   "sort_by": "Sort by",
   "price_low_high": "Price: Low to High",
   "price_high_low": "Price: High to Low",
-  "newest": "Newest"
+  "newest": "Newest",
+  "contact_support_title": "Contact Customer Support",
+  "phone_call_label": "Phone Call",
+  "whatsapp_chat_label": "WhatsApp Chat"
 }

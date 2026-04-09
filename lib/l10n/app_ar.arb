@@ -263,5 +263,8 @@
   "sort_by": "ترتيب حسب",
   "price_low_high": "السعر: من الأقل للأعلى",
   "price_high_low": "السعر: من الأعلى للأقل",
-  "newest": "الأحدث"
+  "newest": "الأحدث",
+  "contact_support_title": "تواصل مع خدمة العملاء",
+  "phone_call_label": "مكالمة هاتفية",
+  "whatsapp_chat_label": "محادثة واتساب"
 }

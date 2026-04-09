@@ -6,29 +6,82 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:myapp/providers/currency_provider.dart';
 
+import 'package:myapp/services/woocommerce_service.dart';
 import '../product_detail_screen.dart';
 import '../providers/cart_provider.dart';
 import '../providers/wishlist_provider.dart';
 import 'custom_cart_notification.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final WooProduct product;
 
   const ProductCard({super.key, required this.product});
 
   @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  static final Map<String, List<String>> _offersCache = {};
+  List<String> _offers = [];
+  bool _isLoading = false;
+  bool _isInit = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInit) {
+      final lang = Localizations.localeOf(context).languageCode;
+      _fetchOffer(lang);
+      _isInit = true;
+    }
+  }
+
+  void _fetchOffer(String lang) async {
+    final cacheKey = "${widget.product.id}_$lang";
+    if (_offersCache.containsKey(cacheKey)) {
+      setState(() {
+        _offers = _offersCache[cacheKey]!;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final service = WooCommerceService();
+      final offers = await service.getProductOffers(widget.product.id, lang);
+      _offersCache[cacheKey] = offers;
+      if (mounted) {
+        setState(() {
+          _offers = offers;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context, listen: false);
     final currencyProvider = Provider.of<CurrencyProvider>(context);
-    final imageUrl = product.images.isNotEmpty ? product.images[0].src : '';
-    final productName = product.name;
+    final imageUrl = widget.product.images.isNotEmpty ? widget.product.images[0].src : '';
+    final productName = widget.product.name;
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(product: product),
+            builder: (context) => ProductDetailScreen(product: widget.product),
           ),
         );
       },
@@ -65,17 +118,47 @@ class ProductCard extends StatelessWidget {
                         child: const Icon(Icons.error, color: Colors.grey),
                       ),
                     ),
+                    if (_offers.isNotEmpty)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade700,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(10),
+                              bottomRight: Radius.circular(10),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 2,
+                                offset: const Offset(1, 1),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            _offers.first.toUpperCase(),
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      ),
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Consumer<WishlistProvider>(
                         builder: (context, wishlistProvider, child) {
                           final isFavorite = wishlistProvider.isFavorite(
-                            product.id,
+                            widget.product.id,
                           );
                           return GestureDetector(
                             onTap: () {
-                              wishlistProvider.toggleWishlist(product);
+                              wishlistProvider.toggleWishlist(widget.product);
                             },
                             child: CircleAvatar(
                               backgroundColor: Colors.white.withAlpha(
@@ -120,13 +203,13 @@ class ProductCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           // Display old price if product is on sale
-                          if (product.salePrice != null &&
-                              product.regularPrice != null &&
-                              product.salePrice! < product.regularPrice!)
+                          if (widget.product.salePrice != null &&
+                              widget.product.regularPrice != null &&
+                              widget.product.salePrice! < widget.product.regularPrice!)
                             Row(
                               children: [
                                 Text(
-                                  '${product.regularPrice?.toStringAsFixed(2) ?? '0.00'} ',
+                                  '${widget.product.regularPrice?.toStringAsFixed(2) ?? '0.00'} ',
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -154,15 +237,15 @@ class ProductCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                '${product.price?.toStringAsFixed(2) ?? '0.00'} ',
+                                '${widget.product.price?.toStringAsFixed(2) ?? '0.00'} ',
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color:
-                                      (product.salePrice != null &&
-                                          product.regularPrice != null &&
-                                          product.salePrice! <
-                                              product.regularPrice!)
+                                      (widget.product.salePrice != null &&
+                                          widget.product.regularPrice != null &&
+                                          widget.product.salePrice! <
+                                              widget.product.regularPrice!)
                                       ? Colors.red.shade600
                                       : Colors.black87,
                                 ),
@@ -176,8 +259,8 @@ class ProductCard extends StatelessWidget {
                           ),
                           GestureDetector(
                             onTap: () {
-                              cart.addItem(product);
-                              CustomCartNotification.show(context, product);
+                              cart.addItem(widget.product);
+                              CustomCartNotification.show(context, widget.product);
                             },
                             child: Container(
                               padding: const EdgeInsets.all(8),

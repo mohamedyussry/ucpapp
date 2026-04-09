@@ -13,6 +13,8 @@ class UCP_API {
         register_rest_route($ns, '/update-info', [ 'methods' => 'GET', 'callback' => [ $this, 'get_update_info' ], 'permission_callback' => '__return_true' ]);
         register_rest_route($ns, '/update-fcm-token', [ 'methods' => 'POST', 'callback' => [ $this, 'update_fcm_token' ], 'permission_callback' => '__return_true' ]);
 
+        register_rest_route($ns, '/product-offers/(?P<id>\d+)', [ 'methods' => 'GET', 'callback' => [ $this, 'get_product_offers' ], 'permission_callback' => '__return_true' ]);
+
         // تسجيل حقول إضافية لمعرفة الماركات المسموح ظهورها في التطبيق
         register_rest_field( 'product_brand', 'app_settings', [
             'get_callback' => function( $term ) {
@@ -74,5 +76,58 @@ class UCP_API {
 
         update_user_meta($user_id, '_fcm_token', $token);
         return ['success' => true];
+    }
+
+    public function get_product_offers($request) {
+        $product_id = $request['id'];
+        $lang = $request->get_param('lang');
+        $offers = [];
+
+        if (class_exists('ADP\BaseVersion\Includes\Database\Repository\RuleRepository')) {
+            try {
+                $repo = new ADP\BaseVersion\Includes\Database\Repository\RuleRepository();
+                // We need to pass some arguments to simulate the product environment
+                $args = [
+                    'product' => (int)$product_id,
+                    'active_only' => true
+                ];
+                
+                $rules = $repo->getRules($args);
+
+                foreach ($rules as $rule) {
+                    // Try to get a user-friendly label
+                    $label = '';
+                    
+                    if (!empty($rule->advertising) && isset($rule->advertising['badge_text']) && !empty($rule->advertising['badge_text'])) {
+                        $label = $rule->advertising['badge_text'];
+                    } elseif (!empty($rule->title)) {
+                        $label = $rule->title;
+                    }
+
+                    if (!empty($label)) {
+                        if (!empty($lang)) {
+                            // Apply the TranslatePress filter directly. 
+                            // WordPress safely ignores this if TranslatePress is not active.
+                            $trp_lang = (strtolower($lang) === 'en') ? 'en_US' : 'ar'; 
+                            $translated_label = apply_filters('trp_translate', $label, $trp_lang, false);
+                            
+                            // If not translated and we asked for Arabic, try 'ar_SA' just in case
+                            if ($translated_label === $label && strtolower($lang) !== 'en') {
+                                $translated_label = apply_filters('trp_translate', $label, 'ar_SA', false);
+                            }
+                            
+                            if (!empty($translated_label) && is_string($translated_label)) {
+                                $label = $translated_label;
+                            }
+                        }
+                        $offers[] = $label;
+                    }
+                }
+            } catch (Exception $e) {
+                // Silently fail or log if needed
+            }
+        }
+
+        return array_unique($offers);
     }
 }

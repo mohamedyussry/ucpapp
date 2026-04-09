@@ -21,6 +21,7 @@ require_once UCP_PATH . 'includes/class-ucp-fcm.php';
 require_once UCP_PATH . 'includes/class-ucp-slider.php';
 require_once UCP_PATH . 'includes/class-ucp-deeplink.php';
 require_once UCP_PATH . 'includes/class-ucp-banner.php';
+require_once UCP_PATH . 'includes/class-ucp-order-filter.php';
 
 // تشغيل النظام
 add_action( 'plugins_loaded', 'ucp_init_app_core' );
@@ -32,4 +33,5 @@ function ucp_init_app_core() {
     new UCP_Slider();
     new UCP_DeepLink();
     new UCP_Banner();
+    new UCP_Order_Filter();
 }

@@ -830,4 +830,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get newest => 'الأحدث';
+
+  @override
+  String get contact_support_title => 'تواصل مع خدمة العملاء';
+
+  @override
+  String get phone_call_label => 'مكالمة هاتفية';
+
+  @override
+  String get whatsapp_chat_label => 'محادثة واتساب';
 }

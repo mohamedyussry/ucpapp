@@ -38,6 +38,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isLoadingVariations = false;
 
   int _quantity = 1;
+  List<String> _productOffers = [];
+  bool _isLoadingOffers = false;
+  bool _isOffersInit = false;
 
   @override
   void initState() {
@@ -46,6 +49,37 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       _fetchVariations();
     } else {
       _selectedVariation = null;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isOffersInit) {
+      final lang = Localizations.localeOf(context).languageCode;
+      _fetchProductOffers(lang);
+      _isOffersInit = true;
+    }
+  }
+
+  void _fetchProductOffers(String lang) async {
+    setState(() {
+      _isLoadingOffers = true;
+    });
+    try {
+      final offers = await _wooCommerceService.getProductOffers(widget.product.id, lang);
+      if (mounted) {
+        setState(() {
+          _productOffers = offers;
+          _isLoadingOffers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingOffers = false;
+        });
+      }
     }
   }
 
@@ -191,39 +225,85 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? [_selectedVariation!.image!]
         : widget.product.images;
 
-    return Column(
+    return Stack(
       children: [
-        SizedBox(
-          height: 300,
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: images.length,
-            itemBuilder: (context, index) {
-              return CachedNetworkImage(
-                imageUrl: images[index].src,
-                fit: BoxFit.contain,
-                placeholder: (context, url) =>
-                    const Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              );
-            },
-          ),
-        ),
-        if (images.length > 1) ...[
-          const SizedBox(height: 16),
-          SmoothPageIndicator(
-            controller: _pageController,
-            count: images.length,
-            effect: const WormEffect(
-              dotHeight: 8,
-              dotWidth: 8,
-              activeDotColor: Colors.black,
-              dotColor: Colors.grey,
+        Column(
+          children: [
+            SizedBox(
+              height: 300,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return CachedNetworkImage(
+                    imageUrl: images[index].src,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+            if (images.length > 1) ...[
+              const SizedBox(height: 16),
+              SmoothPageIndicator(
+                controller: _pageController,
+                count: images.length,
+                effect: const WormEffect(
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  activeDotColor: Colors.black,
+                  dotColor: Colors.grey,
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (_productOffers.isNotEmpty)
+          _buildRibbonOverlay(),
       ],
     );
+  }
+
+  Widget _buildRibbonOverlay() {
+    return Positioned(
+      bottom: 20,
+      left: 0,
+      child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.red.shade700,
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.flash_on, color: Colors.white, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                _productOffers.first.toUpperCase(),
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
   }
 
   Widget _buildProductInfo(AppLocalizations l10n) {

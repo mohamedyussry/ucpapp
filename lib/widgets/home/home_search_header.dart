@@ -45,7 +45,7 @@ class HomeSearchHeader extends StatelessWidget {
                     ),
                     IconButton(
                       icon: const Icon(Icons.headset_mic_outlined, color: Colors.white),
-                      onPressed: () => _showContactOptions(context),
+                      onPressed: () => _showContactOptions(context, l10n),
                     ),
                   ],
                 ),
@@ -126,7 +126,7 @@ class HomeSearchHeader extends StatelessWidget {
     );
   }
 
-  void _showContactOptions(BuildContext context) {
+  void _showContactOptions(BuildContext context, AppLocalizations l10n) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -148,7 +148,7 @@ class HomeSearchHeader extends StatelessWidget {
                 ),
               ),
               Text(
-                'تواصل مع خدمة العملاء',
+                l10n.contact_support_title,
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -166,7 +166,7 @@ class HomeSearchHeader extends StatelessWidget {
                   child: const Icon(Icons.phone, color: Colors.blue),
                 ),
                 title: Text(
-                  'مكالمة هاتفية',
+                  l10n.phone_call_label,
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text('+966 53 040 1333', style: GoogleFonts.poppins()),
@@ -187,7 +187,7 @@ class HomeSearchHeader extends StatelessWidget {
                   child: const Icon(Icons.chat, color: Colors.green),
                 ),
                 title: Text(
-                  'محادثة واتساب',
+                  l10n.whatsapp_chat_label,
                   style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text('+966 53 040 1333', style: GoogleFonts.poppins()),

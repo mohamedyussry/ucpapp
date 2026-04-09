@@ -117,7 +117,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => CurrencyProvider(wooCommerceService),
         ),
-        ChangeNotifierProvider(create: (_) => LoyaltyProvider()),
+        ChangeNotifierProvider(create: (_) {
+          final loyalty = LoyaltyProvider();
+          // Pre-load tiers & settings immediately (no user data needed)
+          loyalty.initSettings();
+          return loyalty;
+        }),
         ChangeNotifierProxyProvider<AuthProvider, CheckoutProvider>(
           create: (_) => CheckoutProvider(null),
           update: (_, auth, previous) => CheckoutProvider(auth),
@@ -174,6 +179,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
         UpdateService().checkForUpdate(context);
         _hasCheckedUpdate = true;
       }
+      // Pre-initialize loyalty data when app loads
+      final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
+      loyalty.initialize();
     });
   }
 

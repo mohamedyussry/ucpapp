@@ -836,4 +836,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newest => 'Newest';
+
+  @override
+  String get contact_support_title => 'Contact Customer Support';
+
+  @override
+  String get phone_call_label => 'Phone Call';
+
+  @override
+  String get whatsapp_chat_label => 'WhatsApp Chat';
 }

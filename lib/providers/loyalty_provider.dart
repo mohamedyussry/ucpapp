@@ -19,22 +19,45 @@ class LoyaltyProvider with ChangeNotifier {
   bool get usePoints => _usePoints;
 
   Future<void> initialize() async {
+    // Already loaded — no need to repeat
+    if (_tiers.isNotEmpty && _settings != null) return;
+
     _isLoading = true;
     notifyListeners();
 
     try {
-      final data = await _loyaltyService.getLoyaltyData();
-      final tiersData = await _loyaltyService.getTiers();
-      final settingsData = await _loyaltyService.getSettings();
+      // Run all three requests in parallel instead of sequentially
+      final results = await Future.wait([
+        _loyaltyService.getLoyaltyData(),
+        _loyaltyService.getTiers(),
+        _loyaltyService.getSettings(),
+      ]);
 
-      _loyaltyData = data;
-      _tiers = tiersData;
-      _settings = settingsData;
+      _loyaltyData = results[0] as LoyaltyData?;
+      _tiers = results[1] as List<LoyaltyTier>;
+      _settings = results[2] as Map<String, dynamic>?;
     } catch (e) {
       developer.log('Error initializing loyalty provider', error: e);
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Loads only tiers & settings (no user-specific data). Safe to call at startup.
+  Future<void> initSettings() async {
+    if (_tiers.isNotEmpty && _settings != null) return;
+
+    try {
+      final results = await Future.wait([
+        _loyaltyService.getTiers(),
+        _loyaltyService.getSettings(),
+      ]);
+      _tiers = results[0] as List<LoyaltyTier>;
+      _settings = results[1] as Map<String, dynamic>?;
+      notifyListeners();
+    } catch (e) {
+      developer.log('Error in initSettings', error: e);
     }
   }
 

@@ -61,3 +61,7 @@ sync.log.txt
 lib_files.txt
 push_changes.bat
 push_to_git.bat
+
+# WooCommerce Plugins/Backups (Exclude from app repo)
+advanced-dynamic-pricing-for-woocommerce/
+wordpress_backups/

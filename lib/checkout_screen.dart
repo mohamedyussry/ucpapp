@@ -92,14 +92,12 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
       if (!mounted) return;
 
       final loyalty = Provider.of<LoyaltyProvider>(context, listen: false);
-      loyalty.initialize().then((_) {
-        if (!mounted) return;
-        _updateLoyaltyDiscount(
-          checkoutProvider,
-          loyalty,
-          Provider.of<CartProvider>(context, listen: false),
-        );
-      });
+      // Data is pre-loaded in main.dart, but we still ensure consistency
+      _updateLoyaltyDiscount(
+        checkoutProvider,
+        loyalty,
+        Provider.of<CartProvider>(context, listen: false),
+      );
     });
   }
 

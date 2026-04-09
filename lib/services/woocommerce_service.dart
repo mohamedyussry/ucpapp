@@ -30,6 +30,27 @@ class WooCommerceService {
     );
   }
 
+  Future<List<String>> getProductOffers(int productId, String lang) async {
+    try {
+      final response = await _dio.get(
+        '${Config.wooCommerceUrl}/wp-json/ucp/v1/product-offers/$productId',
+        queryParameters: {
+          'consumer_key': Config.consumerKey,
+          'consumer_secret': Config.consumerSecret,
+          'lang': lang,
+        },
+      );
+
+      if (response.statusCode == 200 && response.data is List) {
+        return List<String>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      developer.log('Error fetching product offers: $e');
+      return [];
+    }
+  }
+
   Future<Coupon?> validateCoupon(String code) async {
     try {
       final response = await _dio.get(
