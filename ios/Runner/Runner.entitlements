@@ -7,6 +7,8 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:ucpksa.com</string>
+		<string>applinks:www.ucpksa.com</string>
+		<string>applinks:*.ucpksa.com</string>
 	</array>
 	<key>com.apple.developer.in-app-payments</key>
 	<array>
