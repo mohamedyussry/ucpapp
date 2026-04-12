@@ -133,16 +133,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final String link = widget.product.permalink;
 
       if (link.isNotEmpty) {
-        // Dual-Link Strategy:
-        // 1. Standard website link for non-app users
-        // 2. Direct app link to bypass browsers (especially in WhatsApp/iOS)
-        final String slug = widget.product.slug;
-        final String appLink = "ucpapp://product/$slug";
-        
-        // Beautifully formatted message
-        final String text = "$name\n\n"
-            "🌐 Website: $link\n"
-            "🚀 Open in App: $appLink";
+        // Simple sharing logic: Website link only
+        // The website is expected to handle the redirection to the app
+        final String text = "$name\n$link";
         
         // Use the RenderBox to determine the position for iPad's popover
         final RenderBox? box = context.findRenderObject() as RenderBox?;

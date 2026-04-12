@@ -120,6 +120,11 @@ class UCP_API {
                                 $label = $translated_label;
                             }
                         }
+
+                        // Remove SKU details like (SKU 12345) from the label
+                        $label = preg_replace('/\s*\(SKU\s+.*?\)/i', '', $label);
+                        $label = trim($label);
+
                         $offers[] = $label;
                     }
                 }
