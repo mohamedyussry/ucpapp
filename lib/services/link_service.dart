@@ -64,7 +64,10 @@ class LinkService {
         slug = uri.host;
       }
     } else {
-      // Standard HTTPS logic
+      // Standard HTTPS/HTTP logic for ucpksa.com
+      developer.log('LinkService: Parsing web link segments: ${uri.pathSegments}');
+      
+      // Look for slug in paths like: /product/slug/ or /shop/slug/
       if (uri.pathSegments.contains('product')) {
         final int index = uri.pathSegments.indexOf('product');
         if (uri.pathSegments.length > index + 1) {
@@ -74,6 +77,13 @@ class LinkService {
         final int index = uri.pathSegments.indexOf('shop');
         if (uri.pathSegments.length > index + 1) {
           slug = uri.pathSegments[index + 1];
+        }
+      } else if (uri.pathSegments.isNotEmpty) {
+        // Fallback: Use the last non-empty segment as a potential slug
+        // This helps if the URL is domain.com/product-slug/ (custom permalink)
+        final nonEmptySegments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+        if (nonEmptySegments.isNotEmpty) {
+          slug = nonEmptySegments.last;
         }
       }
     }
@@ -86,14 +96,37 @@ class LinkService {
   Future<void> _navigateToProduct(String slug) async {
     developer.log('LinkService: Navigating to product with slug: $slug');
     
-    // Show loading if possible or just fetch
+    // 1. Wait for context to be available (especially for Cold Starts)
+    BuildContext? context;
+    int retries = 0;
+    const int maxRetries = 10; // Wait up to 5 seconds (10 * 500ms)
+
+    while (retries < maxRetries) {
+      context = MyApp.navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        developer.log('LinkService: Context is ready after ${retries * 500}ms');
+        break;
+      }
+      
+      developer.log('LinkService: Waiting for context... (Attempt ${retries + 1})');
+      await Future.delayed(const Duration(milliseconds: 500));
+      retries++;
+    }
+
+    if (context == null) {
+      developer.log('LinkService: Failed to get context after multiple retries.');
+      return;
+    }
+
+    // 2. Fetch product data
+    // It's better to fetch while waiting if possible, but let's be safe
     final product = await _wooService.getProductBySlug(slug);
     
     if (product != null) {
-      final context = MyApp.navigatorKey.currentContext;
-      if (context != null) {
+      // Ensure we still have a valid context after the async fetch
+      if (MyApp.navigatorKey.currentContext != null) {
         Navigator.push(
-          context,
+          MyApp.navigatorKey.currentContext!,
           MaterialPageRoute(
             builder: (context) => ProductDetailScreen(product: product),
           ),

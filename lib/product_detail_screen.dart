@@ -133,9 +133,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final String link = widget.product.permalink;
 
       if (link.isNotEmpty) {
-        final String appLink = "ucpapp://product/${widget.product.slug}";
-        // Enhanced share text with both types of links for reliability
-        final String text = "$name\n\nWeb Link:\n$link\n\nرابط مباشر للتطبيق:\n$appLink";
+        // Standard website link that works with Deep Linking
+        final String text = "$name\n$link";
         
         // Use the RenderBox to determine the position for iPad's popover
         final RenderBox? box = context.findRenderObject() as RenderBox?;
