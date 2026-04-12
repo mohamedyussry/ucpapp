@@ -50,10 +50,17 @@ class LinkService {
     String? slug;
     
     if (uri.scheme == 'ucpapp') {
-      if (uri.pathSegments.isNotEmpty) {
-        slug = uri.pathSegments.last;
-      } else if (uri.host.isNotEmpty) {
-        // In some cases ucpapp://slug
+      if (uri.host == 'product' && uri.pathSegments.isNotEmpty) {
+        // ucpapp://product/slug
+        slug = uri.pathSegments.first;
+      } else if (uri.pathSegments.contains('product')) {
+        // ucpapp:///product/slug (alternative)
+        final int index = uri.pathSegments.indexOf('product');
+        if (uri.pathSegments.length > index + 1) {
+          slug = uri.pathSegments[index + 1];
+        }
+      } else if (uri.host.isNotEmpty && uri.host != 'product') {
+        // ucpapp://slug (backward compatibility or short link)
         slug = uri.host;
       }
     } else {

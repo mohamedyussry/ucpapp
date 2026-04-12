@@ -7,6 +7,7 @@ class WooProduct {
   final double? regularPrice;
   final String description;
   final String permalink;
+  final String slug;
   final List<WooProductImage> images;
   final List<WooProductCategory> categories;
   final List<WooProductAttribute> attributes;
@@ -26,6 +27,7 @@ class WooProduct {
     this.regularPrice,
     required this.description,
     required this.permalink,
+    required this.slug,
     required this.images,
     required this.categories,
     required this.attributes,
@@ -47,6 +49,7 @@ class WooProduct {
       regularPrice: double.tryParse(json['regular_price']?.toString() ?? ''),
       description: json['description'] ?? '',
       permalink: json['permalink'] ?? '',
+      slug: json['slug'] ?? '',
       images:
           (json['images'] as List<dynamic>?)
               ?.map((imgJson) => WooProductImage.fromJson(imgJson))
@@ -84,6 +87,7 @@ class WooProduct {
       'regular_price': regularPrice?.toString(),
       'description': description,
       'permalink': permalink,
+      'slug': slug,
       'images': images.map((img) => img.toJson()).toList(),
       'categories': categories.map((cat) => cat.toJson()).toList(),
       'attributes': attributes.map((attr) => attr.toJson()).toList(),
