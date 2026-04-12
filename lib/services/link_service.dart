@@ -15,6 +15,10 @@ class LinkService {
   StreamSubscription<Uri>? _linkSubscription;
   final WooCommerceService _wooService = WooCommerceService();
 
+  // Debouncing logic
+  String? _lastProcessedLink;
+  DateTime? _lastProcessTime;
+
   void initialize() {
     _appLinks = AppLinks();
     _initDeepLinks();
@@ -42,6 +46,20 @@ class LinkService {
   }
 
   void _handleLink(Uri uri) async {
+    final String linkString = uri.toString();
+    final now = DateTime.now();
+
+    // Prevent processing the same link multiple times within 1 second
+    if (_lastProcessedLink == linkString && 
+        _lastProcessTime != null && 
+        now.difference(_lastProcessTime!).inSeconds < 1) {
+      developer.log('LinkService: Ignoring duplicate link: $linkString');
+      return;
+    }
+
+    _lastProcessedLink = linkString;
+    _lastProcessTime = now;
+    
     developer.log('LinkService: Handling link: $uri');
 
     // Handle Custom Scheme: ucpapp://product/slug
