@@ -213,12 +213,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               _buildStockInfo(l10n),
               const SizedBox(height: 32),
               _buildDescription(),
-              const SizedBox(height: 100), // Space for the bottom bar
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
-      bottomSheet: _buildBottomBar(l10n),
+      bottomNavigationBar: SafeArea(child: _buildBottomBar(l10n)),
     );
   }
 
@@ -309,19 +309,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildProductInfo(AppLocalizations l10n) {
-    final brand = "Medicube"; // Dummy brand
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          brand.toUpperCase(),
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 4),
         Text(
           widget.product.name,
           style: GoogleFonts.poppins(
@@ -535,7 +525,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Widget _buildDescription() {
-    final description = widget.product.description.replaceAll(
+    String rawDescription = widget.product.description;
+
+    if (_selectedVariation != null &&
+        _selectedVariation!.description != null &&
+        _selectedVariation!.description!.isNotEmpty) {
+      rawDescription = _selectedVariation!.description!;
+    }
+
+    final description = rawDescription.replaceAll(
       RegExp(r'<[^>]*>'),
       '',
     );

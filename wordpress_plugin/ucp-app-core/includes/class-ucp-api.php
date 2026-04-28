@@ -15,6 +15,9 @@ class UCP_API {
 
         register_rest_route($ns, '/product-offers/(?P<id>\d+)', [ 'methods' => 'GET', 'callback' => [ $this, 'get_product_offers' ], 'permission_callback' => '__return_true' ]);
 
+        register_rest_route($ns, '/subscription/plans', [ 'methods' => 'GET', 'callback' => [ $this, 'get_subscription_plans' ], 'permission_callback' => '__return_true' ]);
+        register_rest_route($ns, '/subscription/my-status', [ 'methods' => 'GET', 'callback' => [ $this, 'get_user_subscription_status' ], 'permission_callback' => function() { return is_user_logged_in(); } ]);
+
         // تسجيل حقول إضافية لمعرفة الماركات المسموح ظهورها في التطبيق
         register_rest_field( 'product_brand', 'app_settings', [
             'get_callback' => function( $term ) {
@@ -64,6 +67,10 @@ class UCP_API {
             'popup_link'         => get_option('ucp_popup_link'),
             'popup_target_type'  => get_option('ucp_popup_target_type', 'external'),
             'popup_target_id'    => get_option('ucp_popup_target_id'),
+
+            // Subscription Global Settings
+            'subscriptions_enabled' => get_option('ucp_subscription_allow_new', '1') === '1',
+            'subscription_grace_period' => (int) get_option('ucp_subscription_grace_period', '0'),
         ];
     }
 
@@ -134,5 +141,44 @@ class UCP_API {
         }
 
         return array_unique($offers);
+    }
+
+    public function get_subscription_plans() {
+        // التحقق من أن التسجيل متاح
+        if ( get_option('ucp_subscription_allow_new', '1') !== '1' ) {
+            return [
+                'status'  => 'disabled',
+                'message' => 'عذراً، التسجيل في الاشتراكات موقوف حالياً.',
+                'plans'   => []
+            ];
+        }
+
+        $plans = get_option('ucp_subscription_plans', []);
+        $checkout_page = get_option('ucp_subscription_checkout_page', wc_get_checkout_url());
+
+        foreach ($plans as &$plan) {
+            $product_id = $plan['product_id'] ?? 0;
+            // إضافة رابط الدفع المباشر (Add to Cart URL)
+            $plan['checkout_url'] = add_query_arg('add-to-cart', $product_id, $checkout_page);
+        }
+
+        return [
+            'status' => 'success',
+            'plans'  => $plans
+        ];
+    }
+
+    public function get_user_subscription_status() {
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            return new WP_Error('not_logged_in', 'يجب تسجيل الدخول أولاً', ['status' => 401]);
+        }
+
+        $status = UCP_Subscriptions::get_status($user_id);
+
+        return [
+            'status' => 'success',
+            'subscription' => $status
+        ];
     }
 }

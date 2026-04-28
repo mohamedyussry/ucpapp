@@ -1,0 +1,430 @@
+/* UCP My Account Subscription Dashboard Styles */
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+
+#ucp-billing-root {
+    --primary-orange: #f97316;
+    --status-color: #10b981;
+    --status-bg: #ecfdf5;
+
+    direction: rtl !important;
+    text-align: right !important;
+    font-family: 'Tajawal', sans-serif !important;
+    color: #1e293b !important;
+    background: #f8fafc !important;
+    padding: 25px !important;
+    border-radius: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    clear: both !important;
+    display: block !important;
+    margin: 10px 0 !important;
+}
+
+#ucp-billing-root * {
+    box-sizing: border-box !important;
+}
+
+/* Header Section */
+.ucp-header-stack {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 40px !important;
+    flex-wrap: wrap !important;
+    gap: 20px !important;
+    width: 100% !important;
+}
+
+.ucp-header-info h1 {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+    border: none !important;
+    background: none !important;
+    letter-spacing: -0.5px !important;
+}
+
+.ucp-header-info p {
+    font-size: 16px !important;
+    color: #64748b !important;
+    margin: 8px 0 0 !important;
+    padding: 0 !important;
+}
+
+/* Renew Button */
+.ucp-renew-btn-main {
+    background: var(--primary-orange) !important;
+    color: #fff !important;
+    padding: 14px 32px !important;
+    border-radius: 14px !important;
+    font-weight: 800 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    box-shadow: 0 10px 25px rgba(249, 115, 22, 0.25) !important;
+    border: none !important;
+    font-size: 17px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ucp-renew-btn-main:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 15px 30px rgba(249, 115, 22, 0.35) !important;
+    background: #ea580c !important;
+}
+
+/* Grid & Cards */
+.ucp-dashboard-grid {
+    display: flex !important;
+    gap: 25px !important;
+    margin-bottom: 30px !important;
+    width: 100% !important;
+}
+
+.ucp-card-mobile {
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    padding: 25px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+.ucp-status-card {
+    flex: 1.4 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.ucp-order-info-top {
+    display: none;
+    /* Can be enabled if needed */
+}
+
+/* Status Header */
+.ucp-status-header {
+    display: flex !important;
+    gap: 25px !important;
+    align-items: flex-start !important;
+    margin-bottom: 40px !important;
+}
+
+.ucp-status-icon-box {
+    width: 80px !important;
+    height: 80px !important;
+    background: var(--status-bg) !important;
+    color: var(--status-color) !important;
+    border-radius: 22px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 40px !important;
+    flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ucp-status-title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+
+.ucp-status-text h2 {
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    color: #0f172a !important;
+    line-height: 1.2 !important;
+    border: none !important;
+    background: none !important;
+}
+
+.ucp-order-badge {
+    background: rgba(249, 115, 22, 0.1) !important;
+    color: var(--primary-orange) !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+.ucp-status-text p {
+    font-size: 15px !important;
+    color: #64748b !important;
+    margin: 12px 0 0 !important;
+}
+
+/* Stats Row */
+.ucp-stats-row {
+    display: flex !important;
+    gap: 20px !important;
+}
+
+.ucp-stat-box {
+    background: #f8fafc !important;
+    border: 1px solid #f1f5f9 !important;
+    padding: 15px 10px !important;
+    border-radius: 18px !important;
+    text-align: center !important;
+    flex: 1 !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+}
+
+.ucp-stat-box:hover {
+    border-color: rgba(249, 115, 22, 0.2) !important;
+    background: #fff !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+.ucp-stat-box .dashicons {
+    font-size: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    margin: 0 0 5px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.ucp-icon-plan {
+    color: var(--primary-orange) !important;
+}
+
+.ucp-icon-time {
+    color: #3b82f6 !important;
+}
+
+.ucp-stat-label {
+    font-size: 11px !important;
+    color: #94a3b8 !important;
+    font-weight: 800 !important;
+    display: block !important;
+    margin: 0 !important;
+}
+
+.ucp-stat-value {
+    font-size: 16px !important;
+    color: #1e293b !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+}
+
+/* Time Card */
+.ucp-time-card {
+    flex: 1 !important;
+}
+
+.ucp-card-title {
+    font-size: 15px !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+    margin: 0 0 30px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.ucp-card-title .dashicons {
+    color: var(--primary-orange) !important;
+}
+
+.ucp-time-rows {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    margin-bottom: 30px !important;
+}
+
+.ucp-time-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.ucp-time-label {
+    font-size: 14px !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+}
+
+.ucp-time-value {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+}
+
+.ucp-start-date {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+}
+
+.ucp-expiry-date {
+    background: #fef2f2 !important;
+    color: #ef4444 !important;
+}
+
+/* Usage Section */
+.ucp-usage-section {
+    /* margin-top: 35px !important; */
+    /* border-top: 1px dashed #e2e8f0 !important; */
+    /* padding-top: 25px !important; */
+}
+
+.ucp-usage-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+    align-items: flex-end !important;
+}
+
+.ucp-usage-label {
+    font-size: 13px !important;
+    color: #64748b !important;
+    font-weight: 800 !important;
+}
+
+.ucp-usage-percent {
+    font-size: 20px !important;
+    color: var(--primary-orange) !important;
+    font-weight: 900 !important;
+}
+
+.ucp-progress-container {
+    height: 12px !important;
+    background: #f1f5f9 !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ucp-progress-bar-fill {
+    height: 100% !important;
+    background: linear-gradient(90deg, var(--primary-orange), #ea580c) !important;
+    border-radius: 10px !important;
+    transition: width 1.5s cubic-bezier(0.1, 0.7, 1.0, 0.1) !important;
+}
+
+.ucp-usage-footer {
+    font-size: 12px !important;
+    color: #94a3b8 !important;
+    text-align: center !important;
+    margin-top: 10px !important;
+    font-weight: 700 !important;
+}
+
+/* Promo Banner */
+.ucp-promo-banner {
+    background: #0f172a !important;
+    border-radius: 24px !important;
+    padding: 40px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 30px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    color: #fff !important;
+    width: 100% !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.ucp-promo-bg-icon {
+    position: absolute !important;
+    right: -30px !important;
+    bottom: -30px !important;
+    font-size: 180px !important;
+    color: rgba(255, 255, 255, 0.03) !important;
+    pointer-events: none !important;
+}
+
+.ucp-promo-content {
+    position: relative !important;
+    z-index: 1 !important;
+    flex: 1 !important;
+    min-width: 300px !important;
+}
+
+.ucp-promo-tag {
+    display: inline-block !important;
+    background: var(--primary-orange) !important;
+    color: #fff !important;
+    padding: 4px 12px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    margin-bottom: 15px !important;
+    letter-spacing: 1px !important;
+}
+
+.ucp-promo-content h3 {
+    font-size: 26px !important;
+    font-weight: 900 !important;
+    margin: 0 0 10px 0 !important;
+    color: #fff !important;
+    border: none !important;
+    background: none !important;
+    line-height: 1.2 !important;
+}
+
+.ucp-promo-content p {
+    font-size: 16px !important;
+    opacity: 0.7 !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+}
+
+.ucp-promo-actions {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.ucp-promo-btn {
+    background: var(--primary-orange) !important;
+    color: #fff !important;
+    padding: 16px 35px !important;
+    border-radius: 14px !important;
+    font-weight: 900 !important;
+    text-decoration: none !important;
+    font-size: 16px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.3) !important;
+    display: inline-block !important;
+}
+
+/* Accessibility & Mobile */
+#ucp-billing-root .dashicons {
+    font-family: dashicons !important;
+    margin: auto;
+}
+
+@media (max-width: 768px) {
+    .ucp-flex-col-mobile {
+        flex-direction: column !important;
+    }
+
+    .ucp-card-mobile {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .ucp-header-stack {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .ucp-renew-btn-main {
+        width: 100% !important;
+    }
+}

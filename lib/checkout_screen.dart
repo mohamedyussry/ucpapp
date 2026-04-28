@@ -843,11 +843,14 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
     final checkoutProvider = Provider.of<CheckoutProvider>(context);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: const Color(0xFFF8F9FA),
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
         elevation: 0,
         leading: checkoutProvider.currentPage == 0
             ? IconButton(
@@ -921,7 +924,7 @@ class _CheckoutScreenViewState extends State<_CheckoutScreenView>
         checkoutProvider,
         currencyProvider,
       ),
-    );
+    ));
   }
 
   Widget _buildLoadingOverlay() {

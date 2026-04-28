@@ -216,6 +216,7 @@ class WooProductVariation {
   final List<Map<String, dynamic>> attributes;
   final String stockStatus;
   final int? stockQuantity;
+  final String? description;
 
   WooProductVariation({
     required this.id,
@@ -226,6 +227,7 @@ class WooProductVariation {
     required this.attributes,
     required this.stockStatus,
     this.stockQuantity,
+    this.description,
   });
 
   factory WooProductVariation.fromJson(Map<String, dynamic> json) {
@@ -240,6 +242,7 @@ class WooProductVariation {
       attributes: List<Map<String, dynamic>>.from(json['attributes'] ?? []),
       stockStatus: json['stock_status'] ?? 'outofstock',
       stockQuantity: json['stock_quantity'],
+      description: json['description']?.toString(),
     );
   }
 }
